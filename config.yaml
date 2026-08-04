@@ -1,0 +1,33 @@
+# Non-secret settings. Secrets (PAT, passcode hash) live encrypted/hashed in the SQLite DB,
+# entered via the /setup screen the first time you run the app - never put them here.
+
+server_url: "https://qualityanalytics.mayocliniclabs.com"
+# Where the app itself listens. "127.0.0.1" (default) only accepts connections from
+# this machine. Set to "0.0.0.0" to accept connections from other machines on the
+# network (e.g. so teammates can reach it) - do this only on a trusted internal
+# network/VLAN, and put a reverse proxy with TLS in front of it if it's reachable
+# beyond that (see README.md's Security notes).
+host: "0.0.0.0"
+port: 5000
+# Each entry is a site's content URL - the segment right after /#/site/ in your
+# browser's address bar. The same PAT must have access to every site listed here.
+sites:
+  - "ClientFeeSchedule-DEV"
+  - "InteractiveDashboards"
+  - "InteractiveDashboards-DEV"
+  - "InteractiveDashboards-INT"
+  - "InteractiveDashboards-TST"
+default_site: "InteractiveDashboards-DEV"    # used for initial setup validation and as the fallback when no site has been selected yet
+refresh_interval_minutes: 60
+# Switching the active site in the nav dropdown triggers a background refresh of that
+# site, unless it was already refreshed within this many minutes.
+site_switch_staleness_minutes: 5
+stale_threshold_days: 90
+
+# Email alert when a workbook/data source extract refresh newly fails or its
+# consecutive-failure count climbs (see README.md). Leave smtp_host blank/absent to
+# disable alerting entirely.
+smtp_host: "smtprelay.mayo.edu"
+smtp_port: 25
+alert_email_from: "nethikar.rohit@mayo.edu"
+alert_email_to: "nethikar.rohit@mayo.edu"

@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Lineage{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-diagram-3"></i> Data Source &rarr; Workbook Lineage</h3>
+<p class="text-muted small">
+  Sourced from the Metadata API (GraphQL). If empty, confirm the Metadata API is enabled on your
+  server: <code>tsm data-service enable</code> then <code>tsm pending-changes apply</code>.
+</p>
+
+{% if not has_data %}
+<div class="alert alert-warning">
+  No lineage data found. This usually means the Metadata API isn't enabled yet, or the last
+  refresh hit an error on this section &mdash; check the status line above.
+</div>
+{% endif %}
+
+<table id="lineage-table" class="table table-striped table-bordered w-100">
+  <thead>
+    <tr>
+      <th>Data Source</th>
+      <th>Dependent Workbooks</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ds_name, workbook_names in by_datasource.items() %}
+    <tr>
+      <td>{{ ds_name }}</td>
+      <td>{{ workbook_names | join(", ") }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    initDataTable('#lineage-table', { pageLength: 25 });
+  });
+</script>
+{% endblock %}

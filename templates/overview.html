@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-speedometer2"></i> Overview</h3>
+<p class="text-muted small">
+  A snapshot of everything else on this dashboard. Numbers come straight from the
+  cached data behind each page &mdash; click any card to see the detail.
+</p>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('workbooks.list_workbooks') }}" class="text-decoration-none">
+      <div class="card stat-card h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-grid-3x3-gap"></i></div>
+          <div>
+            <div class="stat-number">{{ workbook_count }}</div>
+            <div class="stat-label">Workbooks</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('datasources.list_datasources') }}" class="text-decoration-none">
+      <div class="card stat-card h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-database"></i></div>
+          <div>
+            <div class="stat-number">{{ datasource_count }}</div>
+            <div class="stat-label">Data Sources</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('workbooks.list_workbooks') }}" class="text-decoration-none">
+      <div class="card stat-card h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
+          <div>
+            <div class="stat-number">{{ stale_count }}</div>
+            <div class="stat-label">Stale Items</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('custom_views.list_custom_views') }}" class="text-decoration-none">
+      <div class="card stat-card h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-easel"></i></div>
+          <div>
+            <div class="stat-number">{{ custom_view_count }}</div>
+            <div class="stat-label">Custom Views</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('subscriptions.list_subscriptions') }}" class="text-decoration-none">
+      <div class="card stat-card h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-envelope"></i></div>
+          <div>
+            <div class="stat-number">{{ subscription_count }}</div>
+            <div class="stat-label">Subscriptions</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-4 col-xl-2">
+    <a href="{{ url_for('health.list_health') }}" class="text-decoration-none">
+      <div class="card stat-card h-100">
+        <div class="card-body d-flex align-items-center gap-3">
+          <div class="stat-icon {{ 'bg-success-subtle text-success' if avg_score is not none and avg_score >= 80 else ('bg-warning-subtle text-warning' if avg_score is not none and avg_score >= 50 else 'bg-danger-subtle text-danger') }}">
+            <i class="bi bi-heart-pulse"></i>
+          </div>
+          <div>
+            <div class="stat-number">{{ avg_score if avg_score is not none else "—" }}</div>
+            <div class="stat-label">Avg Health Score</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle text-muted mb-3">Open Findings by Severity</h6>
+        {% if severity_counts.values() | sum > 0 %}
+        <canvas id="severity-chart" height="180"></canvas>
+        {% else %}
+        <p class="text-muted small mb-0">No open findings &mdash; nothing to chart.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle text-muted mb-3">Health Score Distribution</h6>
+        {% if score_buckets.values() | sum > 0 %}
+        <canvas id="score-chart" height="180"></canvas>
+        {% else %}
+        <p class="text-muted small mb-0">No health scores computed yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h6 class="card-subtitle text-muted mb-3"><i class="bi bi-flag"></i> Needs Attention</h6>
+    {% if top_findings %}
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Resource</th>
+          <th>Title</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for f in top_findings %}
+        <tr>
+          <td>
+            <span class="badge {{ 'bg-danger' if f.severity == 'critical' else ('bg-warning text-dark' if f.severity in ('high', 'medium') else 'bg-secondary') }}">
+              {{ f.severity }}
+            </span>
+          </td>
+          <td>{{ f.resource_name }}</td>
+          <td>{{ f.title }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('findings.list_findings', severity=f.severity) }}" class="btn btn-sm btn-outline-secondary">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="text-muted small mb-0">No open findings. Everything's in good shape.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  $(document).ready(function () {
+    var severityTotal = {{ (severity_counts.values() | sum) }};
+    if (severityTotal > 0) {
+      new Chart(document.getElementById('severity-chart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Critical', 'High', 'Medium', 'Low'],
+          datasets: [{
+            data: [
+              {{ severity_counts.critical }},
+              {{ severity_counts.high }},
+              {{ severity_counts.medium }},
+              {{ severity_counts.low }}
+            ],
+            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#6c757d']
+          }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    var scoreTotal = {{ (score_buckets.values() | sum) }};
+    if (scoreTotal > 0) {
+      new Chart(document.getElementById('score-chart'), {
+        type: 'bar',
+        data: {
+          labels: ['Good (80+)', 'Warning (50-79)', 'Critical (<50)'],
+          datasets: [{
+            data: [
+              {{ score_buckets.good }},
+              {{ score_buckets.warning }},
+              {{ score_buckets.critical }}
+            ],
+            backgroundColor: ['#198754', '#ffc107', '#dc3545']
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      });
+    }
+  });
+</script>
+{% endblock %}

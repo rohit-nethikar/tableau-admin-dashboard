@@ -1,0 +1,304 @@
+:root {
+  --accent: #2f5fdb;
+  --accent-dark: #23439e;
+  --accent-light: #eef2fd;
+  --ink: #1c2333;
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 10px 30px rgba(16, 24, 40, 0.12);
+}
+
+body {
+  background-color: #f4f6fb;
+  color: var(--ink);
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* Accent color override for Bootstrap's default blue */
+.btn {
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
+}
+.btn-primary {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover, .btn-primary:focus {
+  background-color: var(--accent-dark);
+  border-color: var(--accent-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.btn-outline-primary {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.btn-outline-primary:hover {
+  background-color: var(--accent);
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+a {
+  color: var(--accent);
+  text-decoration-color: rgba(47, 95, 219, 0.35);
+}
+a:hover {
+  color: var(--accent-dark);
+}
+.text-primary {
+  color: var(--accent) !important;
+}
+.bg-primary-subtle {
+  background-color: var(--accent-light) !important;
+}
+
+/* Page transition */
+.page-fade {
+  animation: page-fade-in 0.25s ease-out;
+}
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Brand */
+.brand-logo {
+  height: 28px;
+  width: auto;
+}
+.brand-logo-sm {
+  height: 18px;
+}
+.brand-logo-lg {
+  height: 56px;
+}
+
+/* Mayo Clinic org branding (nearly-square "stacked" mark) */
+.mayo-logo {
+  height: 32px;
+  width: auto;
+}
+.mayo-logo-lg {
+  height: 64px;
+  width: auto;
+}
+
+/* Tableau product mark */
+.tableau-logo {
+  height: 22px;
+  width: auto;
+}
+.tableau-logo-sm {
+  height: 16px;
+}
+.tableau-logo-lg {
+  height: 40px;
+  width: auto;
+}
+
+/* Navbar */
+.navbar-gradient {
+  background: linear-gradient(135deg, var(--accent-dark), #16213e);
+  box-shadow: 0 2px 12px rgba(16, 24, 40, 0.18);
+}
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.navbar-nav .nav-link {
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  margin: 0 0.1rem;
+  font-weight: 500;
+  font-size: 0.92rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.navbar-nav .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.navbar-nav .nav-link.active {
+  background-color: var(--accent);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Refresh status pill */
+.refresh-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: #495057;
+  background-color: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 999px;
+  padding: 0.35rem 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Cards */
+.card {
+  border: 1px solid #ecedf1;
+  border-radius: 0.75rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s ease;
+}
+
+.card-subtitle {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.stat-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+.stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.stat-number {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+.stat-label {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+/* DataTables' Buttons extension always injects its own "btn btn-secondary"
+   base classes alongside whatever className we pass in datatables-common.js.
+   btn-outline-secondary never redeclares --bs-btn-bg (it relies on .btn's
+   transparent default), so btn-secondary's solid gray background wins,
+   leaving gray text on a gray fill of the same color - invisible. Force the
+   background back to transparent so the outline style actually applies. */
+.dt-buttons .btn.btn-outline-secondary {
+  --bs-btn-bg: transparent;
+}
+
+/* Tables */
+table.dataTable {
+  --bs-table-padding-y: 0.25rem;
+  font-size: 0.85rem;
+}
+table.dataTable thead th {
+  background-color: #f4f6fb;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: #6c757d;
+  border-bottom: 2px solid #e9ecef;
+  padding-top: 0.4rem !important;
+  padding-bottom: 0.4rem !important;
+}
+table.dataTable tbody tr {
+  transition: background-color 0.1s ease;
+}
+table.dataTable tbody td {
+  padding-top: 0.2rem !important;
+  padding-bottom: 0.2rem !important;
+  line-height: 1.25;
+  vertical-align: middle;
+}
+
+.badge {
+  font-weight: 600;
+  padding: 0.4em 0.7em;
+  border-radius: 999px;
+}
+
+/* Form controls */
+.form-control:focus, .form-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 0.2rem rgba(47, 95, 219, 0.15);
+}
+
+/* Auth screens (login/setup) */
+.auth-shell {
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(47, 95, 219, 0.1), transparent 60%),
+    radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 100% 100%, 18px 18px;
+  border-radius: 1rem;
+  padding: 1px 0 2rem;
+  margin: -0.5rem -0.5rem 0;
+}
+.auth-shell .card {
+  border-radius: 1rem;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Footer */
+.app-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2.5rem;
+  padding: 1rem 0;
+  border-top: 1px solid #e9ecef;
+  color: #adb5bd;
+  font-size: 0.8rem;
+}
+.app-footer .app-footer-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Dark mode - toggled via data-bs-theme on <html>, persisted in localStorage
+   (see base.html). Bootstrap 5.3's built-in dark theme handles most component
+   colors automatically; these are the overrides for this app's own custom CSS. */
+[data-bs-theme="dark"] {
+  --ink: #e4e7f0;
+}
+[data-bs-theme="dark"] body {
+  background-color: #10141f;
+}
+[data-bs-theme="dark"] .card {
+  border-color: #262c42;
+}
+[data-bs-theme="dark"] .refresh-pill {
+  background-color: #1a1f30;
+  border-color: #262c42;
+  color: #c7cede;
+}
+[data-bs-theme="dark"] table.dataTable thead th {
+  background-color: #1a1f30;
+  color: #9aa3b8;
+  border-bottom-color: #2a3150;
+}
+[data-bs-theme="dark"] .stat-label,
+[data-bs-theme="dark"] .text-muted {
+  color: #9aa3b8 !important;
+}
+[data-bs-theme="dark"] .bg-primary-subtle {
+  background-color: rgba(47, 95, 219, 0.2) !important;
+}
+[data-bs-theme="dark"] .auth-shell .card {
+  background-color: #161b2c;
+}

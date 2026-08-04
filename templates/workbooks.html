@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Workbooks{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-grid-3x3-gap"></i> Workbooks</h3>
+<p class="text-muted small">
+  "Stale" flags workbooks whose content hasn't been updated in {{ stale_threshold_days }}+ days,
+  based on last-updated (content modified) date. "Views" is a lifetime total from the REST API
+  (not a recent-activity window) &mdash; see README.md. "Revisions" is capped by the server's
+  configured revision-retention setting, not true unlimited history. "Extract Failures" counts
+  extract-refresh job failures back from the most recent job and is bounded by however much job
+  history Tableau Server currently retains &mdash; this is Tableau's own extract job history, not
+  this app's sync runs (see Refresh Health's "Consecutive Sync Failures" for that). "Connection Type" reflects the underlying connection
+  driver(s) &mdash; "Mixed" means the workbook has both a live connection and an extract.
+  "Data Source(s)" comes from the Metadata API (same as the Lineage page) and will be blank while
+  that API is unreachable. "Extract Run Duration" is how long the most recent extract-refresh job
+  took (completed minus started); it's blank if that job never completed or Tableau didn't report
+  a start time. "Next Scheduled Refresh" is blank if the resource has no server-managed
+  extract-refresh schedule (e.g. it's all-live-connection, or only ever refreshed on demand) &mdash;
+  a blank cell does not mean refresh is broken. "Owner Last Login" is blank for a user who has never logged in. A
+  workbook with no Project is in the owner's <strong>Personal Space</strong> &mdash; Tableau's
+  private per-user area for content not yet published to a project. Permissions can't be set on
+  Personal Space content (it's private to the owner and site/server admins by design), so it never
+  appears on the Permissions page.
+</p>
+
+{% if personal_space_count %}
+<p class="text-muted small">
+  <span class="badge bg-secondary">Personal Space</span>
+  {{ personal_space_count }} workbook{{ "s" if personal_space_count != 1 else "" }} currently in a
+  personal space, not assigned to any project.
+</p>
+{% endif %}
+
+<table id="workbooks-table" class="table table-striped table-bordered w-100">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Project</th>
+      <th>Owner</th>
+      <th>Owner Email</th>
+      <th>Owner Role</th>
+      <th>Owner Last Login</th>
+      <th>Last Updated</th>
+      <th>Stale?</th>
+      <th>Extract Status</th>
+      <th>Extract Last Run</th>
+      <th>Extract Run Duration</th>
+      <th>Next Scheduled Refresh</th>
+      <th>Views</th>
+      <th>Link</th>
+      <th>Created</th>
+      <th>Size (MB)</th>
+      <th>Sheets</th>
+      <th>Connections</th>
+      <th>Connection Type</th>
+      <th>Data Source(s)</th>
+      <th>Revisions</th>
+      <th>Extract Failures</th>
+      <th>Tags</th>
+      <th>Favorites</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for wb in workbooks %}
+    <tr class="{{ 'table-danger' if wb.is_stale else '' }}">
+      <td>{{ wb.name }}</td>
+      <td>{{ wb.project_name if wb.project_name else ('<span class="badge bg-secondary">Personal Space</span>' | safe) }}</td>
+      <td>{{ wb.owner_name or "" }}</td>
+      <td>{{ wb.owner_email or "" }}</td>
+      <td>{{ wb.owner_site_role or "" }}</td>
+      <td>{{ wb.owner_last_login_at or "" }}</td>
+      <td>{{ wb.updated_at or "" }}</td>
+      <td>{{ "Yes" if wb.is_stale else "No" }}</td>
+      <td>{{ wb.extract_status or "" }}</td>
+      <td>{{ wb.extract_last_run_at or "" }}</td>
+      <td>{{ wb.extract_last_run_duration_seconds | format_duration }}</td>
+      <td>
+        {{ wb.refresh_next_run_at or "" }}
+        {% if wb.refresh_schedule_name %}<br><span class="text-muted small">{{ wb.refresh_schedule_name }}{% if wb.refresh_frequency %} ({{ wb.refresh_frequency }}){% endif %}</span>{% endif %}
+      </td>
+      <td>{{ wb.lifetime_view_count if wb.lifetime_view_count is not none else "N/A" }}</td>
+      <td>
+        {% if wb.webpage_url %}
+        <a href="{{ wb.webpage_url }}" target="_blank" rel="noopener">Open</a>
+        {% endif %}
+      </td>
+      <td>{{ wb.created_at or "" }}</td>
+      <td>{{ wb.size_mb if wb.size_mb is not none else "" }}</td>
+      <td>{{ wb.sheet_count if wb.sheet_count is not none else "" }}</td>
+      <td>{{ wb.connection_count if wb.connection_count is not none else "" }}</td>
+      <td>{{ wb.connection_type or "" }}</td>
+      <td>{{ workbook_datasources.get(wb.name, []) | join(", ") }}</td>
+      <td>{{ wb.revision_count if wb.revision_count is not none else "" }}</td>
+      <td>{{ wb.consecutive_extract_failures if wb.consecutive_extract_failures is not none else "" }}</td>
+      <td>{{ wb.tags or "" }}</td>
+      <td>{{ wb.favorites_count if wb.favorites_count is not none else "n/a" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    initDataTable('#workbooks-table', { order: [[7, 'desc']], pageLength: 25, scrollX: true });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}Health{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-heart-pulse"></i> Content Health Scores</h3>
+<p class="text-muted small">
+  Score (0-100) per item 1's signals: usage, ownership, refresh status, certification,
+  documentation, permission risk, and lineage. Weights are configurable in
+  <code>governance.yaml</code>. A factor that isn't available for a given asset (e.g.
+  certification on a workbook, or lineage/usage while the Metadata API is unreachable) is
+  excluded and its weight redistributed across the remaining available factors &mdash; it is
+  never silently treated as zero. Click "Factors" on any row to see exactly why it scored the
+  way it did.
+</p>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon {{ 'bg-success-subtle text-success' if avg_score is not none and avg_score >= 80 else ('bg-warning-subtle text-warning' if avg_score is not none and avg_score >= 50 else 'bg-danger-subtle text-danger') }}">
+          <i class="bi bi-heart-pulse"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ avg_score if avg_score is not none else "—" }}</div>
+          <div class="stat-label">Avg Health Score</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-success-subtle text-success"><i class="bi bi-check-circle"></i></div>
+        <div>
+          <div class="stat-number">{{ score_buckets.good }}</div>
+          <div class="stat-label">Good (80+)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-triangle"></i></div>
+        <div>
+          <div class="stat-number">{{ score_buckets.warning }}</div>
+          <div class="stat-label">Warning (50-79)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-x-circle"></i></div>
+        <div>
+          <div class="stat-number">{{ score_buckets.critical }}</div>
+          <div class="stat-label">Critical (&lt;50)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<table id="health-table" class="table table-striped table-bordered w-100">
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Name</th>
+      <th>Project</th>
+      <th>Owner</th>
+      <th>Business/Technical Owner</th>
+      <th>Score</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in scores %}
+    <tr>
+      <td>{{ row.resource_type }}</td>
+      <td>{{ row.resource_name }}</td>
+      <td>
+        {% if row.project_name %}{{ row.project_name }}
+        {% elif row.resource_type == "workbook" %}<span class="badge bg-secondary">Personal Space</span>
+        {% endif %}
+      </td>
+      <td>{{ row.owner_name or "" }}</td>
+      <td>
+        {% if row.business_owner or row.technical_owner %}
+          {{ row.business_owner or "" }}{% if row.business_owner and row.technical_owner %} / {% endif %}{{ row.technical_owner or "" }}
+        {% else %}
+          <span class="text-muted">none recorded</span>
+        {% endif %}
+      </td>
+      <td>
+        <span class="badge {{ 'bg-success' if row.score >= 80 else ('bg-warning text-dark' if row.score >= 50 else 'bg-danger') }}">
+          {{ row.score }}
+        </span>
+      </td>
+      <td>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#modal-{{ row.resource_id }}">
+          Factors
+        </button>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% for row in scores %}
+<div class="modal fade" id="modal-{{ row.resource_id }}" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ row.resource_name }} &mdash; score {{ row.score }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Factor</th>
+              <th>Available?</th>
+              <th>Raw Score</th>
+              <th>Weight Used</th>
+              <th>Contribution</th>
+              <th>Explanation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in row.factors %}
+            <tr class="{{ '' if f.available else 'text-muted' }}">
+              <td>{{ f.name }}</td>
+              <td>{{ "Yes" if f.available else "N/A" }}</td>
+              <td>{{ f.raw_score if f.raw_score is not none else "—" }}</td>
+              <td>{{ (f.weight_used * 100) | round(1) }}%</td>
+              <td>{{ f.contribution }}</td>
+              <td>{{ f.explanation }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <hr>
+        <h6>Assign business / technical owner</h6>
+        <p class="text-muted small">
+          Tableau has no native field for this &mdash; recording an owner here does not
+          change anything in Tableau, it only informs orphaned-content detection and this
+          dashboard.
+        </p>
+        <form method="post" action="{{ url_for('health.set_owner_override', resource_type=row.resource_type, resource_id=row.resource_id) }}">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <input type="text" name="business_owner" class="form-control form-control-sm" placeholder="Business owner" value="{{ row.business_owner or '' }}">
+            </div>
+            <div class="col-md-4">
+              <input type="text" name="technical_owner" class="form-control form-control-sm" placeholder="Technical owner" value="{{ row.technical_owner or '' }}">
+            </div>
+            <div class="col-md-4">
+              <input type="text" name="notes" class="form-control form-control-sm" placeholder="Notes" value="{{ row.owner_notes or '' }}">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-sm btn-primary mt-2">Save</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    initDataTable('#health-table', { order: [[5, 'asc']], pageLength: 25 });
+  });
+</script>
+{% endblock %}

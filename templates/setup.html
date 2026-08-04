@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Setup{% endblock %}
+{% block content %}
+<div class="auth-shell">
+<div class="row justify-content-center">
+  <div class="col-md-6 mt-4">
+    <div class="text-center mb-3 d-flex justify-content-center align-items-center gap-2">
+      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="brand-logo brand-logo-lg">
+      <img src="{{ url_for('static', filename='img/tableau-logo.png') }}" alt="Tableau" class="tableau-logo-lg">
+    </div>
+    <h3 class="mb-3 text-center"><i class="bi bi-gear"></i> {{ "Update" if already_configured else "First-Time Setup" }}</h3>
+
+    <div class="alert alert-info small">
+      Server URL and sites are set in <code>config.yaml</code>:<br>
+      <strong>Server:</strong> {{ server_url }}<br>
+      <strong>Sites:</strong> {{ sites|join(", ") }}<br>
+      The Personal Access Token below must have access to every site listed above.
+      Edit that file and restart the app if these are wrong.
+    </div>
+
+    <form method="post">
+      <div class="mb-3">
+        <label class="form-label">Personal Access Token Name</label>
+        <input type="text" name="pat_name" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Personal Access Token Secret</label>
+        <input type="password" name="pat_secret" class="form-control" required>
+        <div class="form-text">Generate this in Tableau Server under your account settings &rarr; Personal Access Tokens. It's encrypted at rest and never displayed again.</div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Dashboard Passcode</label>
+        <input type="password" name="passcode" class="form-control" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Confirm Passcode</label>
+        <input type="password" name="passcode_confirm" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Save &amp; Sign In</button>
+    </form>
+    <div class="text-center mt-4">
+      <img src="{{ url_for('static', filename='img/mayo-clinic-logo.png') }}" alt="Mayo Clinic" class="mayo-logo">
+      <p class="text-muted small mb-0 mt-1">Developed by Rohit Nethikar</p>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

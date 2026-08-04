@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Custom Views{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-easel"></i> Custom Views</h3>
+<p class="text-muted small">
+  Tableau's saved-view-per-user feature. "Shared" means the view is visible to anyone
+  with access to the workbook, not just its owner. A non-admin PAT may only see custom
+  views it owns or that are marked shared &mdash; a Tableau Server-side restriction.
+  "View" is the base worksheet/dashboard the custom view saves a filter/selection
+  state on top of. Tableau's REST and Metadata APIs do not expose the actual filter
+  values, parameter settings, or mark selections saved inside a custom view &mdash;
+  that state lives only in the workbook's internal view definition, so it can't be
+  listed here; "Project" and a direct link to the parent workbook are shown instead
+  to help you find and inspect it in Tableau. "Last Accessed" is blank if the view
+  has never been opened by anyone since it was created.
+</p>
+
+<form method="get" action="{{ url_for('custom_views.list_custom_views') }}" class="row g-2 mb-3">
+  <div class="col-md-3">
+    <select name="workbook_name" class="form-select form-select-sm">
+      <option value="">All workbooks</option>
+      {% for wb in workbook_names %}
+      <option value="{{ wb }}" {{ "selected" if filters.workbook_name == wb else "" }}>{{ wb }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="view_name" class="form-select form-select-sm">
+      <option value="">All base views</option>
+      {% for view in view_names %}
+      <option value="{{ view }}" {{ "selected" if filters.view_name == view else "" }}>{{ view }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <select name="owner_name" class="form-select form-select-sm">
+      <option value="">All owners</option>
+      {% for owner in owner_names %}
+      <option value="{{ owner }}" {{ "selected" if filters.owner_name == owner else "" }}>{{ owner }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-2">
+    <select name="shared" class="form-select form-select-sm">
+      <option value="">Shared or private</option>
+      <option value="1" {{ "selected" if filters.shared == 1 else "" }}>Shared only</option>
+      <option value="0" {{ "selected" if filters.shared == 0 else "" }}>Private only</option>
+    </select>
+  </div>
+  <div class="col-md-2">
+    <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+    <a href="{{ url_for('custom_views.list_custom_views') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+  </div>
+</form>
+
+{% if not custom_views %}
+<div class="alert alert-light border text-muted">
+  <i class="bi bi-info-circle"></i>
+  {% if filters.workbook_name or filters.view_name or filters.owner_name or filters.shared is not none %}
+  No custom views match the current filters. Try clearing them.
+  {% else %}
+  No custom views found for this site. A non-admin PAT only sees views it owns or that are
+  marked shared (see note above).
+  {% endif %}
+</div>
+{% else %}
+<table id="custom-views-table" class="table table-striped table-bordered w-100">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Workbook</th>
+      <th>Project</th>
+      <th>View</th>
+      <th>Owner</th>
+      <th>Shared?</th>
+      <th>Created</th>
+      <th>Updated</th>
+      <th>Last Accessed</th>
+      <th>Link</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cv in custom_views %}
+    {% set wb = workbooks_by_name.get(cv.workbook_name) %}
+    <tr>
+      <td>{{ cv.name }}</td>
+      <td>{{ cv.workbook_name or "" }}</td>
+      <td>{{ wb.project_name if wb else "" }}</td>
+      <td>{{ cv.view_name or "" }}</td>
+      <td>{{ cv.owner_name or "" }}</td>
+      <td>{{ "Yes" if cv.shared else "No" }}</td>
+      <td>{{ cv.created_at or "" }}</td>
+      <td>{{ cv.updated_at or "" }}</td>
+      <td>{{ cv.last_accessed_at or "" }}</td>
+      <td>
+        {% if wb and wb.webpage_url %}
+        <a href="{{ wb.webpage_url }}" target="_blank" rel="noopener">Open Workbook</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    if ($('#custom-views-table').length) {
+      initDataTable('#custom-views-table', { order: [[0, 'asc']], pageLength: 25, scrollX: true });
+    }
+  });
+</script>
+{% endblock %}

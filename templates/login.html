@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="auth-shell">
+<div class="row justify-content-center">
+  <div class="col-md-4 mt-5">
+    <div class="text-center mb-3 d-flex justify-content-center align-items-center gap-2">
+      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="brand-logo brand-logo-lg">
+      <img src="{{ url_for('static', filename='img/tableau-logo.png') }}" alt="Tableau" class="tableau-logo-lg">
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h3 class="mb-3 text-center"><i class="bi bi-lock"></i> Enter Passcode</h3>
+        <form method="post">
+          <input type="password" name="passcode" class="form-control mb-3" placeholder="Passcode" autofocus required>
+          <button type="submit" class="btn btn-primary w-100">Unlock</button>
+        </form>
+        <p class="text-muted small mt-3 mb-0">
+          This unlocks the local dashboard UI. It's separate from your Tableau Personal Access Token,
+          which is stored encrypted and never shown again.
+        </p>
+      </div>
+    </div>
+    <div class="text-center mt-4">
+      <img src="{{ url_for('static', filename='img/mayo-clinic-logo.png') }}" alt="Mayo Clinic" class="mayo-logo">
+      <p class="text-muted small mb-0 mt-1">Developed by Rohit Nethikar</p>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

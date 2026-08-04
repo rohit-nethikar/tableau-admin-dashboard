@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}Site Settings{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-gear"></i> Site Settings</h3>
+<p class="text-muted small">
+  A snapshot of this site's configuration and license usage, pulled directly from Tableau.
+  This app never changes these settings &mdash; it's read-only visibility. The "Tableau
+  Server" card below is server-wide &mdash; it's the same for every configured site since
+  they all live on the same physical Tableau Server &mdash; everything else on this page is
+  specific to the currently-selected site.
+</p>
+
+{% if server_info %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-server"></i></div>
+        <div>
+          <div class="stat-number">{{ server_info.product_version or "—" }}</div>
+          <div class="stat-label">
+            Tableau Server
+            {% if server_info.build_number %}<br><span class="text-muted">Build {{ server_info.build_number }}</span>{% endif %}
+            {% if server_info.rest_api_version %}<br><span class="text-muted">REST API {{ server_info.rest_api_version }}</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if not settings %}
+<p class="text-muted">Site settings haven't been synced yet. Run a refresh to populate this page.</p>
+{% else %}
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-hdd"></i></div>
+        <div>
+          <div class="stat-number">
+            {% if settings.storage_used is not none and settings.storage_quota %}
+              {{ settings.storage_used }} / {{ settings.storage_quota }}
+            {% elif settings.storage_used is not none %}
+              {{ settings.storage_used }}
+            {% else %}
+              &mdash;
+            {% endif %}
+          </div>
+          <div class="stat-label">Storage (MB)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-lock"></i></div>
+        <div>
+          <div class="stat-number">{{ settings.extract_encryption_mode or "—" }}</div>
+          <div class="stat-label">Extract Encryption</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon {{ 'bg-success-subtle text-success' if settings.guest_access_enabled else 'bg-secondary-subtle text-secondary' }}">
+          <i class="bi bi-person-badge"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ "On" if settings.guest_access_enabled else "Off" }}</div>
+          <div class="stat-label">Guest Access</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon {{ 'bg-success-subtle text-success' if not settings.disable_subscriptions else 'bg-secondary-subtle text-secondary' }}">
+          <i class="bi bi-envelope"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ "Off" if settings.disable_subscriptions else "On" }}</div>
+          <div class="stat-label">Subscriptions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon {{ 'bg-success-subtle text-success' if settings.revision_history_enabled else 'bg-secondary-subtle text-secondary' }}">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <div>
+          <div class="stat-number">
+            {% if settings.revision_history_enabled %}
+              {{ settings.revision_limit if settings.revision_limit is not none else "Unlimited" }}
+            {% else %}
+              Off
+            {% endif %}
+          </div>
+          <div class="stat-label">Revision History</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-4 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-magic"></i></div>
+        <div>
+          <div class="stat-number">{{ settings.ask_data_mode or "—" }}</div>
+          <div class="stat-label">Ask Data Mode</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <h6 class="card-subtitle text-muted mb-3">License Tier Capacity vs. Actual Users</h6>
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th>Capacity</th>
+          <th>Actual Users</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Creator</td>
+          <td>{{ settings.tier_creator_capacity if settings.tier_creator_capacity is not none else "Unlimited" }}</td>
+          <td>{{ role_counts.get("Creator", 0) }}</td>
+        </tr>
+        <tr>
+          <td>Explorer</td>
+          <td>{{ settings.tier_explorer_capacity if settings.tier_explorer_capacity is not none else "Unlimited" }}</td>
+          <td>{{ role_counts.get("Explorer", 0) }}</td>
+        </tr>
+        <tr>
+          <td>Viewer</td>
+          <td>{{ settings.tier_viewer_capacity if settings.tier_viewer_capacity is not none else "Unlimited" }}</td>
+          <td>{{ role_counts.get("Viewer", 0) }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Tableau Admin Dashboard{% endblock %}
+{% block content %}
+<div class="auth-shell">
+<div class="row justify-content-center">
+  <div class="col-md-8 mt-4">
+    <div class="text-center mb-3 d-flex justify-content-center align-items-center gap-2">
+      <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="" class="brand-logo brand-logo-lg">
+      <img src="{{ url_for('static', filename='img/tableau-logo.png') }}" alt="Tableau" class="tableau-logo-lg">
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body p-4 text-center">
+        <h2 class="mb-2">Tableau Admin Dashboard</h2>
+        <p class="text-muted mb-4">
+          A governance dashboard for Tableau Server: content health scoring, a
+          findings/remediation queue, orphaned-content and permission-risk detection,
+          refresh reliability tracking, a permissions audit view, and data-source/workbook
+          lineage &mdash; all backed by a scheduled cache so pages load fast.
+        </p>
+
+        <div class="row row-cols-2 row-cols-md-4 g-3 text-start mb-4">
+          <div class="col"><i class="bi bi-grid-3x3-gap"></i> Workbooks</div>
+          <div class="col"><i class="bi bi-database"></i> Data Sources</div>
+          <div class="col"><i class="bi bi-shield-lock"></i> Permissions</div>
+          <div class="col"><i class="bi bi-diagram-3"></i> Lineage</div>
+          <div class="col"><i class="bi bi-heart-pulse"></i> Health Scoring</div>
+          <div class="col"><i class="bi bi-flag"></i> Findings Queue</div>
+          <div class="col"><i class="bi bi-arrow-repeat"></i> Refresh Reliability</div>
+          <div class="col"><i class="bi bi-hdd-network"></i> Multi-Site Support</div>
+        </div>
+
+        <p class="text-muted small mb-4">
+          <strong>Nothing is ever auto-remediated.</strong> This app never deletes content,
+          changes permissions, or reassigns ownership on its own &mdash; it only surfaces
+          findings for human review.
+        </p>
+
+        <a href="{{ url_for('setup.setup') if not already_configured else url_for('auth_routes.login') }}"
+           class="btn btn-primary btn-lg px-5">
+          {{ "Get Started" if not already_configured else "Enter Dashboard" }}
+        </a>
+      </div>
+    </div>
+
+    <div class="text-center mt-4">
+      <img src="{{ url_for('static', filename='img/mayo-clinic-logo.png') }}" alt="Mayo Clinic" class="mayo-logo">
+      <p class="text-muted small mb-0 mt-1">Developed by Rohit Nethikar</p>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

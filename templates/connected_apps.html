@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Connected Apps{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-plug"></i> Connected Apps</h3>
+<p class="text-muted small">
+  A Connected App is a Tableau Server OAuth/JWT direct-trust relationship, used to let an
+  embedded dashboard or an external application call the REST API on a user's behalf without
+  a login prompt. "Project Scope" shows which projects the app is restricted to embedding
+  content from &mdash; "All Projects" means Tableau applied no restriction. This list requires
+  the PAT this app uses to belong to a server or site admin, and Tableau Server 2022.3+ (REST
+  API 3.17+); <code>tableauserverclient</code> has no native wrapper for this endpoint, so this
+  page is built from a raw REST call (same approach as Custom Views' usage-statistics lookup).
+  On an older server or a non-admin PAT, this section will show a sync error on Refresh Health
+  instead of populating &mdash; that's expected, not a bug.
+</p>
+
+{% if not connected_apps %}
+<div class="alert alert-light border text-muted">
+  <i class="bi bi-info-circle"></i> No connected apps found for this site. If you expect some
+  here, confirm the PAT belongs to a server/site admin and the server is 2022.3+, then check
+  Refresh Health for a sync error on this section.
+</div>
+{% else %}
+<table id="connected-apps-table" class="table table-striped table-bordered w-100">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Client ID</th>
+      <th>Enabled</th>
+      <th>Project Scope</th>
+      <th>Domain Restriction</th>
+      <th>Unrestricted Embedding</th>
+      <th>Created</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for app in connected_apps %}
+    <tr>
+      <td>{{ app.name or "" }}</td>
+      <td>{{ app.client_id }}</td>
+      <td>{{ "Yes" if app.enabled else "No" }}</td>
+      <td>{{ app.project_scope or "" }}</td>
+      <td>{{ app.domain_safelist or "" }}</td>
+      <td>{{ "Yes" if app.unrestricted_embedding else "No" }}</td>
+      <td>{{ app.created_at or "" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    if ($('#connected-apps-table').length) {
+      initDataTable('#connected-apps-table', { order: [[0, 'asc']], pageLength: 25, scrollX: true });
+    }
+  });
+</script>
+{% endblock %}

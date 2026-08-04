@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Tableau Admin Dashboard logo">
+  <defs>
+    <linearGradient id="badgeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2f5fdb"/>
+      <stop offset="100%" stop-color="#23439e"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#badgeGradient)"/>
+  <rect x="14" y="34" width="8" height="14" rx="2" fill="#ffffff"/>
+  <rect x="28" y="26" width="8" height="22" rx="2" fill="#ffffff"/>
+  <rect x="42" y="18" width="8" height="30" rx="2" fill="#ffffff"/>
+  <circle cx="46" cy="12" r="4" fill="#9fc0ff"/>
+</svg>

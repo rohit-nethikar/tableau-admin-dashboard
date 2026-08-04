@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tableau Admin Dashboard - Team Guide</title>
+<style>
+  @page { margin: 22mm 18mm; }
+  body {
+    font-family: "Segoe UI", Calibri, Arial, sans-serif;
+    color: #1c2333;
+    line-height: 1.5;
+    font-size: 11pt;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 22pt;
+    color: #23439e;
+    border-bottom: 3px solid #2f5fdb;
+    padding-bottom: 8px;
+    margin-top: 0;
+  }
+  h2 {
+    font-size: 15pt;
+    color: #23439e;
+    margin-top: 28px;
+    border-bottom: 1px solid #dbe1f0;
+    padding-bottom: 4px;
+  }
+  p { margin: 8px 0; }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  strong { color: #16213e; }
+  code {
+    background-color: #eef2fd;
+    color: #23439e;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.92em;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 10px 0 16px;
+    font-size: 10pt;
+  }
+  th, td {
+    border: 1px solid #dbe1f0;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th {
+    background-color: #eef2fd;
+    color: #23439e;
+    text-transform: uppercase;
+    font-size: 9pt;
+    letter-spacing: 0.03em;
+  }
+  tr:nth-child(even) td { background-color: #f7f9fd; }
+  hr { border: none; border-top: 1px solid #dbe1f0; margin: 20px 0; }
+</style>
+</head>
+<body>
+<h1>Tableau Admin Dashboard — Team Guide</h1>
+<p>A quick reference for using the app day-to-day. For setup/installation, see <code>README.md</code> instead — this guide assumes it's already running and you just need a passcode.</p>
+<h2>What this app is for</h2>
+<p>It's a governance dashboard that sits on top of your Tableau Server/Site and answers questions Tableau's own UI doesn't make easy:</p>
+<ul>
+<li>Which workbooks and data sources are stale, unowned, or have broken extract refreshes?</li>
+<li>Who has access to what, and does any of it look risky (e.g. conflicting Allow/Deny grants, an inactive user still holding access)?</li>
+<li>What's the overall health of our content, and where should we focus cleanup?</li>
+<li>Is our nightly extract refresh actually running, and how long does it take?</li>
+</ul>
+<p>It reads from Tableau on a schedule and caches the results locally so pages load instantly. <strong>It never changes anything in Tableau</strong> — no permission changes, no deletions, no ownership reassignment. The only things it writes are local notes (an assigned owner, a finding's review status), and those are logged.</p>
+<h2>Logging in</h2>
+<ul>
+<li>Go to the app's URL (ask whoever set it up for the address — commonly a shared machine's hostname/IP and port, e.g. <code>http://&lt;hostname&gt;:5000</code>).</li>
+<li>Enter the shared passcode. Everyone on the team uses the same one — it's separate from any Tableau login and just locks the local UI, not a personal account.</li>
+<li>If you're managing multiple Tableau sites, use the site dropdown in the top-right of the nav bar to switch between them. Each site has its own cached data. Your selected site is personal to your own browser — switching it doesn't change what anyone else looking at the app sees.</li>
+</ul>
+<h2>Everyday actions</h2>
+<table>
+<thead>
+<tr>
+<th>Action</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Force an immediate data refresh</td>
+<td><strong>Refresh Now</strong> button, top nav bar</td>
+</tr>
+<tr>
+<td>Export any table to CSV</td>
+<td><strong>CSV</strong> button above that table</td>
+</tr>
+<tr>
+<td>Show/hide columns in a table</td>
+<td><strong>Columns</strong> button above that table</td>
+</tr>
+<tr>
+<td>Toggle dark mode</td>
+<td>Moon/sun icon, top nav bar</td>
+</tr>
+<tr>
+<td>Search/sort/paginate any table</td>
+<td>Built into every table — click column headers to sort, use the search box to filter</td>
+</tr>
+<tr>
+<td>Log out</td>
+<td><strong>Logout</strong>, top nav bar</td>
+</tr>
+</tbody>
+</table>
+<p>Data refreshes automatically in the background on a schedule (ask your admin what interval is configured — commonly hourly). You don't need to trigger it manually unless you just fixed something in Tableau and want to see it reflected immediately.</p>
+<h2>Page-by-page</h2>
+<p><strong>Overview</strong> — the landing page: total workbook/data source counts, how many are stale, average health score, open findings by severity, and a top-5 list of the most urgent findings. Start here.</p>
+<p><strong>Workbooks / Data Sources</strong> — full inventories with owner, project, staleness, extract refresh status and schedule, tags, favorites, revision count, and (for workbooks) which data source(s) they use. Data Sources also has an "Underlying Source(s)" column showing what each connection actually points at — a database/file and server, or, when it's built on top of another published data source, that data source's name. A blank "Personal Space" badge instead of a project name means that content lives in the owner's private area — it has no permissions to manage and won't show up on the Permissions page, which is expected, not a bug.</p>
+<p><strong>Permissions</strong> — every explicit permission grant on projects and workbooks, plus each project's default-permission template, with group membership expanded to individual users. The <strong>Risk</strong> column links to any related finding (e.g. a same-resource Allow/Deny conflict).</p>
+<p><strong>Lineage</strong> — for each workbook, which published data source(s) it draws from. Requires the Tableau Metadata API to be enabled on your server; if it's not, this page (and the "Data Source(s)" column elsewhere) will be blank.</p>
+<p><strong>Custom Views</strong> — saved per-user views: which workbook/view they belong to, owner, and whether they're shared or private.</p>
+<p><strong>Subscriptions</strong> — who receives emailed snapshots of a workbook or view, on what schedule, and whether it's currently suspended.</p>
+<p><strong>Connected Apps</strong> — OAuth/JWT app registrations used for embedding. Requires an admin-level PAT and a recent-enough Tableau Server version; if either is missing this section just won't populate (see Refresh Health for the specific error).</p>
+<p><strong>Data Alerts</strong> — data-driven alert subscriptions: subject, creator, owner, frequency, and target view/workbook. Tableau's API doesn't expose the actual trigger threshold, so that's not shown.</p>
+<p><strong>Webhooks</strong> — site-level webhooks (name, target URL, triggering event, owner).</p>
+<p><strong>Site Settings</strong> — a snapshot of site-wide config: storage used/quota, extract encryption mode, guest access, revision history limit, Ask Data mode, and license tier capacity vs. actual usage. Also shows the Tableau Server's product version, build number, and REST API version — the same for every site since they're all on the same physical server.</p>
+<p><strong>Users</strong> — the full user roster for the current site: name, email, site role, last login, and an <strong>Inactive?</strong> flag for anyone who has never logged in or hasn't logged in for 90+ days (same threshold as the "Stale" flag elsewhere, just applied to login recency). A banner at the top summarizes how many users are inactive.</p>
+<p><strong>Health</strong> — a 0–100 score per workbook/data source built from usage, ownership, refresh status, certification, documentation, permission risk, and lineage presence. Click <strong>Factors</strong> on any row to see exactly which signals counted and which were skipped (a skipped signal's weight is redistributed, never scored as zero). You can also record an admin-assigned owner here — this is a local note only and doesn't touch Tableau.</p>
+<p><strong>Findings</strong> — the actual to-do list: every detected issue (orphaned content, permission risk, staleness, refresh failures, data quality warnings) with severity, evidence, and a recommended action. Filter by severity, category, project, owner, or status. Mark a finding <strong>Acknowledged</strong>, <strong>Resolved</strong>, or <strong>Dismissed</strong> as you work through it — that status sticks across future refreshes unless the underlying problem goes away on its own, in which case the app auto-resolves it. Every status change is logged. Export the current filtered view as CSV to share or track offline.</p>
+<p><strong>Refresh Health</strong> — is the app itself keeping up? Last successful sync, consecutive sync failures, next scheduled sync, and a trend chart of how long syncs have been taking. Also shows Tableau's own most-recent extract-refresh timestamp, and a recent sync-run log with redacted failure details. Use <strong>Validate PAT access to all sites</strong> here if something looks stale and you suspect the service account's token needs attention.</p>
+<h2>A few things that look like bugs but aren't</h2>
+<ul>
+<li><strong>Favorites column shows "n/a"</strong> on some Tableau Server versions — Tableau's REST API doesn't return that field on this kind of deployment. Not fixable from our side.</li>
+<li><strong>"Extract Failures" (on Workbooks/Data Sources) vs. "Consecutive Sync Failures" (on Refresh Health)</strong> are two different things: the first is Tableau's own extract-refresh job failures for that specific item; the second is how many times <em>this app's</em> own background sync has failed in a row. Same-sounding names, different meaning.</li>
+<li><strong>A blank "Next Scheduled Refresh"</strong> just means that content has no server-managed refresh schedule (e.g. it's live-connection-only, or only ever refreshed manually) — it doesn't mean anything is broken.</li>
+<li><strong>Usage counts are lifetime totals</strong>, not "views in the last 30 days" — Tableau doesn't expose a windowed count via the APIs this app uses.</li>
+</ul>
+<h2>Who to ask</h2>
+<p>For access issues (passcode, which site to pick), config changes (refresh interval, alert emails, governance thresholds), or anything that looks like a real bug rather than one of the items above, contact whoever administers this app for your team.</p>
+</body>
+</html>
