@@ -3,10 +3,10 @@
 {% block content %}
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
   <div>
-    <h1 class="mb-2">📊 Dashboard Overview</h1>
+    <h1 class="mb-2">📊 Dashboard Overview <span id="live-indicator" style="display: none; color: var(--success); font-size: 14px; font-weight: 600;">🟢 LIVE</span></h1>
     <p class="text-muted mb-0" style="font-size: 12px;">
       {% if last_refresh %}
-        Last updated: <strong>{{ last_refresh }}</strong>
+        Last updated: <strong id="last-refresh-time">{{ last_refresh }}</strong>
       {% else %}
         <em>Never synced</em>
       {% endif %}
@@ -24,7 +24,7 @@
       <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
         <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
           <div style="font-size: 24px;">📊</div>
-          <div class="stat-number" style="margin: 0; color: var(--primary); font-weight: 700;">{{ workbook_count }}</div>
+          <div class="stat-number" data-metric="workbook_count" style="margin: 0; color: var(--primary); font-weight: 700;">{{ workbook_count }}</div>
           <div style="font-size: 12px; color: var(--text-secondary);">Workbooks</div>
         </div>
       </div>
@@ -91,19 +91,19 @@
 <div style="background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
   <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
     <div style="text-align: center;">
-      <div style="font-size: 28px; margin-bottom: 4px;">{{ workbook_count + datasource_count }}</div>
+      <div id="health-total-assets" style="font-size: 28px; margin-bottom: 4px;">{{ workbook_count + datasource_count }}</div>
       <div style="font-size: 12px; opacity: 0.9;">Total Assets</div>
     </div>
     <div style="text-align: center;">
-      <div style="font-size: 28px; margin-bottom: 4px;">{{ stale_count }}</div>
+      <div id="health-stale-items" style="font-size: 28px; margin-bottom: 4px;">{{ stale_count }}</div>
       <div style="font-size: 12px; opacity: 0.9;">Stale Items</div>
     </div>
     <div style="text-align: center;">
-      <div style="font-size: 28px; margin-bottom: 4px;">{{ severity_counts.critical + severity_counts.high }}</div>
+      <div id="health-critical-issues" style="font-size: 28px; margin-bottom: 4px;">{{ severity_counts.critical + severity_counts.high }}</div>
       <div style="font-size: 12px; opacity: 0.9;">Critical Issues</div>
     </div>
     <div style="text-align: center;">
-      <div style="font-size: 28px; margin-bottom: 4px;">{{ avg_score if avg_score is not none else "—" }}</div>
+      <div id="health-avg-score" style="font-size: 28px; margin-bottom: 4px;">{{ avg_score if avg_score is not none else "—" }}</div>
       <div style="font-size: 12px; opacity: 0.9;">Avg Health Score</div>
     </div>
   </div>
@@ -308,6 +308,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
   $(document).ready(function () {
@@ -392,6 +393,122 @@
         }
       });
     }
+
+    // ======================================
+    // WebSocket Real-Time Updates
+    // ======================================
+    const socket = io();
+
+    // Connect to WebSocket server
+    socket.on('connect', function() {
+      console.log('Connected to live updates');
+      document.getElementById('live-indicator').style.display = 'inline';
+      socket.emit('request_metrics');
+    });
+
+    socket.on('disconnect', function() {
+      console.log('Disconnected from live updates');
+      document.getElementById('live-indicator').style.display = 'none';
+    });
+
+    // Listen for metrics updates from server
+    socket.on('metrics_update', function(metrics) {
+      console.log('Metrics updated:', metrics);
+      updateDashboardMetrics(metrics);
+    });
+
+    // Update dashboard with new metrics
+    function updateDashboardMetrics(metrics) {
+      // Update metric cards with animation
+      updateMetricCard('workbook_count', metrics.workbook_count);
+      updateMetricCard('datasource_count', metrics.datasource_count);
+      updateMetricCard('stale_count', metrics.stale_count);
+      updateMetricCard('custom_view_count', metrics.custom_view_count);
+      updateMetricCard('subscription_count', metrics.subscription_count);
+      updateMetricCard('avg_score', metrics.avg_score || '—');
+
+      // Update health summary banner
+      updateHealthSummary(metrics);
+
+      // Update last refresh time
+      const timestamp = new Date(metrics.timestamp);
+      document.getElementById('last-refresh-time').textContent = timestamp.toLocaleTimeString();
+
+      // Rebuild charts with new data
+      rebuildCharts(metrics);
+    }
+
+    function updateMetricCard(elementId, value) {
+      const elements = document.querySelectorAll('[data-metric="' + elementId + '"]');
+      elements.forEach(el => {
+        const oldValue = el.textContent;
+        if (oldValue !== value.toString()) {
+          el.textContent = value;
+          el.style.transition = 'all 0.3s ease';
+          el.style.backgroundColor = 'var(--accent)';
+          el.style.color = 'white';
+          el.style.borderRadius = '4px';
+          el.style.padding = '4px 8px';
+          setTimeout(() => {
+            el.style.backgroundColor = '';
+            el.style.color = '';
+          }, 500);
+        }
+      });
+    }
+
+    function updateHealthSummary(metrics) {
+      // Update the summary banner values
+      document.getElementById('health-total-assets').textContent =
+        (metrics.workbook_count + metrics.datasource_count);
+      document.getElementById('health-stale-items').textContent = metrics.stale_count;
+      document.getElementById('health-critical-issues').textContent =
+        (metrics.severity_counts.critical + metrics.severity_counts.high);
+      document.getElementById('health-avg-score').textContent =
+        (metrics.avg_score !== null ? metrics.avg_score : '—');
+    }
+
+    function rebuildCharts(metrics) {
+      // Update Severity Chart
+      const severityCtx = document.getElementById('severity-chart');
+      if (severityCtx && severityCtx.chart) {
+        severityCtx.chart.data.datasets[0].data = [
+          metrics.severity_counts.critical,
+          metrics.severity_counts.high,
+          metrics.severity_counts.medium,
+          metrics.severity_counts.low
+        ];
+        severityCtx.chart.update();
+      }
+
+      // Update User Roles Chart
+      const userRolesCtx = document.getElementById('user-roles-chart');
+      if (userRolesCtx && userRolesCtx.chart) {
+        userRolesCtx.chart.data.labels = Object.keys(metrics.user_roles);
+        userRolesCtx.chart.data.datasets[0].data = Object.values(metrics.user_roles);
+        userRolesCtx.chart.update();
+      }
+
+      // Update Content Type Chart
+      const contentTypeCtx = document.getElementById('content-type-chart');
+      if (contentTypeCtx && contentTypeCtx.chart) {
+        contentTypeCtx.chart.data.labels = Object.keys(metrics.content_by_type);
+        contentTypeCtx.chart.data.datasets[0].data = Object.values(metrics.content_by_type);
+        contentTypeCtx.chart.update();
+      }
+    }
+
+    // Store chart references for updates
+    window.addEventListener('load', function() {
+      if (window.Chart) {
+        const charts = Chart.instances;
+        charts.forEach(chart => {
+          if (chart.canvas) {
+            chart.canvas.chart = chart;
+          }
+        });
+      }
+    });
   });
 </script>
 {% endblock %}

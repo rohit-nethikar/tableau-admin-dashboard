@@ -1,12 +1,14 @@
 import os
 
 from flask import Flask, redirect, render_template, session, url_for
+from flask_socketio import SocketIO
 
 import db
 import refresh_watch
 import scheduler
 import site_context
 from config import INSTANCE_DIR, settings
+import websocket_events
 from routes import (
     auth_routes,
     connected_apps,
@@ -45,6 +47,10 @@ def _load_or_create_flask_secret() -> bytes:
 def create_app():
     app = Flask(__name__)
     app.secret_key = os.environ.get("FLASK_SECRET_KEY") or _load_or_create_flask_secret()
+
+    # Initialize WebSocket support
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+    websocket_events.init_websocket(socketio)
 
     db.init_db()
 
@@ -108,17 +114,17 @@ def create_app():
 
     scheduler.start()
 
-    return app
+    # Start background metrics updater for real-time dashboard
+    websocket_events.start_metrics_updater(app, socketio)
+
+    # Store socketio for access in routes
+    app.socketio = socketio
+
+    return app, socketio
 
 
-app = create_app()
+app, socketio = create_app()
 
 if __name__ == "__main__":
-    # Waitress instead of Flask's dev server - the dev server logs a warning on every
-    # startup that it's not meant for anything but local single-user debugging, and
-    # its single-threaded default would serialize teammates' requests behind each
-    # other. Also sidesteps Flask's reloader, which would start the BackgroundScheduler
-    # twice by re-running this module in a subprocess.
-    from waitress import serve
-
-    serve(app, host=settings.host, port=settings.port)
+    # Use socketio.run instead of waitress for WebSocket support
+    socketio.run(app, host=settings.host, port=settings.port, debug=False, allow_unsafe_werkzeug=True)
