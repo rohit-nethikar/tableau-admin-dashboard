@@ -48,6 +48,13 @@
     </select>
   </div>
   <div class="col-md-2">
+    <select name="account_type" class="form-select form-select-sm">
+      <option value="">All accounts</option>
+      <option value="mayo" {{ "selected" if filters.account_type == 'mayo' else "" }}>Mayo only</option>
+      <option value="non-mayo" {{ "selected" if filters.account_type == 'non-mayo' else "" }}>Non-Mayo only</option>
+    </select>
+  </div>
+  <div class="col-md-2">
     <button type="submit" class="btn btn-sm btn-primary">Filter</button>
     <a href="{{ url_for('custom_views.list_custom_views') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
   </div>

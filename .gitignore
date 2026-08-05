@@ -47,3 +47,16 @@ instance/
 *.db
 *.sqlite
 *.sqlite3
+
+# BigQuery
+bigquery-credentials.json
+*-credentials.json
+
+# Helper/diagnostic scripts (temporary)
+diagnose-*.py
+inspect-*.py
+test-*.py
+validate-*.py
+populate-*.py
+list-routes.py
+run.py

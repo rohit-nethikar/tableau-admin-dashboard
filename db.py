@@ -709,7 +709,7 @@ def fetch_custom_views(site: str, filters: dict = None):
                       COALESCE(u.email, '') as owner_email,
                       COALESCE(u.account_number, '') as owner_account_number
                FROM custom_views cv
-               LEFT JOIN users u ON cv.owner_name = u.name AND u.site = cv.site
+               LEFT JOIN users u ON LOWER(cv.owner_name) = LOWER(u.email) AND u.site = cv.site
                {where}
                ORDER BY cv.workbook_name, cv.name""",
             params,
