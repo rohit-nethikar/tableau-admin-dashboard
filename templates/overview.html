@@ -158,6 +158,128 @@
   </div>
 </div>
 
+<!-- Additional Dashboard Cards: Extract Status, Activity, Quick Links -->
+<div class="row g-3 mb-4">
+  <!-- Extract Refresh Status -->
+  <div class="col-md-4">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">⚡ Extract Refresh Status</h5>
+        {% if extract_stats.total > 0 %}
+        <div style="display: grid; gap: 12px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background-color: var(--bg-tertiary); border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 18px;">✅</span>
+              <span style="color: var(--text-secondary); font-size: 12px;">Successful</span>
+            </div>
+            <div style="font-weight: 700; color: var(--success);">{{ extract_stats.success }}</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background-color: var(--bg-tertiary); border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 18px;">🔴</span>
+              <span style="color: var(--text-secondary); font-size: 12px;">Failed</span>
+            </div>
+            <div style="font-weight: 700; color: var(--error);">{{ extract_stats.failed }}</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background-color: var(--bg-tertiary); border-radius: 6px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 18px;">⏱️</span>
+              <span style="color: var(--text-secondary); font-size: 12px;">Running</span>
+            </div>
+            <div style="font-weight: 700; color: var(--info);">{{ extract_stats.running }}</div>
+          </div>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 20px 0; margin: 0;">No extract refreshes configured</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="col-md-4">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">📝 Recent Activity</h5>
+        {% if recent_activity %}
+        <div style="display: grid; gap: 8px; font-size: 12px;">
+          {% for activity in recent_activity[:3] %}
+          <div style="padding: 8px; background-color: var(--bg-tertiary); border-radius: 4px; border-left: 2px solid var(--accent);">
+            <div style="color: var(--text-secondary); margin-bottom: 2px;">{{ activity }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 20px 0; margin: 0;">No recent activity</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="col-md-4">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">⚡ Quick Links</h5>
+        <div style="display: grid; gap: 8px;">
+          <a href="{{ url_for('workbooks.list_workbooks') }}" style="display: flex; align-items: center; gap: 8px; padding: 10px; background-color: var(--bg-tertiary); border-radius: 4px; text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+            <span>📊</span>
+            <span style="font-size: 12px; font-weight: 500;">View Workbooks</span>
+          </a>
+          <a href="{{ url_for('users.list_users') }}" style="display: flex; align-items: center; gap: 8px; padding: 10px; background-color: var(--bg-tertiary); border-radius: 4px; text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+            <span>👥</span>
+            <span style="font-size: 12px; font-weight: 500;">Manage Users</span>
+          </a>
+          <a href="{{ url_for('permissions.list_permissions') }}" style="display: flex; align-items: center; gap: 8px; padding: 10px; background-color: var(--bg-tertiary); border-radius: 4px; text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+            <span>🔐</span>
+            <span style="font-size: 12px; font-weight: 500;">Check Permissions</span>
+          </a>
+          <a href="{{ url_for('health.list_health') }}" style="display: flex; align-items: center; gap: 8px; padding: 10px; background-color: var(--bg-tertiary); border-radius: 4px; text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+            <span>❤️</span>
+            <span style="font-size: 12px; font-weight: 500;">Health Scores</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Additional Charts: User Distribution & Content Type Breakdown -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">👥 User Distribution by Role</h5>
+        {% if user_roles %}
+        <canvas id="user-roles-chart" height="150"></canvas>
+        {% else %}
+        <p style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 40px 0; margin: 0;">No user data available</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">📦 Content Type Breakdown</h5>
+        {% if content_by_type %}
+        <canvas id="content-type-chart" height="150"></canvas>
+        <div style="margin-top: 12px; font-size: 11px; color: var(--text-secondary);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            {% for content_type, count in content_by_type.items() %}
+            <div>{{ content_type }}: <strong>{{ count }}</strong></div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 40px 0; margin: 0;">No content data</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
   <div class="card-body">
     <h5 class="mb-3">🚨 Needs Attention</h5>
@@ -225,6 +347,49 @@
           }]
         },
         options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      });
+    }
+
+    // User Roles Distribution Chart
+    var userRoles = {{ user_roles | tojson }};
+    if (Object.keys(userRoles).length > 0) {
+      new Chart(document.getElementById('user-roles-chart'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(userRoles),
+          datasets: [{
+            data: Object.values(userRoles),
+            backgroundColor: ['#004B87', '#00A3E0', '#5CB85C', '#FFB81C', '#D9534F', '#5BC0DE']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // Content Type Breakdown Chart
+    var contentTypes = {{ content_by_type | tojson }};
+    if (Object.keys(contentTypes).length > 0) {
+      new Chart(document.getElementById('content-type-chart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(contentTypes),
+          datasets: [{
+            label: 'Count',
+            data: Object.values(contentTypes),
+            backgroundColor: ['#004B87', '#00A3E0', '#5CB85C', '#FFB81C']
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
       });
     }
   });
