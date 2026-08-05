@@ -1,10 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Overview{% endblock %}
 {% block content %}
-<h1 class="mb-2">📊 Dashboard Overview</h1>
-<p class="text-muted mb-4">
-  System health at a glance. Click any card to dive deeper into the data.
-</p>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+  <div>
+    <h1 class="mb-2">📊 Dashboard Overview</h1>
+    <p class="text-muted mb-0" style="font-size: 12px;">
+      {% if last_refresh %}
+        Last updated: <strong>{{ last_refresh }}</strong>
+      {% else %}
+        <em>Never synced</em>
+      {% endif %}
+    </p>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <a href="{{ url_for('refresh.trigger_refresh') }}" class="btn btn-small" style="background-color: var(--primary); color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 13px;">🔄 Sync Now</a>
+    <a href="{{ url_for('findings.list_findings') }}" class="btn btn-small" style="background-color: var(--accent); color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 13px;">🚩 Findings</a>
+  </div>
+</div>
 
 <div class="row g-3 mb-4">
   <div class="col-6 col-lg-4 col-xl-2">
@@ -75,27 +87,71 @@
   </div>
 </div>
 
+<!-- System Health Summary Banner -->
+<div style="background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
+    <div style="text-align: center;">
+      <div style="font-size: 28px; margin-bottom: 4px;">{{ workbook_count + datasource_count }}</div>
+      <div style="font-size: 12px; opacity: 0.9;">Total Assets</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 28px; margin-bottom: 4px;">{{ stale_count }}</div>
+      <div style="font-size: 12px; opacity: 0.9;">Stale Items</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 28px; margin-bottom: 4px;">{{ severity_counts.critical + severity_counts.high }}</div>
+      <div style="font-size: 12px; opacity: 0.9;">Critical Issues</div>
+    </div>
+    <div style="text-align: center;">
+      <div style="font-size: 28px; margin-bottom: 4px;">{{ avg_score if avg_score is not none else "—" }}</div>
+      <div style="font-size: 12px; opacity: 0.9;">Avg Health Score</div>
+    </div>
+  </div>
+</div>
+
 <div class="row g-3 mb-4">
   <div class="col-md-6">
-    <div class="card h-100">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
       <div class="card-body">
-        <h6 class="card-subtitle text-muted mb-3">Open Findings by Severity</h6>
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">📋 Open Findings by Severity</h5>
         {% if severity_counts.values() | sum > 0 %}
         <canvas id="severity-chart" height="180"></canvas>
+        <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>🔴 Critical: <strong>{{ severity_counts.critical }}</strong></div>
+            <div>🟡 High: <strong>{{ severity_counts.high }}</strong></div>
+            <div>🟠 Medium: <strong>{{ severity_counts.medium }}</strong></div>
+            <div>🔵 Low: <strong>{{ severity_counts.low }}</strong></div>
+          </div>
+        </div>
         {% else %}
-        <p class="text-muted small mb-0">No open findings &mdash; nothing to chart.</p>
+        <div style="padding: 40px; text-align: center;">
+          <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
+          <p class="text-muted small mb-0">No open findings</p>
+        </div>
         {% endif %}
       </div>
     </div>
   </div>
   <div class="col-md-6">
-    <div class="card h-100">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
       <div class="card-body">
-        <h6 class="card-subtitle text-muted mb-3">Health Score Distribution</h6>
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">📈 Health Score Distribution</h5>
         {% if score_buckets.values() | sum > 0 %}
         <canvas id="score-chart" height="180"></canvas>
+        <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>✅ Good (80+): <strong>{{ score_buckets.good }}</strong></div>
+            <div>⚠️ Warning (50-79): <strong>{{ score_buckets.warning }}</strong></div>
+            <div>❌ Critical (<50): <strong>{{ score_buckets.critical }}</strong></div>
+            <div>📊 Total: <strong>{{ score_buckets.values() | sum }}</strong></div>
+          </div>
+        </div>
         {% else %}
-        <p class="text-muted small mb-0">No health scores computed yet.</p>
+        <div style="padding: 40px; text-align: center;">
+          <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+          <p class="text-muted small mb-0">No health scores yet</p>
+        </div>
         {% endif %}
       </div>
     </div>
