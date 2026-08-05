@@ -54,16 +54,39 @@ for owner in missing_owners:
 conn.commit()
 print(f"\nTotal users added: {added_count}")
 
-# Now run the BigQuery sync
-print("\nRunning BigQuery sync...")
+# Now run the BigQuery sync with protection
+print("\nRunning BigQuery sync with account number protection...")
 import bigquery_sync
 import db
+from account_number_watchdog import get_watchdog
 
-result = bigquery_sync.sync_account_numbers_to_database(db)
-print(f"Sync result:")
-print(f"  Status: {result['status']}")
-print(f"  Updated: {result['updated_count']}")
-print(f"  Skipped: {result['skipped_count']}")
+watchdog = get_watchdog()
+
+# Protected sync with auto-backup and verify
+try:
+    print("  Creating pre-sync backup...")
+    watchdog.pre_sync_backup()
+
+    print("  Syncing account numbers...")
+    result = bigquery_sync.sync_account_numbers_to_database(db)
+    print(f"Sync result:")
+    print(f"  Status: {result['status']}")
+    print(f"  Updated: {result['updated_count']}")
+    print(f"  Skipped: {result['skipped_count']}")
+
+    print("  Verifying account numbers...")
+    if watchdog.post_sync_verify():
+        print("  ✅ Verification passed - accounts are safe!")
+    else:
+        print("  ⚠️ Verification issues - check logs")
+
+except Exception as e:
+    print(f"  ❌ Sync error: {e}")
+    print("  Attempting auto-restore...")
+    if watchdog.verify_accounts():
+        print("  ✅ Auto-restore successful!")
+    else:
+        print("  ❌ Auto-restore failed - check logs")
 
 # Check how many custom views now have account numbers
 cursor.execute('''

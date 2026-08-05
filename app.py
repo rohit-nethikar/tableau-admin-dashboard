@@ -48,6 +48,15 @@ def create_app():
 
     db.init_db()
 
+    # Account Number Protection: Verify on startup
+    try:
+        from account_number_watchdog import get_watchdog
+        watchdog = get_watchdog()
+        if not watchdog.verify_accounts():
+            print("⚠️ WARNING: Account numbers were lost and have been auto-restored from backup")
+    except Exception as e:
+        print(f"⚠️ Account watchdog warning: {e}")
+
     app.register_blueprint(setup.bp)
     app.register_blueprint(auth_routes.bp)
     app.register_blueprint(overview.bp)
