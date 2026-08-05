@@ -578,14 +578,38 @@ def replace_permissions(site, rows):
 
 
 def replace_users(site, rows):
-    """rows: (id, name, email, site_role, last_login_at, fetched_at) tuples."""
+    """rows: (id, name, email, site_role, last_login_at, fetched_at) tuples.
+
+    Uses UPSERT to preserve existing account_number values during refresh.
+    """
     with get_conn() as conn:
-        conn.execute("DELETE FROM users WHERE site = ?", (site,))
+        # Use UPSERT pattern: UPDATE if exists, INSERT if new
+        # Preserves account_number column during refresh
         conn.executemany(
             """INSERT INTO users(site, id, name, email, site_role, last_login_at, fetched_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(id) DO UPDATE SET
+                   name = excluded.name,
+                   email = excluded.email,
+                   site_role = excluded.site_role,
+                   last_login_at = excluded.last_login_at,
+                   fetched_at = excluded.fetched_at
+               -- Note: account_number is NOT updated, preserving BigQuery-synced data
+            """,
             [(site,) + tuple(r) for r in rows],
         )
+        # Clean up: delete users for this site that are no longer in rows
+        row_ids = {r[0] for r in rows}
+        existing = conn.execute(
+            "SELECT id FROM users WHERE site = ?", (site,)
+        ).fetchall()
+        to_delete = [row[0] for row in existing if row[0] not in row_ids]
+        if to_delete:
+            placeholders = ",".join("?" * len(to_delete))
+            conn.execute(
+                f"DELETE FROM users WHERE site = ? AND id IN ({placeholders})",
+                [site] + to_delete,
+            )
 
 
 def update_datasource_view_counts(site, counts_by_name: dict):
