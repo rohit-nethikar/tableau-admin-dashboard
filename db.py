@@ -293,6 +293,7 @@ _COLUMN_MIGRATIONS = [
     ("datasources", "tags", "TEXT"),
     ("datasources", "favorites_count", "INTEGER"),
     ("datasources", "underlying_sources", "TEXT"),
+    ("users", "account_number", "TEXT"),
 ] + [(table, "site", "TEXT NOT NULL DEFAULT ''") for table in _SITE_SCOPED_TABLES]
 
 
@@ -695,16 +696,22 @@ _CUSTOM_VIEW_FILTER_COLUMNS = {"workbook_name", "owner_name", "view_name", "shar
 
 def fetch_custom_views(site: str, filters: dict = None):
     filters = filters or {}
-    clauses = ["site = ?"]
+    clauses = ["cv.site = ?"]
     params = [site]
     for key, value in filters.items():
         if key in _CUSTOM_VIEW_FILTER_COLUMNS and value not in (None, ""):
-            clauses.append(f"{key} = ?")
+            clauses.append(f"cv.{key} = ?")
             params.append(value)
     where = f"WHERE {' AND '.join(clauses)}"
     with get_conn() as conn:
         rows = conn.execute(
-            f"SELECT * FROM custom_views {where} ORDER BY workbook_name, name",
+            f"""SELECT cv.*,
+                      COALESCE(u.email, '') as owner_email,
+                      COALESCE(u.account_number, '') as owner_account_number
+               FROM custom_views cv
+               LEFT JOIN users u ON cv.owner_name = u.name AND u.site = cv.site
+               {where}
+               ORDER BY cv.workbook_name, cv.name""",
             params,
         ).fetchall()
         return [dict(r) for r in rows]
@@ -929,3 +936,12 @@ def fetch_audit_log(limit: int = 200):
             "SELECT * FROM audit_log ORDER BY id DESC LIMIT ?", (limit,)
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+def update_user_account_number(site: str, user_id: str, account_number: str):
+    """Update the account_number for a user."""
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE users SET account_number = ? WHERE site = ? AND id = ?",
+            (account_number, site, user_id)
+        )

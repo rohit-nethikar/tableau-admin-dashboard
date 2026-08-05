@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request
+from flask import Blueprint, render_template, request, jsonify
 
 import db
 import site_context
@@ -43,3 +43,33 @@ def list_custom_views():
         filters=filters,
         last_refresh=db.latest_refresh(site),
     )
+
+
+@bp.route("/custom-views/account-numbers", methods=["GET"])
+@login_required
+def get_account_numbers():
+    """Fetch all users with their account numbers for the current site."""
+    site = site_context.get_current_site()
+    users = db.fetch_users(site)
+    return jsonify([{
+        "id": u["id"],
+        "name": u["name"],
+        "email": u.get("email", ""),
+        "account_number": u.get("account_number", "")
+    } for u in users])
+
+
+@bp.route("/custom-views/account-numbers", methods=["POST"])
+@login_required
+def update_account_number():
+    """Update account number for a user."""
+    site = site_context.get_current_site()
+    data = request.get_json()
+    user_id = data.get("user_id")
+    account_number = data.get("account_number")
+    
+    if not user_id:
+        return jsonify({"error": "user_id required"}), 400
+    
+    db.update_user_account_number(site, user_id, account_number)
+    return jsonify({"status": "ok"})

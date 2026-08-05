@@ -72,6 +72,8 @@
       <th>Project</th>
       <th>View</th>
       <th>Owner</th>
+      <th>Owner Email</th>
+      <th>Account #</th>
       <th>Shared?</th>
       <th>Created</th>
       <th>Updated</th>
@@ -88,6 +90,14 @@
       <td>{{ wb.project_name if wb else "" }}</td>
       <td>{{ cv.view_name or "" }}</td>
       <td>{{ cv.owner_name or "" }}</td>
+      <td>
+        {% if cv.owner_email %}
+        <a href="mailto:{{ cv.owner_email }}">{{ cv.owner_email }}</a>
+        {% endif %}
+      </td>
+      <td>
+        <span class="account-number-display" data-owner-name="{{ cv.owner_name }}">{{ cv.owner_account_number or "—" }}</span>
+      </td>
       <td>{{ "Yes" if cv.shared else "No" }}</td>
       <td>{{ cv.created_at or "" }}</td>
       <td>{{ cv.updated_at or "" }}</td>
