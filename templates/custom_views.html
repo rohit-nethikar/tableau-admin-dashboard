@@ -16,30 +16,58 @@
 </p>
 
 <form method="get" action="{{ url_for('custom_views.list_custom_views') }}" class="row g-2 mb-3">
+  <!-- Workbook Filter - Searchable -->
   <div class="col-md-3">
-    <select name="workbook_name" class="form-select form-select-sm">
+    <input type="text"
+           name="workbook_name"
+           class="form-control form-control-sm"
+           placeholder="Search workbooks..."
+           list="workbook_list"
+           value="{{ filters.workbook_name or '' }}"
+           autocomplete="off">
+    <datalist id="workbook_list">
       <option value="">All workbooks</option>
       {% for wb in workbook_names %}
-      <option value="{{ wb }}" {{ "selected" if filters.workbook_name == wb else "" }}>{{ wb }}</option>
+      <option value="{{ wb }}">{{ wb }}</option>
       {% endfor %}
-    </select>
+    </datalist>
   </div>
+
+  <!-- View Filter - Searchable -->
   <div class="col-md-2">
-    <select name="view_name" class="form-select form-select-sm">
+    <input type="text"
+           name="view_name"
+           class="form-control form-control-sm"
+           placeholder="Search views..."
+           list="view_list"
+           value="{{ filters.view_name or '' }}"
+           autocomplete="off">
+    <datalist id="view_list">
       <option value="">All base views</option>
       {% for view in view_names %}
-      <option value="{{ view }}" {{ "selected" if filters.view_name == view else "" }}>{{ view }}</option>
+      <option value="{{ view }}">{{ view }}</option>
       {% endfor %}
-    </select>
+    </datalist>
   </div>
+
+  <!-- Owner Filter - Searchable -->
   <div class="col-md-3">
-    <select name="owner_name" class="form-select form-select-sm">
+    <input type="text"
+           name="owner_name"
+           class="form-control form-control-sm"
+           placeholder="Search owners..."
+           list="owner_list"
+           value="{{ filters.owner_name or '' }}"
+           autocomplete="off">
+    <datalist id="owner_list">
       <option value="">All owners</option>
       {% for owner in owner_names %}
-      <option value="{{ owner }}" {{ "selected" if filters.owner_name == owner else "" }}>{{ owner }}</option>
+      <option value="{{ owner }}">{{ owner }}</option>
       {% endfor %}
-    </select>
+    </datalist>
   </div>
+
+  <!-- Shared Filter - Static (limited options) -->
   <div class="col-md-2">
     <select name="shared" class="form-select form-select-sm">
       <option value="">Shared or private</option>
@@ -47,6 +75,8 @@
       <option value="0" {{ "selected" if filters.shared == 0 else "" }}>Private only</option>
     </select>
   </div>
+
+  <!-- Account Type Filter - Static (limited options) -->
   <div class="col-md-2">
     <select name="account_type" class="form-select form-select-sm">
       <option value="">All accounts</option>
@@ -54,11 +84,40 @@
       <option value="non-mayo" {{ "selected" if filters.account_type == 'non-mayo' else "" }}>Non-Mayo only</option>
     </select>
   </div>
+
+  <!-- Filter & Clear Buttons -->
   <div class="col-md-2">
     <button type="submit" class="btn btn-sm btn-primary">Filter</button>
     <a href="{{ url_for('custom_views.list_custom_views') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
   </div>
 </form>
+
+<style>
+/* Style datalist dropdown - matches Bootstrap select styling */
+input[list] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+}
+
+input[list]:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Datalist option styling */
+datalist option {
+  background-color: white;
+  color: #212529;
+  padding: 0.5rem 0.75rem;
+}
+</style>
 
 {% if not custom_views %}
 <div class="alert alert-light border text-muted">
