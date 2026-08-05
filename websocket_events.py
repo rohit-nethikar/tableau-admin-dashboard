@@ -83,21 +83,23 @@ def init_websocket(socketio):
     @socketio.on('connect')
     def handle_connect():
         """Handle client connection"""
-        if 'user_id' not in session:
+        # Check if user is authenticated
+        if not session.get('authed'):
+            print("WebSocket: Unauthorized connection attempt")
             return False
 
-        user_id = session.get('user_id')
-        active_connections[user_id] = True
-        print(f"Client connected: {user_id}")
+        auth_id = session.get('authed', 'unknown')
+        active_connections[auth_id] = True
+        print(f"✅ WebSocket client connected: {auth_id}")
         emit('connection_response', {'data': 'Connected to live updates'})
 
     @socketio.on('disconnect')
     def handle_disconnect():
         """Handle client disconnection"""
-        user_id = session.get('user_id')
-        if user_id in active_connections:
-            del active_connections[user_id]
-        print(f"Client disconnected: {user_id}")
+        auth_id = session.get('authed', 'unknown')
+        if auth_id in active_connections:
+            del active_connections[auth_id]
+        print(f"❌ WebSocket client disconnected: {auth_id}")
 
     @socketio.on('request_metrics')
     def handle_metrics_request():
