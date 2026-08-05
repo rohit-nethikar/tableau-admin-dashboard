@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Custom Views{% endblock %}
 {% block content %}
-<h3 class="mb-3"><i class="bi bi-easel"></i> Custom Views</h3>
+<h1 class="mb-3">👀 Custom Views</h1>
 <p class="text-muted small">
   Tableau's saved-view-per-user feature. "Shared" means the view is visible to anyone
   with access to the workbook, not just its owner. A non-admin PAT may only see custom
@@ -120,13 +120,12 @@ datalist option {
 </style>
 
 {% if not custom_views %}
-<div class="alert alert-light border text-muted">
-  <i class="bi bi-info-circle"></i>
+<div style="background-color: rgba(91, 192, 222, 0.1); border-left: 4px solid var(--info); padding: 16px; border-radius: 4px; color: var(--text-primary);">
+  ℹ️
   {% if filters.workbook_name or filters.view_name or filters.owner_name or filters.shared is not none %}
   No custom views match the current filters. Try clearing them.
   {% else %}
-  No custom views found for this site. A non-admin PAT only sees views it owns or that are
-  marked shared (see note above).
+  No custom views found. A non-admin PAT only sees views it owns or that are marked shared.
   {% endif %}
 </div>
 {% else %}
@@ -151,27 +150,25 @@ datalist option {
     {% for cv in custom_views %}
     {% set wb = workbooks_by_name.get(cv.workbook_name) %}
     <tr>
-      <td>{{ cv.name }}</td>
+      <td><strong>{{ cv.name }}</strong></td>
       <td>{{ cv.workbook_name or "" }}</td>
       <td>{{ wb.project_name if wb else "" }}</td>
       <td>{{ cv.view_name or "" }}</td>
       <td>{{ cv.owner_name or "" }}</td>
+      <td><span style="font-family: monospace; color: var(--accent);">{{ cv.owner_email or "—" }}</span></td>
       <td>
-        {% if cv.owner_email %}
-        <a href="mailto:{{ cv.owner_email }}">{{ cv.owner_email }}</a>
-        {% endif %}
+        <span class="account-number-display badge" style="background-color: {% if cv.owner_account_number %}var(--success){% else %}var(--neutral){% endif %}; color: white; padding: 4px 8px; border-radius: 4px; white-space: nowrap;" data-owner-name="{{ cv.owner_name }}">
+          {% if cv.owner_account_number %}<strong>{{ cv.owner_account_number }}</strong>{% else %}—{% endif %}
+        </span>
       </td>
-      <td>
-        <span class="account-number-display" data-owner-name="{{ cv.owner_name }}">{{ cv.owner_account_number or "-" }}</span>
-      </td>
-      <td>{{ "Yes" if cv.shared else "No" }}</td>
-      <td>{{ cv.created_at or "" }}</td>
-      <td>{{ cv.updated_at or "" }}</td>
-      <td>{{ cv.last_accessed_at or "" }}</td>
+      <td>{% if cv.shared %}<span class="badge badge-success">🔓 Shared</span>{% else %}<span class="badge badge-warning">🔒 Private</span>{% endif %}</td>
+      <td><span style="color: var(--text-secondary);">{{ cv.created_at or "—" }}</span></td>
+      <td><span style="color: var(--text-secondary);">{{ cv.updated_at or "—" }}</span></td>
+      <td><span style="color: var(--text-secondary);">{{ cv.last_accessed_at or "—" }}</span></td>
       <td>
         {% if wb and wb.webpage_url %}
-        <a href="{{ wb.webpage_url }}" target="_blank" rel="noopener">Open Workbook</a>
-        {% endif %}
+        <a href="{{ wb.webpage_url }}" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: none;">↗ Open</a>
+        {% else %}—{% endif %}
       </td>
     </tr>
     {% endfor %}

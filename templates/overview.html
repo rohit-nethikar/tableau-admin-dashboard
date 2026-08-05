@@ -1,89 +1,74 @@
 {% extends "base.html" %}
 {% block title %}Overview{% endblock %}
 {% block content %}
-<h3 class="mb-3"><i class="bi bi-speedometer2"></i> Overview</h3>
-<p class="text-muted small">
-  A snapshot of everything else on this dashboard. Numbers come straight from the
-  cached data behind each page &mdash; click any card to see the detail.
+<h1 class="mb-2">📊 Dashboard Overview</h1>
+<p class="text-muted mb-4">
+  System health at a glance. Click any card to dive deeper into the data.
 </p>
 
 <div class="row g-3 mb-4">
-  <div class="col-6 col-md-4 col-xl-2">
+  <div class="col-6 col-lg-4 col-xl-2">
     <a href="{{ url_for('workbooks.list_workbooks') }}" class="text-decoration-none">
-      <div class="card stat-card h-100">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-grid-3x3-gap"></i></div>
-          <div>
-            <div class="stat-number">{{ workbook_count }}</div>
-            <div class="stat-label">Workbooks</div>
-          </div>
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">📊</div>
+          <div class="stat-number" style="margin: 0; color: var(--primary); font-weight: 700;">{{ workbook_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Workbooks</div>
         </div>
       </div>
     </a>
   </div>
-  <div class="col-6 col-md-4 col-xl-2">
+  <div class="col-6 col-lg-4 col-xl-2">
     <a href="{{ url_for('datasources.list_datasources') }}" class="text-decoration-none">
-      <div class="card stat-card h-100">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-database"></i></div>
-          <div>
-            <div class="stat-number">{{ datasource_count }}</div>
-            <div class="stat-label">Data Sources</div>
-          </div>
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">🔌</div>
+          <div class="stat-number" style="margin: 0; color: var(--primary); font-weight: 700;">{{ datasource_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Data Sources</div>
         </div>
       </div>
     </a>
   </div>
-  <div class="col-6 col-md-4 col-xl-2">
+  <div class="col-6 col-lg-4 col-xl-2">
     <a href="{{ url_for('workbooks.list_workbooks') }}" class="text-decoration-none">
-      <div class="card stat-card h-100">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
-          <div>
-            <div class="stat-number">{{ stale_count }}</div>
-            <div class="stat-label">Stale Items</div>
-          </div>
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">⏱️</div>
+          <div class="stat-number" style="margin: 0; color: var(--warning); font-weight: 700;">{{ stale_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Stale Items</div>
         </div>
       </div>
     </a>
   </div>
-  <div class="col-6 col-md-4 col-xl-2">
+  <div class="col-6 col-lg-4 col-xl-2">
     <a href="{{ url_for('custom_views.list_custom_views') }}" class="text-decoration-none">
-      <div class="card stat-card h-100">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-easel"></i></div>
-          <div>
-            <div class="stat-number">{{ custom_view_count }}</div>
-            <div class="stat-label">Custom Views</div>
-          </div>
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">👀</div>
+          <div class="stat-number" style="margin: 0; color: var(--primary); font-weight: 700;">{{ custom_view_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Custom Views</div>
         </div>
       </div>
     </a>
   </div>
-  <div class="col-6 col-md-4 col-xl-2">
+  <div class="col-6 col-lg-4 col-xl-2">
     <a href="{{ url_for('subscriptions.list_subscriptions') }}" class="text-decoration-none">
-      <div class="card stat-card h-100">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-envelope"></i></div>
-          <div>
-            <div class="stat-number">{{ subscription_count }}</div>
-            <div class="stat-label">Subscriptions</div>
-          </div>
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">📬</div>
+          <div class="stat-number" style="margin: 0; color: var(--primary); font-weight: 700;">{{ subscription_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Subscriptions</div>
         </div>
       </div>
     </a>
   </div>
-  <div class="col-6 col-md-4 col-xl-2">
+  <div class="col-6 col-lg-4 col-xl-2">
     <a href="{{ url_for('health.list_health') }}" class="text-decoration-none">
-      <div class="card stat-card h-100">
-        <div class="card-body d-flex align-items-center gap-3">
-          <div class="stat-icon {{ 'bg-success-subtle text-success' if avg_score is not none and avg_score >= 80 else ('bg-warning-subtle text-warning' if avg_score is not none and avg_score >= 50 else 'bg-danger-subtle text-danger') }}">
-            <i class="bi bi-heart-pulse"></i>
-          </div>
-          <div>
-            <div class="stat-number">{{ avg_score if avg_score is not none else "—" }}</div>
-            <div class="stat-label">Avg Health Score</div>
-          </div>
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">{% if avg_score is not none and avg_score >= 80 %}✅{% elif avg_score is not none and avg_score >= 50 %}⚠️{% else %}❌{% endif %}</div>
+          <div class="stat-number" style="margin: 0; color: {% if avg_score is not none and avg_score >= 80 %}var(--success){% elif avg_score is not none and avg_score >= 50 %}var(--warning){% else %}var(--error){% endif %}; font-weight: 700;">{{ avg_score if avg_score is not none else "—" }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Health</div>
         </div>
       </div>
     </a>
@@ -117,38 +102,28 @@
   </div>
 </div>
 
-<div class="card">
+<div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
   <div class="card-body">
-    <h6 class="card-subtitle text-muted mb-3"><i class="bi bi-flag"></i> Needs Attention</h6>
+    <h5 class="mb-3">🚨 Needs Attention</h5>
     {% if top_findings %}
-    <table class="table table-sm mb-0">
-      <thead>
-        <tr>
-          <th>Severity</th>
-          <th>Resource</th>
-          <th>Title</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for f in top_findings %}
-        <tr>
-          <td>
-            <span class="badge {{ 'bg-danger' if f.severity == 'critical' else ('bg-warning text-dark' if f.severity in ('high', 'medium') else 'bg-secondary') }}">
-              {{ f.severity }}
-            </span>
-          </td>
-          <td>{{ f.resource_name }}</td>
-          <td>{{ f.title }}</td>
-          <td class="text-end">
-            <a href="{{ url_for('findings.list_findings', severity=f.severity) }}" class="btn btn-sm btn-outline-secondary">View</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div style="display: grid; gap: 12px;">
+      {% for f in top_findings %}
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background-color: var(--bg-tertiary); border-radius: var(--radius-md); border-left: 4px solid {% if f.severity == 'critical' %}var(--error){% elif f.severity in ('high', 'medium') %}var(--warning){% else %}var(--info){% endif %};">
+        <span style="font-size: 20px;">{% if f.severity == 'critical' %}🔴{% elif f.severity in ('high', 'medium') %}🟡{% else %}🔵{% endif %}</span>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: var(--text-primary);">{{ f.title }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">{{ f.resource_name }}</div>
+        </div>
+        <span class="badge {{ 'badge-error' if f.severity == 'critical' else ('badge-warning' if f.severity in ('high', 'medium') else 'badge-info') }}" style="white-space: nowrap;">{{ f.severity | upper }}</span>
+        <a href="{{ url_for('findings.list_findings', severity=f.severity) }}" class="btn btn-small" style="background-color: var(--accent); color: white; text-decoration: none; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px;">View</a>
+      </div>
+      {% endfor %}
+    </div>
     {% else %}
-    <p class="text-muted small mb-0">No open findings. Everything's in good shape.</p>
+    <div style="padding: 24px; text-align: center;">
+      <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
+      <p style="color: var(--text-secondary); margin: 0;">No open findings. Everything's in good shape!</p>
+    </div>
     {% endif %}
   </div>
 </div>

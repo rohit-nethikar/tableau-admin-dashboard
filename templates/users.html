@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Users{% endblock %}
 {% block content %}
-<h3 class="mb-3"><i class="bi bi-people"></i> Users</h3>
+<h1 class="mb-3">👥 Users</h1>
 <p class="text-muted small">
   Every user on this site, from the same roster used to populate "Owner" everywhere
   else in this app. "Last Login" is blank/"Never" for a user who has never signed in
@@ -14,11 +14,10 @@
   separate "last active" signal beyond last login.
 </p>
 
-<p class="text-muted small">
-  <span class="badge bg-danger">Inactive</span>
+<p class="text-muted small" style="margin-bottom: 16px;">
+  <span class="badge badge-error">🔴 Inactive</span>
   {{ inactive_count }} of {{ users | length }} user{{ "s" if users | length != 1 else "" }}
-  {{ "hasn't" if inactive_count == 1 else "haven't" }} logged into Tableau in
-  {{ stale_threshold_days }}+ days.
+  {{ "hasn't" if inactive_count == 1 else "haven't" }} logged in for {{ stale_threshold_days }}+ days.
 </p>
 
 <table id="users-table" class="table table-striped table-bordered w-100">
@@ -34,13 +33,13 @@
   </thead>
   <tbody>
     {% for u in users %}
-    <tr class="{{ 'table-danger' if u.is_inactive else '' }}">
-      <td>{{ u.name }}</td>
-      <td>{{ u.email or "" }}</td>
-      <td>{{ u.site_role or "" }}</td>
-      <td>{{ u.last_login_at or "Never" }}</td>
-      <td>{{ u.days_since_login if u.days_since_login is not none else "" }}</td>
-      <td>{{ "Yes" if u.is_inactive else "No" }}</td>
+    <tr style="{% if u.is_inactive %}background-color: rgba(217, 83, 79, 0.05); border-left: 3px solid var(--error);{% endif %}">
+      <td><strong>{{ u.name }}</strong></td>
+      <td><span style="font-family: monospace; color: var(--accent);">{{ u.email or "—" }}</span></td>
+      <td><span class="badge badge-info" style="white-space: nowrap;">{{ u.site_role or "—" }}</span></td>
+      <td><span style="color: var(--text-secondary);">{{ u.last_login_at or "Never" }}</span></td>
+      <td style="text-align: center;"><strong>{{ u.days_since_login if u.days_since_login is not none else "—" }}</strong></td>
+      <td>{% if u.is_inactive %}<span class="badge badge-error">🔴 Inactive</span>{% else %}<span class="badge badge-success">✅ Active</span>{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>

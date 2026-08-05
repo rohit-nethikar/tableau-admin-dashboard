@@ -18,6 +18,8 @@
 <link href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css" rel="stylesheet">
 <link href="https://cdn.datatables.net/fixedheader/3.4.0/css/fixedHeader.bootstrap5.min.css" rel="stylesheet">
 <link href="{{ url_for('static', filename='style.css', v=6) }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/modern.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/dark-mode.css') }}" rel="stylesheet">
 </head>
 <body>
 {% if session.get('authed') %}
@@ -87,8 +89,8 @@
         <form method="post" action="{{ url_for('refresh.trigger_refresh') }}" class="d-flex me-lg-2" id="refresh-now-form">
           <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-arrow-clockwise"></i> Refresh Now</button>
         </form>
-        <button id="theme-toggle" class="btn btn-outline-light btn-sm me-lg-2" type="button" title="Toggle dark mode">
-          <i class="bi bi-moon-stars"></i>
+        <button id="theme-toggle" class="btn btn-outline-light btn-sm me-lg-2 theme-toggle" type="button" title="Toggle dark mode">
+          🌙 Dark Mode
         </button>
         <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('auth_routes.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
       </div>
@@ -136,24 +138,7 @@
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
 <script src="https://cdn.datatables.net/fixedheader/3.4.0/js/dataTables.fixedHeader.min.js"></script>
 <script src="{{ url_for('static', filename='js/datatables-common.js') }}"></script>
-<script>
-  (function () {
-    var btn = document.getElementById('theme-toggle');
-    if (!btn) { return; }
-    function updateIcon() {
-      var isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-      btn.querySelector('i').className = isDark ? 'bi bi-sun' : 'bi bi-moon-stars';
-    }
-    updateIcon();
-    btn.addEventListener('click', function () {
-      var isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
-      var next = isDark ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-bs-theme', next);
-      localStorage.setItem('theme', next);
-      updateIcon();
-    });
-  })();
-</script>
+<script src="{{ url_for('static', filename='js/dark-mode.js') }}"></script>
 <script>
   // Shared toast helper - pages fire this instead of relying on a server
   // redirect + flash banner for actions handled over fetch().
