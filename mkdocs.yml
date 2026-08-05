@@ -1,0 +1,65 @@
+site_name: Tableau Admin Dashboard
+site_description: Comprehensive guide to the Tableau Admin Dashboard for managing and monitoring Tableau Server
+site_author: Mayo Clinic
+repo_url: https://github.com/rohit-nethikar/tableau-admin-dashboard
+repo_name: tableau-admin-dashboard
+edit_uri: edit/master/docs/
+
+theme:
+  name: material
+  logo: https://www.tableau.com/sites/default/files/pages/2021-04/Tableau_Logo_1.png
+  favicon: https://www.tableau.com/favicon.ico
+  palette:
+    scheme: slate
+    primary: blue
+    accent: blue
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Features:
+    - Overview: features/overview.md
+  - Guides:
+    - Getting Started: guides/getting-started.md
+    - Common Workflows: guides/workflows.md
+    - Best Practices: guides/best-practices.md
+  - Account Numbers:
+    - Overview: account-numbers/overview.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/rohit-nethikar/tableau-admin-dashboard
+
+copyright: "Copyright &copy; 2026 Mayo Clinic. All rights reserved."

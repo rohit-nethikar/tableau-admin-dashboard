@@ -60,3 +60,7 @@ validate-*.py
 populate-*.py
 list-routes.py
 run.py
+
+# MkDocs
+site/
+.cache/
