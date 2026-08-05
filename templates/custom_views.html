@@ -96,7 +96,7 @@
         {% endif %}
       </td>
       <td>
-        <span class="account-number-display" data-owner-name="{{ cv.owner_name }}">{{ cv.owner_account_number or "—" }}</span>
+        <span class="account-number-display" data-owner-name="{{ cv.owner_name }}">{{ cv.owner_account_number or "-" }}</span>
       </td>
       <td>{{ "Yes" if cv.shared else "No" }}</td>
       <td>{{ cv.created_at or "" }}</td>
