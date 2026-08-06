@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Tableau Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 style="color: var(--text-primary);">📊 Analytics</h1>
+  <div style="color: var(--text-secondary); font-size: 14px;">Showing <strong>{{ current_site }}</strong></div>
+</div>
+
+<!-- Toolbar with filters -->
+<div style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 24px;">
+  <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+    <span style="color: var(--text-secondary); font-weight: 500;">Date Range:</span>
+    <a href="{{ url_for('analytics.show_analytics', range='all', workbook_id=current_workbook_filter) }}"
+       class="btn {{ 'btn-primary' if current_range == 'all' else 'btn-outline-secondary' }}"
+       style="padding: 6px 12px; font-size: 12px;">
+      All
+    </a>
+    <a href="{{ url_for('analytics.show_analytics', range='7days', workbook_id=current_workbook_filter) }}"
+       class="btn {{ 'btn-primary' if current_range == '7days' else 'btn-outline-secondary' }}"
+       style="padding: 6px 12px; font-size: 12px;">
+      7 Days
+    </a>
+    <a href="{{ url_for('analytics.show_analytics', range='30days', workbook_id=current_workbook_filter) }}"
+       class="btn {{ 'btn-primary' if current_range == '30days' else 'btn-outline-secondary' }}"
+       style="padding: 6px 12px; font-size: 12px;">
+      30 Days
+    </a>
+    <a href="{{ url_for('analytics.show_analytics', range='90days', workbook_id=current_workbook_filter) }}"
+       class="btn {{ 'btn-primary' if current_range == '90days' else 'btn-outline-secondary' }}"
+       style="padding: 6px 12px; font-size: 12px;">
+      90 Days
+    </a>
+
+    <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+      <span style="color: var(--text-secondary); font-weight: 500;">Workbook:</span>
+      <form method="get" style="display: flex; gap: 8px;">
+        <input type="hidden" name="range" value="{{ current_range }}">
+        <select name="workbook_id" class="form-select form-select-sm" style="max-width: 300px;" onchange="this.form.submit();">
+          <option value="">All Workbooks</option>
+          {% for name in workbook_names %}
+          <option value="{{ name }}" {{ 'selected' if current_workbook_filter == name else '' }}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      <a href="{{ url_for('analytics.show_analytics') }}" class="btn btn-outline-secondary btn-sm">Reset Filters</a>
+    </div>
+  </div>
+</div>
+
+<!-- Summary Stats Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-2">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.total_view_hits | default(0) | int }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">View Hits (All-Time)</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.workbook_count }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Workbooks</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.view_count }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Views</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.user_count }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Users</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.active_users_30d }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Active (≤30d)</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-2">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.never_signed_in }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Never Signed In</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Grid (2x2) -->
+<div class="row g-3 mb-4">
+  <!-- Most Viewed Workbooks -->
+  <div class="col-md-6">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="color: var(--text-primary); margin-bottom: 16px;">📊 Most Viewed Workbooks</h5>
+        {% if top_by_hits %}
+        <div style="max-height: 300px; overflow-y: auto;">
+          <canvas id="top-by-hits-chart" height="{{ (top_by_hits | length) * 25 }}"></canvas>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px 0; margin: 0;">No data available</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Sheets/Views -->
+  <div class="col-md-6">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="color: var(--text-primary); margin-bottom: 16px;">🎯 Most Viewed Sheets</h5>
+        {% if top_views %}
+        <div style="max-height: 300px; overflow-y: auto;">
+          <canvas id="top-views-chart" height="{{ (top_views | length) * 25 }}"></canvas>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px 0; margin: 0;">No data available</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Most Engaged Workbooks -->
+  <div class="col-md-6">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="color: var(--text-primary); margin-bottom: 16px;">🔥 Most Engaged Workbooks</h5>
+        {% if top_by_avg_month %}
+        <div style="max-height: 300px; overflow-y: auto;">
+          <canvas id="top-avg-month-chart" height="{{ (top_by_avg_month | length) * 25 }}"></canvas>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px 0; margin: 0;">No data available</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- User Activity Timeline -->
+  <div class="col-md-6">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="color: var(--text-primary); margin-bottom: 16px;">📈 User Activity Timeline</h5>
+        <canvas id="login-recency-chart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Organization Breakdown -->
+  <div class="col-md-6">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="color: var(--text-primary); margin-bottom: 16px;">🏢 Organization Breakdown</h5>
+        <canvas id="owner-domain-chart" height="250"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Views Summary Stats Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_count }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Custom Views</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_owners }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Distinct Owners</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_domains }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Owner Domains</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<script>
+  Chart.register(ChartDataLabels);
+
+  $(document).ready(function () {
+    var topByHitsData = {{ top_by_hits | tojson }};
+    if (topByHitsData.length > 0) {
+      new Chart(document.getElementById('top-by-hits-chart'), {
+        type: 'bar',
+        data: {
+          labels: topByHitsData.map(w => w.name),
+          datasets: [{
+            label: 'Views',
+            data: topByHitsData.map(w => w.lifetime_view_count || 0),
+            backgroundColor: '#004B87'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            datalabels: { anchor: 'end', align: 'end', color: '#000', font: { weight: 'bold' } }
+          },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    var topViewsData = {{ top_views | tojson }};
+    if (topViewsData.length > 0) {
+      new Chart(document.getElementById('top-views-chart'), {
+        type: 'bar',
+        data: {
+          labels: topViewsData.map(v => v.view_name),
+          datasets: [{
+            label: 'Views',
+            data: topViewsData.map(v => v.total_views || 0),
+            backgroundColor: '#00A3E0'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            datalabels: { anchor: 'end', align: 'end', color: '#000', font: { weight: 'bold' } }
+          },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    var topAvgMonthData = {{ top_by_avg_month | tojson }};
+    if (topAvgMonthData.length > 0) {
+      new Chart(document.getElementById('top-avg-month-chart'), {
+        type: 'bar',
+        data: {
+          labels: topAvgMonthData.map(w => w.name),
+          datasets: [{
+            label: 'Avg Views/Month',
+            data: topAvgMonthData.map(w => w.avg_views_per_month || 0),
+            backgroundColor: '#5CB85C'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            datalabels: { anchor: 'end', align: 'end', color: '#000', font: { weight: 'bold' }, formatter: (v) => v.toFixed(1) }
+          },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    var loginBucketsData = {{ login_buckets | tojson }};
+    var bucketOrder = ['≤7 days', '8-30 days', '31-90 days', '91-365 days', '>1 year', 'Never'];
+    var sortedLabels = bucketOrder.filter(b => b in loginBucketsData);
+    var sortedData = sortedLabels.map(b => loginBucketsData[b]);
+    new Chart(document.getElementById('login-recency-chart'), {
+      type: 'bar',
+      data: {
+        labels: sortedLabels,
+        datasets: [{
+          label: 'Users',
+          data: sortedData,
+          backgroundColor: ['#198754', '#5CB85C', '#FFB81C', '#FF9800', '#D9534F', '#6C757D']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { display: false },
+          datalabels: { anchor: 'end', align: 'top', color: '#000', font: { weight: 'bold' } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+
+    var workbooksCustomViewsData = {{ workbooks_with_custom_views | tojson }};
+    if (workbooksCustomViewsData.length > 0) {
+      new Chart(document.getElementById('workbooks-custom-views-chart'), {
+        type: 'bar',
+        data: {
+          labels: workbooksCustomViewsData.map(w => w.name),
+          datasets: [{
+            label: 'Custom Views',
+            data: workbooksCustomViewsData.map(w => w.custom_view_count || 0),
+            backgroundColor: '#FF6B35'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            datalabels: { anchor: 'end', align: 'end', color: '#000', font: { weight: 'bold' } }
+          },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    var ownerDomainData = {{ owner_domain_split | tojson }};
+    if (Object.keys(ownerDomainData).length > 0) {
+      new Chart(document.getElementById('owner-domain-chart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(ownerDomainData).map(d => '@' + d),
+          datasets: [{
+            label: 'Custom Views',
+            data: Object.values(ownerDomainData),
+            backgroundColor: ['#004B87', '#00A3E0', '#5CB85C', '#FFB81C', '#FF9800', '#D9534F', '#6C757D', '#17A2B8']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            datalabels: { anchor: 'end', align: 'top', color: '#000', font: { weight: 'bold' } }
+          },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

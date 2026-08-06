@@ -1,15 +1,15 @@
 import os
 
 from flask import Flask, redirect, render_template, session, url_for
-from flask_socketio import SocketIO
+from waitress import serve
 
 import db
 import refresh_watch
 import scheduler
 import site_context
 from config import INSTANCE_DIR, settings
-import websocket_events
 from routes import (
+    analytics,
     auth_routes,
     connected_apps,
     custom_views,
@@ -20,6 +20,7 @@ from routes import (
     lineage,
     overview,
     permissions,
+    phase4_api,
     refresh,
     refresh_health,
     setup,
@@ -48,23 +49,73 @@ def create_app():
     app = Flask(__name__)
     app.secret_key = os.environ.get("FLASK_SECRET_KEY") or _load_or_create_flask_secret()
 
-    # Initialize WebSocket support
-    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
-    websocket_events.init_websocket(socketio)
-
     db.init_db()
+
+    # Sync account numbers from BigQuery BEFORE app starts (synchronous, blocking)
+    try:
+        print("Syncing account numbers from BigQuery...")
+        import bigquery_sync
+        import uuid
+        import sqlite3
+
+        # First, add missing custom view owners to users table
+        with db.get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT DISTINCT owner_name FROM custom_views')
+            custom_view_owners = [row[0] for row in cursor.fetchall()]
+
+            added_count = 0
+            for owner in custom_view_owners:
+                cursor.execute('SELECT id FROM users WHERE LOWER(email) = LOWER(?)', (owner,))
+                if not cursor.fetchone():
+                    # Get site for this owner
+                    cursor.execute('SELECT site FROM custom_views WHERE owner_name = ? LIMIT 1', (owner,))
+                    site_row = cursor.fetchone()
+                    if site_row:
+                        site = site_row[0]
+                        user_id = str(uuid.uuid4())
+                        name_part = owner.split('@')[0]
+                        try:
+                            cursor.execute('''
+                            INSERT INTO users (id, name, email, site, site_role, fetched_at, account_number)
+                            VALUES (?, ?, ?, ?, ?, datetime('now'), NULL)
+                            ''', (user_id, name_part, owner, site, 'Unknown'))
+                            added_count += 1
+                        except sqlite3.IntegrityError:
+                            pass
+            if added_count > 0:
+                # Don't just commit - explicitly ensure the connection commits
+                conn.commit()
+                print(f"Added {added_count} custom view owners to users table")
+
+        # Now sync account numbers from BigQuery
+        result = bigquery_sync.sync_account_numbers_to_database(db)
+        print(f"Account number sync: {result['message']} (Updated: {result['updated_count']})")
+
+        # Verify sync worked
+        with db.get_conn() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM users WHERE account_number IS NOT NULL AND account_number != ''")
+            count = cursor.fetchone()[0]
+            print(f"Verification: {count} users now have account numbers")
+
+    except Exception as e:
+        print(f"WARNING: Account number sync failed: {e}")
+        import traceback
+        traceback.print_exc()
 
     # Account Number Protection: Verify on startup
     try:
         from account_number_watchdog import get_watchdog
         watchdog = get_watchdog()
         if not watchdog.verify_accounts():
-            print("⚠️ WARNING: Account numbers were lost and have been auto-restored from backup")
+            print("WARNING: Account numbers were lost and have been auto-restored from backup")
     except Exception as e:
-        print(f"⚠️ Account watchdog warning: {e}")
+        print(f"WARNING: Account watchdog error: {e}")
 
     app.register_blueprint(setup.bp)
     app.register_blueprint(auth_routes.bp)
+    app.register_blueprint(analytics.bp)
     app.register_blueprint(overview.bp)
     app.register_blueprint(workbooks.bp)
     app.register_blueprint(datasources.bp)
@@ -82,6 +133,7 @@ def create_app():
     app.register_blueprint(site_settings.bp)
     app.register_blueprint(sites.bp)
     app.register_blueprint(users.bp)
+    app.register_blueprint(phase4_api.phase4_bp)
 
     @app.template_filter("format_duration")
     def format_duration(seconds):
@@ -114,17 +166,11 @@ def create_app():
 
     scheduler.start()
 
-    # Start background metrics updater for real-time dashboard
-    websocket_events.start_metrics_updater(app, socketio)
-
-    # Store socketio for access in routes
-    app.socketio = socketio
-
-    return app, socketio
+    return app
 
 
-app, socketio = create_app()
+app = create_app()
 
 if __name__ == "__main__":
-    # Use socketio.run instead of waitress for WebSocket support
-    socketio.run(app, host=settings.host, port=settings.port, debug=False, allow_unsafe_werkzeug=True)
+    print("Starting Tableau Admin Dashboard (HTTP-only mode)")
+    serve(app, host=settings.host, port=settings.port)

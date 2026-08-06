@@ -153,6 +153,14 @@ CREATE TABLE IF NOT EXISTS custom_views (
     updated_at TEXT
 );
 
+CREATE TABLE IF NOT EXISTS workbook_views (
+    workbook_id TEXT NOT NULL,
+    workbook_name TEXT,
+    view_name TEXT NOT NULL,
+    total_views INTEGER,
+    PRIMARY KEY (workbook_id, view_name)
+);
+
 CREATE TABLE IF NOT EXISTS subscriptions (
     id TEXT PRIMARY KEY,
     subscriber_name TEXT,
@@ -242,7 +250,7 @@ _SITE_SCOPED_TABLES = [
     "permission_grants", "group_members", "refresh_log", "users",
     "health_scores", "findings", "asset_owner_overrides", "custom_views",
     "subscriptions", "connected_apps", "data_alerts",
-    "webhooks", "dqw_warnings",
+    "webhooks", "dqw_warnings", "workbook_views",
 ]
 
 # (table, column, type declaration) - applied via ALTER TABLE if the column is missing,
@@ -581,6 +589,8 @@ def replace_users(site, rows):
     """rows: (id, name, email, site_role, last_login_at, fetched_at) tuples.
 
     Uses UPSERT to preserve existing account_number values during refresh.
+    IMPORTANT: Preserves users with account_number set (BigQuery-synced custom view owners)
+    even if they're no longer in Tableau's user list.
     """
     with get_conn() as conn:
         # Use UPSERT pattern: UPDATE if exists, INSERT if new
@@ -599,11 +609,15 @@ def replace_users(site, rows):
             [(site,) + tuple(r) for r in rows],
         )
         # Clean up: delete users for this site that are no longer in rows
+        # BUT: PRESERVE users with account_number (BigQuery-synced custom view owners)
         row_ids = {r[0] for r in rows}
         existing = conn.execute(
-            "SELECT id FROM users WHERE site = ?", (site,)
+            "SELECT id, account_number FROM users WHERE site = ?", (site,)
         ).fetchall()
-        to_delete = [row[0] for row in existing if row[0] not in row_ids]
+        # Only delete users that:
+        # 1. Are not in the latest Tableau sync, AND
+        # 2. Don't have an account_number (i.e., not BigQuery-synced)
+        to_delete = [row[0] for row in existing if row[0] not in row_ids and not row[1]]
         if to_delete:
             placeholders = ",".join("?" * len(to_delete))
             conn.execute(
@@ -737,6 +751,25 @@ def fetch_custom_views(site: str, filters: dict = None):
                {where}
                ORDER BY cv.workbook_name, cv.name""",
             params,
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def replace_workbook_views(site: str, rows):
+    """rows: (workbook_id, workbook_name, view_name, total_views) tuples."""
+    with get_conn() as conn:
+        conn.execute("DELETE FROM workbook_views WHERE site = ?", (site,))
+        conn.executemany(
+            """INSERT INTO workbook_views (site, workbook_id, workbook_name, view_name, total_views)
+               VALUES (?, ?, ?, ?, ?)""",
+            [(site,) + tuple(r) for r in rows],
+        )
+
+
+def fetch_workbook_views(site: str):
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM workbook_views WHERE site = ? ORDER BY total_views DESC", (site,)
         ).fetchall()
         return [dict(r) for r in rows]
 
@@ -969,3 +1002,246 @@ def update_user_account_number(site: str, user_id: str, account_number: str):
             "UPDATE users SET account_number = ? WHERE site = ? AND id = ?",
             (account_number, site, user_id)
         )
+
+
+# --- User Preferences -------------------------------------------------------
+
+def get_user_preferences(user_id: str):
+    """Get user preferences (dark_mode, filters, notification settings)"""
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM user_preferences WHERE user_id = ?", (user_id,)).fetchone()
+        return dict(row) if row else None
+
+
+def upsert_user_preferences(user_id: str, **kwargs):
+    """Save or update user preferences"""
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO user_preferences(user_id, dark_mode, default_filters, layout_settings,
+               notification_email, notifications_enabled)
+               VALUES (?, ?, ?, ?, ?, ?)
+               ON CONFLICT(user_id) DO UPDATE SET
+               dark_mode = COALESCE(excluded.dark_mode, dark_mode),
+               default_filters = COALESCE(excluded.default_filters, default_filters),
+               layout_settings = COALESCE(excluded.layout_settings, layout_settings),
+               notification_email = COALESCE(excluded.notification_email, notification_email),
+               notifications_enabled = COALESCE(excluded.notifications_enabled, notifications_enabled),
+               updated_at = CURRENT_TIMESTAMP""",
+            (user_id, kwargs.get('dark_mode'), kwargs.get('default_filters'),
+             kwargs.get('layout_settings'), kwargs.get('notification_email'),
+             kwargs.get('notifications_enabled', 1))
+        )
+
+
+def set_dark_mode(user_id: str, enabled: bool):
+    """Set dark mode preference for user"""
+    upsert_user_preferences(user_id, dark_mode=1 if enabled else 0)
+
+
+def set_notification_email(user_id: str, email: str):
+    """Set notification email for user"""
+    upsert_user_preferences(user_id, notification_email=email)
+
+
+def set_default_filters(user_id: str, filters_json: str):
+    """Set default filters for user"""
+    upsert_user_preferences(user_id, default_filters=filters_json)
+
+
+# --- Dashboard Configs -------------------------------------------------------
+
+def create_dashboard_config(config_id: str, user_id: str, name: str,
+                            filters_json: str, metric_selection_json: str,
+                            layout_json: str, is_shared: bool = False):
+    """Create a new dashboard configuration"""
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO dashboard_configs(config_id, user_id, name, filters,
+               metric_selection, layout, is_shared, is_default)
+               VALUES (?, ?, ?, ?, ?, ?, ?, 0)""",
+            (config_id, user_id, name, filters_json, metric_selection_json, layout_json, 1 if is_shared else 0)
+        )
+
+
+def get_dashboard_config(config_id: str):
+    """Get a specific dashboard configuration"""
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM dashboard_configs WHERE config_id = ?", (config_id,)).fetchone()
+        return dict(row) if row else None
+
+
+def get_user_dashboards(user_id: str):
+    """Get all dashboard configurations for a user"""
+    with get_conn() as conn:
+        rows = conn.execute("SELECT * FROM dashboard_configs WHERE user_id = ? ORDER BY updated_at DESC",
+                           (user_id,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def update_dashboard_config(config_id: str, **kwargs):
+    """Update a dashboard configuration"""
+    with get_conn() as conn:
+        updates = []
+        params = []
+        for key, value in kwargs.items():
+            if key in ['name', 'filters', 'metric_selection', 'layout', 'is_shared', 'is_default']:
+                updates.append(f"{key} = ?")
+                params.append(value)
+
+        if updates:
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            params.append(config_id)
+            query = f"UPDATE dashboard_configs SET {', '.join(updates)} WHERE config_id = ?"
+            conn.execute(query, params)
+
+
+def delete_dashboard_config(config_id: str):
+    """Delete a dashboard configuration"""
+    with get_conn() as conn:
+        conn.execute("DELETE FROM dashboard_configs WHERE config_id = ?", (config_id,))
+
+
+def set_default_dashboard(user_id: str, config_id: str):
+    """Set a dashboard as the default for a user"""
+    with get_conn() as conn:
+        # Clear other defaults
+        conn.execute("UPDATE dashboard_configs SET is_default = 0 WHERE user_id = ?", (user_id,))
+        # Set the specified one as default
+        conn.execute("UPDATE dashboard_configs SET is_default = 1 WHERE config_id = ?", (config_id,))
+
+
+# --- Alert Rules -------------------------------------------------------
+
+def insert_alert_rule(rule_id: str, user_id: str, name: str, metric: str,
+                     condition: str, threshold: float, action: str):
+    """Create a new alert rule"""
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO alert_rules(rule_id, user_id, name, metric, condition, threshold, action)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (rule_id, user_id, name, metric, condition, threshold, action)
+        )
+
+
+def get_alert_rules(user_id: str = None, enabled_only: bool = False):
+    """Get alert rules, optionally filtered by user and enabled status"""
+    with get_conn() as conn:
+        query = "SELECT * FROM alert_rules WHERE 1=1"
+        params = []
+
+        if user_id:
+            query += " AND user_id = ?"
+            params.append(user_id)
+
+        if enabled_only:
+            query += " AND enabled = 1"
+
+        query += " ORDER BY updated_at DESC"
+        rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in rows]
+
+
+def update_alert_rule(rule_id: str, **kwargs):
+    """Update an alert rule"""
+    with get_conn() as conn:
+        updates = []
+        params = []
+        for key, value in kwargs.items():
+            if key in ['name', 'metric', 'condition', 'threshold', 'action', 'action_target', 'enabled']:
+                updates.append(f"{key} = ?")
+                params.append(value)
+
+        if updates:
+            updates.append("updated_at = CURRENT_TIMESTAMP")
+            params.append(rule_id)
+            query = f"UPDATE alert_rules SET {', '.join(updates)} WHERE rule_id = ?"
+            conn.execute(query, params)
+
+
+def delete_alert_rule(rule_id: str):
+    """Delete an alert rule"""
+    with get_conn() as conn:
+        conn.execute("DELETE FROM alert_rules WHERE rule_id = ?", (rule_id,))
+
+
+def enable_alert_rule(rule_id: str):
+    """Enable an alert rule"""
+    update_alert_rule(rule_id, enabled=True)
+
+
+def disable_alert_rule(rule_id: str):
+    """Disable an alert rule"""
+    update_alert_rule(rule_id, enabled=False)
+
+
+# --- Alert History -------------------------------------------------------
+
+def log_alert_trigger(rule_id: str, metric_value: float, threshold: float, action_taken: str = None):
+    """Log an alert trigger event"""
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO alert_history(rule_id, metric_value, threshold, action_taken)
+               VALUES (?, ?, ?, ?)""",
+            (rule_id, metric_value, threshold, action_taken)
+        )
+
+
+def get_alert_history(rule_id: str, limit: int = 50):
+    """Get alert trigger history for a rule"""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM alert_history WHERE rule_id = ? ORDER BY triggered_at DESC LIMIT ?",
+            (rule_id, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_active_alerts(user_id: str):
+    """Get recently triggered alerts for a user"""
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT ah.* FROM alert_history ah
+               JOIN alert_rules ar ON ah.rule_id = ar.rule_id
+               WHERE ar.user_id = ? AND ah.triggered_at >= datetime('now', '-1 day')
+               ORDER BY ah.triggered_at DESC""",
+            (user_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+# --- Filter Presets -------------------------------------------------------
+
+def create_filter_preset(preset_id: str, user_id: str, name: str, filters_json: str):
+    """Create a named filter preset"""
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO filter_presets(preset_id, user_id, name, filters)
+               VALUES (?, ?, ?, ?)""",
+            (preset_id, user_id, name, filters_json)
+        )
+
+
+def get_filter_presets(user_id: str):
+    """Get all filter presets for a user"""
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM filter_presets WHERE user_id = ? ORDER BY name",
+            (user_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_filter_preset(preset_id: str):
+    """Get a specific filter preset"""
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM filter_presets WHERE preset_id = ?",
+            (preset_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def delete_filter_preset(preset_id: str):
+    """Delete a filter preset"""
+    with get_conn() as conn:
+        conn.execute("DELETE FROM filter_presets WHERE preset_id = ?", (preset_id,))

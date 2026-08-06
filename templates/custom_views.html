@@ -85,10 +85,10 @@
     </select>
   </div>
 
-  <!-- Filter & Clear Buttons -->
+  <!-- Filter & Reset Buttons -->
   <div class="col-md-2">
     <button type="submit" class="btn btn-sm btn-primary">Filter</button>
-    <a href="{{ url_for('custom_views.list_custom_views') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+    <a href="{{ url_for('custom_views.list_custom_views') }}" class="btn btn-sm btn-outline-secondary">Reset</a>
   </div>
 </form>
 
@@ -119,6 +119,77 @@ datalist option {
 }
 </style>
 
+<!-- Custom Views Summary Stats Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_count if summary else 0 }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Total Custom Views</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_owners if summary else 0 }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Distinct Owners</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_domains if summary else 0 }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Owner Domains</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
+      <div class="card-body" style="padding: 16px;">
+        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.shared_count if summary else 0 }}</div>
+        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Shared Views</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Views Charts Grid -->
+<div class="row g-3 mb-4">
+  <!-- Custom View Distribution -->
+  <div class="col-md-6">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="color: var(--text-primary); margin-bottom: 16px;">🗂️ Custom View Distribution</h5>
+        {% if workbooks_with_custom_views %}
+        <div style="max-height: 300px; overflow-y: auto;">
+          <canvas id="workbooks-custom-views-chart" height="{{ (workbooks_with_custom_views | length) * 25 }}"></canvas>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px 0; margin: 0;">No data available</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Power Users -->
+  <div class="col-md-6">
+    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="color: var(--text-primary); margin-bottom: 16px;">⭐ Power Users</h5>
+        {% if top_owners %}
+        <div style="max-height: 300px; overflow-y: auto;">
+          <canvas id="top-owners-chart" height="{{ (top_owners | length) * 25 }}"></canvas>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); text-align: center; padding: 40px 0; margin: 0;">No data available</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
 {% if not custom_views %}
 <div style="background-color: rgba(91, 192, 222, 0.1); border-left: 4px solid var(--info); padding: 16px; border-radius: 4px; color: var(--text-primary);">
   ℹ️
@@ -128,6 +199,7 @@ datalist option {
   No custom views found. A non-admin PAT only sees views it owns or that are marked shared.
   {% endif %}
 </div>
+
 {% else %}
 <table id="custom-views-table" class="table table-striped table-bordered w-100">
   <thead>
@@ -178,10 +250,64 @@ datalist option {
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
+  Chart.register(ChartDataLabels);
+
   $(document).ready(function () {
     if ($('#custom-views-table').length) {
       initDataTable('#custom-views-table', { order: [[0, 'asc']], pageLength: 25, scrollX: true });
+    }
+
+    var workbooksCustomViewsData = {{ workbooks_with_custom_views | tojson if workbooks_with_custom_views else '[]' }};
+    if (workbooksCustomViewsData.length > 0) {
+      new Chart(document.getElementById('workbooks-custom-views-chart'), {
+        type: 'bar',
+        data: {
+          labels: workbooksCustomViewsData.map(w => w.name),
+          datasets: [{
+            label: 'Custom Views',
+            data: workbooksCustomViewsData.map(w => w.custom_view_count || 0),
+            backgroundColor: '#FF6B35'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            datalabels: { anchor: 'end', align: 'end', color: '#000', font: { weight: 'bold' } }
+          },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    var topOwnersData = {{ top_owners | tojson if top_owners else '[]' }};
+    if (topOwnersData.length > 0) {
+      new Chart(document.getElementById('top-owners-chart'), {
+        type: 'bar',
+        data: {
+          labels: topOwnersData.map(o => o.name),
+          datasets: [{
+            label: 'Custom Views',
+            data: topOwnersData.map(o => o.custom_view_count || 0),
+            backgroundColor: '#4B7BEC'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            datalabels: { anchor: 'end', align: 'end', color: '#000', font: { weight: 'bold' } }
+          },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
     }
   });
 </script>
