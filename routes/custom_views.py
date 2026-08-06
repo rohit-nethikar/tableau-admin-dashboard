@@ -5,6 +5,55 @@ import site_context
 from auth import login_required
 import bigquery_sync
 
+
+def _get_unique_domains(owner_emails):
+    """Extract unique domains from email addresses."""
+    domains = set()
+    for email in owner_emails:
+        if email and "@" in email:
+            domains.add(email.split("@")[1])
+    return domains
+
+
+def _workbooks_with_custom_views(custom_views, top_n=10):
+    """Count custom views per workbook, sorted by count descending."""
+    wb_counts = {}
+    for cv in custom_views:
+        wb_name = cv.get("workbook_name")
+        if wb_name:
+            wb_counts[wb_name] = wb_counts.get(wb_name, 0) + 1
+    return sorted(
+        [{"name": wb, "custom_view_count": count} for wb, count in wb_counts.items()],
+        key=lambda x: x["custom_view_count"],
+        reverse=True,
+    )[:top_n]
+
+
+def _owner_domain_split(custom_views):
+    """Count custom views by owner domain (email domain)."""
+    domain_counts = {}
+    for cv in custom_views:
+        owner = cv.get("owner_name")
+        if owner and "@" in owner:
+            domain = owner.split("@")[1]
+            domain_counts[domain] = domain_counts.get(domain, 0) + 1
+    return domain_counts
+
+
+def _top_owners(custom_views, top_n=10):
+    """Get top owners by custom view count."""
+    owner_counts = {}
+    for cv in custom_views:
+        owner = cv.get("owner_name")
+        if owner:
+            owner_counts[owner] = owner_counts.get(owner, 0) + 1
+    return sorted(
+        [{"name": owner, "custom_view_count": count} for owner, count in owner_counts.items()],
+        key=lambda x: x["custom_view_count"],
+        reverse=True,
+    )[:top_n]
+
+
 bp = Blueprint("custom_views", __name__)
 
 
@@ -46,6 +95,17 @@ def list_custom_views():
     elif account_type == "non-mayo":
         filtered_views = [cv for cv in filtered_views if cv.get("owner_name", "") and not cv.get("owner_name", "").lower().endswith("@mayo.edu")]
 
+    # Custom views analytics (computed from all unfiltered views)
+    summary = {
+        "custom_view_count": len(all_custom_views),
+        "custom_view_owners": len({cv.get("owner_name") for cv in all_custom_views if cv.get("owner_name")}),
+        "custom_view_domains": len(_get_unique_domains([cv.get("owner_name") for cv in all_custom_views if cv.get("owner_name")])),
+        "shared_count": sum(1 for cv in all_custom_views if cv.get("shared")),
+    }
+    workbooks_with_custom_views = _workbooks_with_custom_views(all_custom_views, top_n=10)
+    owner_domain_split = _owner_domain_split(all_custom_views)
+    top_owners = _top_owners(all_custom_views, top_n=10)
+
     return render_template(
         "custom_views.html",
         custom_views=filtered_views,
@@ -55,6 +115,10 @@ def list_custom_views():
         workbooks_by_name=workbooks_by_name,
         filters=filters,
         last_refresh=db.latest_refresh(site),
+        summary=summary,
+        workbooks_with_custom_views=workbooks_with_custom_views,
+        owner_domain_split=owner_domain_split,
+        top_owners=top_owners,
     )
 
 

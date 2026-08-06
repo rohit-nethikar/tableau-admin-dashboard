@@ -133,6 +133,7 @@ def _sync_projects_and_content(site, server, errors, alerts):
         errors.append(f"favorites: {exc}")
 
     workbooks = []
+    view_usage_rows = []
     try:
         previous_wb_failures = {
             row["id"]: row.get("consecutive_extract_failures") for row in db.fetch_workbooks(site)
@@ -140,10 +141,11 @@ def _sync_projects_and_content(site, server, errors, alerts):
         workbooks = tableau_client.list_workbooks(server, users_by_id_name, projects_by_id)
         now = dt.datetime.now(dt.timezone.utc)
         try:
-            wb_detail = tableau_client.enrich_workbooks(server, workbooks)
+            wb_detail, view_usage_rows = tableau_client.enrich_workbooks(server, workbooks)
         except Exception as exc:
             errors.append(f"workbook_detail: {exc}")
             wb_detail = {}
+            view_usage_rows = []
         wb_rows = []
         for wb in workbooks:
             updated_at = wb.updated_at
@@ -198,6 +200,10 @@ def _sync_projects_and_content(site, server, errors, alerts):
                 )
             )
         db.replace_workbooks(site, wb_rows)
+        try:
+            db.replace_workbook_views(site, view_usage_rows)
+        except Exception as exc:
+            errors.append(f"workbook_views: {exc}")
     except Exception as exc:
         errors.append(f"workbooks: {exc}")
 

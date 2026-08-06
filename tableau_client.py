@@ -109,9 +109,12 @@ def _summarize_connection_types(connections) -> str:
     return "Mixed (Live + Extract)" if len(types) > 1 else types.pop()
 
 
-def enrich_workbooks(server, workbooks: list) -> dict:
-    """Returns {workbook_id: {"view_count", "sheet_count", "connection_count",
-    "connection_type", "revision_count"}} via three extra per-workbook REST calls.
+def enrich_workbooks(server, workbooks: list) -> tuple:
+    """Returns ({workbook_id: {...}}, [(workbook_id, workbook_name, view_name, total_views), ...])
+    tuple. The first element is the detail dict as before: {workbook_id: {"view_count",
+    "sheet_count", "connection_count", "connection_type", "revision_count"}}. The second
+    element is a list of per-sheet tuples for populating the workbook_views table.
+
     view_count/sheet_count come from the includeUsageStatistics=true view listing - a
     real REST endpoint that works even while the Metadata API is disabled/unreachable,
     see README.md. connection_count/connection_type/revision_count come from the same
@@ -122,6 +125,7 @@ def enrich_workbooks(server, workbooks: list) -> dict:
     three simply gets all-None values rather than being dropped or failing the whole
     sync."""
     detail = {}
+    view_rows = []
     for wb in workbooks:
         entry = {
             "view_count": None,
@@ -134,6 +138,8 @@ def enrich_workbooks(server, workbooks: list) -> dict:
             server.workbooks.populate_views(wb, usage=True)
             entry["view_count"] = sum((v.total_views or 0) for v in wb.views)
             entry["sheet_count"] = len(wb.views)
+            for v in wb.views:
+                view_rows.append((wb.id, wb.name, v.name, v.total_views or 0))
         except Exception:
             pass
         try:
@@ -148,7 +154,7 @@ def enrich_workbooks(server, workbooks: list) -> dict:
         except Exception:
             pass
         detail[wb.id] = entry
-    return detail
+    return detail, view_rows
 
 
 def _summarize_underlying_sources(connections) -> str:

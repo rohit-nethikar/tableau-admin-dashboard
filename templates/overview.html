@@ -5,8 +5,10 @@
   <div>
     <h1 class="mb-2">📊 Dashboard Overview <span id="live-indicator" style="display: none; color: var(--success); font-size: 14px; font-weight: 600;">🟢 LIVE</span></h1>
     <p class="text-muted mb-0" style="font-size: 12px;">
-      {% if last_refresh %}
-        Last updated: <strong id="last-refresh-time">{{ last_refresh }}</strong>
+      {% if last_refresh and last_refresh.finished_at %}
+        Last updated: <strong id="last-refresh-time">{{ last_refresh.finished_at }}</strong>
+      {% elif last_refresh and last_refresh.started_at %}
+        Syncing since: <strong id="last-refresh-time">{{ last_refresh.started_at }}</strong>
       {% else %}
         <em>Never synced</em>
       {% endif %}
@@ -109,13 +111,35 @@
   </div>
 </div>
 
+<!-- Phase 4: Advanced Features Toolbar -->
+<div style="background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+  <!-- Advanced Filtering -->
+  <div id="advancedFilterContainer" style="margin-bottom: 12px;"></div>
+
+  <!-- Export Buttons -->
+  <div id="exportContainer" style="margin-bottom: 12px;"></div>
+
+  <!-- Dashboard Selector -->
+  <div id="dashboardSelectorContainer" style="margin-bottom: 12px;"></div>
+
+  <!-- Alert Rules Manager -->
+  <details style="cursor: pointer;">
+    <summary style="font-weight: 600; color: var(--primary); padding: 8px; user-select: none;">
+      🚨 Alert Rules (<span id="alertRuleCount">0</span>)
+    </summary>
+    <div id="alertRulesContainer" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);"></div>
+  </details>
+</div>
+
 <div class="row g-3 mb-4">
   <div class="col-md-6">
     <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
       <div class="card-body">
         <h5 style="margin-bottom: 16px; color: var(--text-primary);">📋 Open Findings by Severity</h5>
         {% if severity_counts.values() | sum > 0 %}
-        <canvas id="severity-chart" height="180"></canvas>
+        <div style="max-height: 320px; overflow: hidden;">
+        <canvas id="severity-chart" height="320"></canvas>
+        </div>
         <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <div>🔴 Critical: <strong>{{ severity_counts.critical }}</strong></div>
@@ -138,7 +162,7 @@
       <div class="card-body">
         <h5 style="margin-bottom: 16px; color: var(--text-primary);">📈 Health Score Distribution</h5>
         {% if score_buckets.values() | sum > 0 %}
-        <canvas id="score-chart" height="180"></canvas>
+        <canvas id="score-chart" height="60"></canvas>
         <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <div>✅ Good (80+): <strong>{{ score_buckets.good }}</strong></div>
@@ -251,7 +275,9 @@
       <div class="card-body">
         <h5 style="margin-bottom: 16px; color: var(--text-primary);">👥 User Distribution by Role</h5>
         {% if user_roles %}
-        <canvas id="user-roles-chart" height="150"></canvas>
+        <div style="max-height: 320px; overflow: hidden;">
+        <canvas id="user-roles-chart" height="320"></canvas>
+        </div>
         {% else %}
         <p style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 40px 0; margin: 0;">No user data available</p>
         {% endif %}
@@ -264,7 +290,7 @@
       <div class="card-body">
         <h5 style="margin-bottom: 16px; color: var(--text-primary);">📦 Content Type Breakdown</h5>
         {% if content_by_type %}
-        <canvas id="content-type-chart" height="150"></canvas>
+        <canvas id="content-type-chart" height="50"></canvas>
         <div style="margin-top: 12px; font-size: 11px; color: var(--text-secondary);">
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             {% for content_type, count in content_by_type.items() %}
@@ -537,6 +563,28 @@
           }
         }
       }, 500);
+    }
+  });
+
+  // Phase 4: Export current metrics to window for Phase 4 features
+  window.currentMetrics = {
+    workbook_count: {{ workbook_count }},
+    datasource_count: {{ datasource_count }},
+    stale_count: {{ stale_count }},
+    custom_view_count: {{ custom_view_count }},
+    subscription_count: {{ subscription_count }},
+    user_count: {{ user_count }},
+    avg_score: {{ avg_score if avg_score is not none else 'null' }},
+    severity_counts: {{ severity_counts | tojson }},
+    score_buckets: {{ score_buckets | tojson }},
+    user_roles: {{ user_roles | tojson }},
+    content_by_type: {{ content_by_type | tojson }}
+  };
+
+  // Update alert rule count
+  document.addEventListener('DOMContentLoaded', () => {
+    if (alertManager && alertManager.rules) {
+      document.getElementById('alertRuleCount').textContent = alertManager.rules.length;
     }
   });
 </script>
