@@ -42,63 +42,33 @@ _account_sync_lock = threading.Lock()
 
 
 def _sync_account_numbers_background():
-    """Run the existing account-number startup work without blocking Waitress."""
+    """Sync account numbers from BigQuery on app startup.
+
+    This runs in a background thread to avoid blocking Waitress startup.
+    The bigquery_sync module handles both:
+    - Creating placeholder users for custom view owners found in BigQuery
+    - Updating all users (new and existing) with account numbers from BigQuery
+
+    This ensures the custom views page always shows accurate account numbers.
+    """
     if not _account_sync_lock.acquire(blocking=False):
         print("Account number sync is already running; skipping duplicate trigger")
         return
 
     try:
-        print("Background account-number sync started")
+        print("Starting BigQuery account number sync on app startup...")
         import bigquery_sync
-        import uuid
-        import sqlite3
 
-        # Preserve the existing behavior: add missing custom-view owners first.
-        with db.get_conn() as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT DISTINCT owner_name FROM custom_views")
-            custom_view_owners = [row[0] for row in cursor.fetchall()]
-
-            added_count = 0
-            for owner in custom_view_owners:
-                cursor.execute(
-                    "SELECT id FROM users WHERE LOWER(email) = LOWER(?)",
-                    (owner,),
-                )
-                if not cursor.fetchone():
-                    cursor.execute(
-                        "SELECT site FROM custom_views WHERE owner_name = ? LIMIT 1",
-                        (owner,),
-                    )
-                    site_row = cursor.fetchone()
-                    if site_row:
-                        site = site_row[0]
-                        user_id = str(uuid.uuid4())
-                        name_part = owner.split("@")[0]
-                        try:
-                            cursor.execute(
-                                """
-                                INSERT INTO users
-                                    (id, name, email, site, site_role, fetched_at, account_number)
-                                VALUES
-                                    (?, ?, ?, ?, ?, datetime('now'), NULL)
-                                """,
-                                (user_id, name_part, owner, site, "Unknown"),
-                            )
-                            added_count += 1
-                        except sqlite3.IntegrityError:
-                            pass
-
-            if added_count > 0:
-                conn.commit()
-                print(f"Added {added_count} custom view owners to users table")
-
+        # Run the main BigQuery sync - handles placeholder creation and account number updates
         result = bigquery_sync.sync_account_numbers_to_database(db)
-        print(
-            f"Account number sync: {result['message']} "
-            f"(Updated: {result['updated_count']})"
-        )
 
+        if result['status'] == 'success':
+            print(f"✓ Account number sync successful: {result['message']}")
+            print(f"  Updated/Created: {result['updated_count']} users")
+        else:
+            print(f"✗ Account number sync failed: {result['message']}")
+
+        # Verify final count
         with db.get_conn() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -110,8 +80,9 @@ def _sync_account_numbers_background():
                 """
             )
             count = cursor.fetchone()[0]
-            print(f"Verification: {count} users now have account numbers")
+            print(f"Verification: {count} total users have account numbers")
 
+        # Check for account number backup/restore issues
         try:
             from account_number_watchdog import get_watchdog
 
@@ -127,7 +98,6 @@ def _sync_account_numbers_background():
     except Exception as error:
         print(f"WARNING: Background account number sync failed: {error}")
         import traceback
-
         traceback.print_exc()
     finally:
         _account_sync_lock.release()
@@ -242,7 +212,14 @@ def create_app():
 
 
     scheduler.start()
-    # Do not hold up Waitress while BigQuery processes millions of rows.
+
+    # Start BigQuery account number sync in background thread to populate custom view account numbers.
+    # Does not block app startup since it runs asynchronously.
+    # This ensures account numbers are populated before any user accesses the custom views page.
+    print("\n" + "="*70)
+    print("IMPORTANT: BigQuery account number sync is running in background...")
+    print("This populates account numbers for all custom view owners.")
+    print("="*70 + "\n")
     _start_account_number_sync_async()
 
     return app
