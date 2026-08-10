@@ -39,3 +39,39 @@ def send_extract_failure_alert(alerts: list):
     msg["To"] = settings.alert_email_to
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
         server.sendmail(settings.alert_email_from, [settings.alert_email_to], msg.as_string())
+
+
+def _format_config_change_body(site: str, changes: list) -> str:
+    lines = [f"{len(changes)} site configuration change(s) detected on site '{site}':", ""]
+    for c in changes:
+        lines.append(f"- {c['label']}: {c['old']!r} -> {c['new']!r}")
+    return "\n".join(lines)
+
+
+def send_config_change_alert(site: str, changes: list):
+    if not changes or not settings.smtp_host or not settings.alert_email_to:
+        return
+    msg = MIMEText(_format_config_change_body(site, changes))
+    msg["Subject"] = f"[Tableau Admin Dashboard] {len(changes)} config change(s) on {site}"
+    msg["From"] = settings.alert_email_from
+    msg["To"] = settings.alert_email_to
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
+        server.sendmail(settings.alert_email_from, [settings.alert_email_to], msg.as_string())
+
+
+def _format_license_body(site: str, crossed: list) -> str:
+    lines = [f"Seat usage crossed {settings.license_alert_threshold_pct}% of capacity on site '{site}':", ""]
+    for c in crossed:
+        lines.append(f"- {c['tier']}: {c['used']}/{c['capacity']} used ({c['pct_used']}%)")
+    return "\n".join(lines)
+
+
+def send_license_threshold_alert(site: str, crossed: list):
+    if not crossed or not settings.smtp_host or not settings.alert_email_to:
+        return
+    msg = MIMEText(_format_license_body(site, crossed))
+    msg["Subject"] = f"[Tableau Admin Dashboard] License capacity threshold crossed on {site}"
+    msg["From"] = settings.alert_email_from
+    msg["To"] = settings.alert_email_to
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
+        server.sendmail(settings.alert_email_from, [settings.alert_email_to], msg.as_string())

@@ -15,6 +15,13 @@
   has never been opened by anyone since it was created.
 </p>
 
+<div class="mb-3">
+  <button type="button" class="btn btn-sm btn-outline-secondary" id="sync-bigquery-btn">
+    <i class="bi bi-arrow-repeat"></i> Sync Account Numbers from BigQuery
+  </button>
+  <span id="sync-status" class="ms-2 small text-muted" style="display: none;"></span>
+</div>
+
 <form method="get" action="{{ url_for('custom_views.list_custom_views') }}" class="row g-2 mb-3">
   <!-- Workbook Filter - Searchable -->
   <div class="col-md-3">
@@ -254,6 +261,34 @@ datalist option {
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
   Chart.register(ChartDataLabels);
+
+  // BigQuery sync button
+  $('#sync-bigquery-btn').on('click', function () {
+    var btn = $(this);
+    var statusEl = $('#sync-status');
+    btn.prop('disabled', true);
+    statusEl.text('Syncing...').show();
+
+    $.ajax({
+      url: '{{ url_for("custom_views.sync_bigquery_account_numbers") }}',
+      method: 'POST',
+      dataType: 'json',
+      success: function (data) {
+        if (data.status === 'success') {
+          statusEl.html('<span class="text-success"><i class="bi bi-check-circle"></i> ' + data.message + '</span>');
+          setTimeout(function () { location.reload(); }, 1500);
+        } else {
+          statusEl.html('<span class="text-danger"><i class="bi bi-exclamation-circle"></i> ' + data.message + '</span>');
+        }
+      },
+      error: function (xhr) {
+        statusEl.html('<span class="text-danger"><i class="bi bi-exclamation-circle"></i> Sync failed: ' + (xhr.responseJSON?.message || 'Unknown error') + '</span>');
+      },
+      complete: function () {
+        btn.prop('disabled', false);
+      }
+    });
+  });
 
   $(document).ready(function () {
     if ($('#custom-views-table').length) {

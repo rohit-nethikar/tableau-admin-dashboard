@@ -520,6 +520,45 @@ def list_connected_apps(server) -> list:
     return rows
 
 
+_JOB_STATUS_LABELS = {
+    "Pending": "Pending",
+    "InProgress": "In Progress",
+    "Success": "Success",
+    "Failed": "Failed",
+    "Cancelled": "Cancelled",
+}
+
+
+def list_background_jobs(server) -> list:
+    """All current/recent background jobs on the site (extract refreshes,
+    subscriptions, flow runs, etc.) via the site-scoped Jobs LIST endpoint
+    (TSC.Pager(server.jobs) -> BackgroundJobItem). No per-job detail call needed."""
+    jobs = []
+    for job in TSC.Pager(server.jobs):
+        status = getattr(job, "status", None)
+        jobs.append({
+            "id": job.id,
+            "type": getattr(job, "type", None),
+            "status": status,
+            "status_label": _JOB_STATUS_LABELS.get(status, status),
+            "title": getattr(job, "title", None),
+            "subtitle": getattr(job, "subtitle", None),
+            "priority": getattr(job, "priority", None),
+            "created_at": job.created_at.isoformat() if getattr(job, "created_at", None) else None,
+            "started_at": job.started_at.isoformat() if getattr(job, "started_at", None) else None,
+            "ended_at": job.ended_at.isoformat() if getattr(job, "ended_at", None) else None,
+            "cancellable": status in ("Pending", "InProgress"),
+        })
+    return jobs
+
+
+def cancel_job(server, job_id: str):
+    """Cancels a Pending/InProgress job. Raises on failure (already completed,
+    insufficient permission) - the caller flashes the error rather than
+    swallowing it, since this is a direct user-initiated write action."""
+    server.jobs.cancel(job_id)
+
+
 def _capabilities_to_str(capabilities: dict) -> str:
     allowed = [name for name, mode in (capabilities or {}).items() if str(mode).lower() == "allow"]
     return ", ".join(sorted(allowed))

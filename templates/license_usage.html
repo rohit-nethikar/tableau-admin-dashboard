@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}License Usage - Tableau Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="display-5"><i class="bi bi-person-badge"></i> License Usage</h1>
+      <p class="text-muted">Track Creator/Explorer/Viewer seat usage vs. licensed capacity</p>
+    </div>
+  </div>
+
+  <!-- Current Usage Cards -->
+  {% if current %}
+  <div class="row g-3 mb-4">
+    {% for usage in current %}
+    {% set pct_used = usage.pct_used or 0 %}
+    {% set is_alert = pct_used >= threshold_pct %}
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-3">
+            <h6 class="card-subtitle text-muted">{{ usage.tier }} Tier</h6>
+            {% if is_alert %}
+              <span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> Alert</span>
+            {% endif %}
+          </div>
+          <p class="mb-2">
+            <strong>{{ usage.used }}/{{ usage.capacity or '∞' }}</strong>
+            <span class="text-muted small">({{ pct_used }}%)</span>
+          </p>
+          <div class="progress" style="height: 1.5rem;">
+            {% set progress_color = 'danger' if is_alert else ('warning' if pct_used >= 75 else 'success') %}
+            {% set bar_width = (pct_used | int) if pct_used <= 100 else 100 %}
+            <div class="progress-bar bg-{{ progress_color }}"
+                 role="progressbar"
+                 style="width: {{ bar_width }}%"
+                 aria-valuenow="{{ pct_used }}" aria-valuemin="0" aria-valuemax="100">
+              {{ pct_used }}%
+            </div>
+          </div>
+          {% if is_alert %}
+            <small class="text-danger d-block mt-2"><i class="bi bi-exclamation-triangle"></i> Usage exceeds {{ threshold_pct }}% threshold</small>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Usage Trend Chart -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-graph-up"></i> Usage Trend Over Time</h5>
+        </div>
+        <div class="card-body">
+          {% if history_by_tier %}
+          <canvas id="usage-trend-chart" height="80"></canvas>
+          {% else %}
+          <p class="text-muted small mb-0">No historical data yet. Snapshots are captured during each sync.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Last Refresh -->
+  {% if last_refresh %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <small class="text-muted">
+            Last synced: <strong>{{ last_refresh.finished_at or last_refresh.started_at }}</strong>
+            <span class="badge bg-{{ 'success' if last_refresh.status == 'success' else 'warning' if last_refresh.status == 'partial' else 'danger' }} ms-2">
+              {{ last_refresh.status|capitalize }}
+            </span>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .card {
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .badge {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .display-5 {
+    color: var(--bs-body-color);
+    font-weight: 600;
+  }
+
+  .progress {
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  $(document).ready(function () {
+    var historyByTier = {{ history_by_tier | tojson }};
+
+    if (Object.keys(historyByTier).length > 0) {
+      var chartCtx = document.getElementById('usage-trend-chart');
+      if (chartCtx) {
+        // Color palette for tiers
+        var tierColors = {
+          'Creator': '#2f5fdb',
+          'Explorer': '#10b981',
+          'Viewer': '#f59e0b'
+        };
+
+        var datasets = [];
+        var labels = null;
+
+        // Build datasets for each tier
+        Object.entries(historyByTier).forEach(function (entry) {
+          var tier = entry[0];
+          var history = entry[1];
+
+          if (!labels && history.length > 0) {
+            labels = history.map(function (r) { return r.snapshot_at.substring(0, 10); });
+          }
+
+          var tierColor = tierColors[tier] || '#999999';
+          datasets.push({
+            label: tier + ' (' + (history[history.length - 1]?.used || 0) + '/' + (history[history.length - 1]?.capacity || '∞') + ')',
+            data: history.map(function (r) { return r.pct_used; }),
+            borderColor: tierColor,
+            backgroundColor: tierColor.replace(')', ', 0.15)').replace('#', 'rgba(') + ')',
+            fill: true,
+            tension: 0.25,
+            pointRadius: 2
+          });
+        });
+
+        new Chart(chartCtx, {
+          type: 'line',
+          data: {
+            labels: labels || [],
+            datasets: datasets
+          },
+          options: {
+            plugins: {
+              legend: { position: 'top' },
+              filler: { propagate: true }
+            },
+            scales: {
+              x: { ticks: { maxTicksLimit: 8 } },
+              y: { beginAtZero: true, max: 100, title: { display: true, text: 'Usage %' } }
+            }
+          }
+        });
+      }
+    }
+  });
+</script>
+{% endblock %}

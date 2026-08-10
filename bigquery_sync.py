@@ -8,6 +8,13 @@ import json
 
 logger = logging.getLogger(__name__)
 
+# Ensure Google credentials are properly set if not already
+if not os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+    creds_file = os.path.join(os.path.dirname(__file__), "bigquery-credentials.json")
+    if os.path.exists(creds_file):
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_file
+        logger.info(f"Set GOOGLE_APPLICATION_CREDENTIALS to {creds_file}")
+
 # BigQuery view details
 BQ_PROJECT = "ml-mps-app-mcs-df-app-p-72d7"
 BQ_DATASET = "phi_team_interactivedbs_us_p"
@@ -100,20 +107,31 @@ def fetch_account_numbers_from_bigquery() -> Dict[str, str]:
 def sync_account_numbers_to_database(db_module) -> Dict[str, any]:
     """
     Sync account numbers from BigQuery to local SQLite database.
+    Updates account numbers for ALL sites that have custom views.
+    Also creates placeholder users for custom view owners found in BigQuery
+    but not yet in the users table.
     Returns a dict with sync statistics.
     """
     updated_count = 0
     skipped_count = 0
+    created_count = 0
 
     try:
         with db_module.get_conn() as conn:
-            # Get all local users with emails
-            logger.info("Fetching local users...")
+            # Get all local users with emails (across all sites)
+            logger.info("Fetching local users from all sites...")
             local_users = conn.execute(
-                "SELECT id, LOWER(email) as email_lower FROM users WHERE email IS NOT NULL"
+                "SELECT COUNT(DISTINCT LOWER(email)) as unique_emails FROM users WHERE email IS NOT NULL"
+            ).fetchone()
+            logger.info(f"Found {local_users[0]} unique email addresses in local users")
+
+            # Get custom view owners (for special handling)
+            custom_view_owners = set()
+            cv_result = conn.execute(
+                "SELECT DISTINCT LOWER(owner_name) FROM custom_views WHERE owner_name IS NOT NULL"
             ).fetchall()
-            local_user_map = {row[1]: row[0] for row in local_users}
-            logger.info(f"Found {len(local_user_map)} local users")
+            custom_view_owners = {row[0] for row in cv_result}
+            logger.info(f"Found {len(custom_view_owners)} custom view owners")
 
             # Fetch BigQuery data
             logger.info("Fetching account mappings from BigQuery...")
@@ -130,27 +148,71 @@ def sync_account_numbers_to_database(db_module) -> Dict[str, any]:
 
             logger.info(f"Fetched {len(account_map)} mappings from BigQuery")
 
-            # Match and update
-            logger.info("Matching and updating...")
+            # Match and update - update ALL users with matching email across all sites
+            logger.info("Matching and updating across all sites...")
+            print(f"\n=== DEBUGGING: Matching {len(account_map)} BigQuery emails ===\n")
+
+            matched_emails = []
+            unmatched_emails = []
+
             for email, account_number in account_map.items():
                 email_lower = email.lower().strip()
-                if email_lower in local_user_map:
-                    user_id = local_user_map[email_lower]
-                    conn.execute(
-                        "UPDATE users SET account_number = ? WHERE id = ?",
-                        (account_number, user_id)
+                # Check if this email exists in users
+                check = conn.execute(
+                    "SELECT id FROM users WHERE LOWER(email) = ? LIMIT 1",
+                    (email_lower,)
+                ).fetchone()
+
+                if check:
+                    # Update all users with this email, regardless of site
+                    result = conn.execute(
+                        "UPDATE users SET account_number = ? WHERE LOWER(email) = ?",
+                        (account_number, email_lower)
                     )
-                    updated_count += 1
+                    updated_count += result.rowcount
+                    matched_emails.append((email, account_number, result.rowcount))
+                    if updated_count <= 10:  # Print first 10 matches
+                        print(f"  MATCHED: {email} -> account {account_number} ({result.rowcount} users updated)")
+                elif email_lower in custom_view_owners:
+                    # Special case: create a placeholder user for custom view owners
+                    # Get a list of sites with this custom view owner
+                    sites = conn.execute(
+                        "SELECT DISTINCT site FROM custom_views WHERE LOWER(owner_name) = ?",
+                        (email_lower,)
+                    ).fetchall()
+
+                    for (site,) in sites:
+                        conn.execute(
+                            """INSERT OR IGNORE INTO users
+                               (id, site, name, email, site_role, account_number)
+                               VALUES (?, ?, ?, ?, ?, ?)""",
+                            (f"cv_owner_{email_lower}_{site}", site, email_lower, email, "SiteRole/Viewer", account_number)
+                        )
+                        created_count += 1
+
+                    matched_emails.append((email, account_number, len(sites)))
+                    if created_count <= 5:
+                        print(f"  CREATED: {email} -> account {account_number} (placeholder user in {len(sites)} site(s))")
                 else:
+                    unmatched_emails.append(email)
                     skipped_count += 1
+                    if len(unmatched_emails) <= 5:  # Print first 5 unmatched
+                        print(f"  NO MATCH: {email}")
 
             conn.commit()
 
-        logger.info(f"Sync complete: {updated_count} updated, {skipped_count} skipped")
+            print(f"\n=== SUMMARY ===")
+            print(f"Total BQ mappings: {len(account_map)}")
+            print(f"Matched to local users: {len([e for e in matched_emails if not e[0].lower() in custom_view_owners])}")
+            print(f"Created placeholder users: {created_count}")
+            print(f"No match found: {len(unmatched_emails)}")
+            print(f"Total users updated/created: {updated_count + created_count}\n")
+
+        logger.info(f"Sync complete: {updated_count} updated, {created_count} created, {skipped_count} skipped")
         return {
             "status": "success",
-            "message": f"Synced {updated_count} account numbers from BigQuery",
-            "updated_count": updated_count,
+            "message": f"Synced {updated_count + created_count} account numbers from BigQuery ({created_count} new placeholder users)",
+            "updated_count": updated_count + created_count,
             "skipped_count": skipped_count
         }
 

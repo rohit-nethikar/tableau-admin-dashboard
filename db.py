@@ -241,6 +241,68 @@ CREATE TABLE IF NOT EXISTS dqw_warnings (
     message TEXT,
     created_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS user_preferences (
+    user_id TEXT PRIMARY KEY,
+    theme TEXT,
+    language TEXT,
+    notifications_enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS dashboard_configs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    name TEXT,
+    config_json TEXT,
+    created_at TEXT,
+    updated_at TEXT,
+    UNIQUE(user_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS filter_presets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    filters_json TEXT,
+    created_at TEXT,
+    updated_at TEXT,
+    UNIQUE(user_id, name)
+);
+
+CREATE TABLE IF NOT EXISTS alert_rules (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT,
+    name TEXT NOT NULL,
+    condition TEXT,
+    action TEXT,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS config_change_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site TEXT NOT NULL,
+    detected_at TEXT NOT NULL,
+    setting_key TEXT NOT NULL,
+    setting_label TEXT NOT NULL,
+    old_value TEXT,
+    new_value TEXT
+);
+
+CREATE TABLE IF NOT EXISTS license_usage_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site TEXT NOT NULL,
+    snapshot_at TEXT NOT NULL,
+    tier TEXT NOT NULL,
+    capacity INTEGER,
+    used INTEGER NOT NULL,
+    pct_used REAL
+);
+CREATE INDEX IF NOT EXISTS idx_license_usage_site_tier_time
+    ON license_usage_snapshots(site, tier, snapshot_at);
 """
 
 # Tables that hold per-site content. Each gets a `site` column (see
@@ -683,6 +745,64 @@ def fetch_refresh_log(site: str, limit: int = 30):
         return [dict(r) for r in rows]
 
 
+# --- config_change_log --------------------------------------------------------
+
+def add_config_change(site, detected_at, setting_key, setting_label, old_value, new_value):
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO config_change_log
+               (site, detected_at, setting_key, setting_label, old_value, new_value)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (site, detected_at, setting_key, setting_label,
+             None if old_value is None else str(old_value),
+             None if new_value is None else str(new_value)),
+        )
+
+
+def fetch_config_change_log(site: str, limit: int = 200):
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM config_change_log WHERE site = ? ORDER BY id DESC LIMIT ?",
+            (site, limit),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+# --- license_usage_snapshots ---------------------------------------------------
+
+def add_license_usage_snapshot(site, snapshot_at, tier, capacity, used, pct_used):
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO license_usage_snapshots
+               (site, snapshot_at, tier, capacity, used, pct_used)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (site, snapshot_at, tier, capacity, used, pct_used),
+        )
+
+
+def fetch_license_usage_history(site: str, limit: int = 500):
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM license_usage_snapshots WHERE site = ? ORDER BY snapshot_at DESC LIMIT ?",
+            (site, limit),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def latest_license_usage(site: str):
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT lus.* FROM license_usage_snapshots lus
+               INNER JOIN (
+                   SELECT tier, MAX(snapshot_at) AS max_at FROM license_usage_snapshots
+                   WHERE site = ? GROUP BY tier
+               ) latest ON lus.tier = latest.tier AND lus.snapshot_at = latest.max_at
+               WHERE lus.site = ?""",
+            (site, site),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
 # --- read helpers for the UI ---------------------------------------------------
 
 def fetch_projects(site: str):
@@ -733,6 +853,9 @@ _CUSTOM_VIEW_FILTER_COLUMNS = {"workbook_name", "owner_name", "view_name", "shar
 
 
 def fetch_custom_views(site: str, filters: dict = None):
+    """Fetch custom views with account numbers.
+    Note: Account numbers are looked up from users table by EXACT email match on owner_name,
+    since Tableau REST API doesn't consistently return user emails."""
     filters = filters or {}
     clauses = ["cv.site = ?"]
     params = [site]
@@ -744,10 +867,10 @@ def fetch_custom_views(site: str, filters: dict = None):
     with get_conn() as conn:
         rows = conn.execute(
             f"""SELECT cv.*,
-                      COALESCE(u.email, '') as owner_email,
-                      COALESCE(u.account_number, '') as owner_account_number
+                      cv.owner_name as owner_email,
+                      COALESCE((SELECT account_number FROM users
+                                WHERE LOWER(email) = LOWER(cv.owner_name) LIMIT 1), '') as owner_account_number
                FROM custom_views cv
-               LEFT JOIN users u ON LOWER(cv.owner_name) = LOWER(u.email) AND u.site = cv.site
                {where}
                ORDER BY cv.workbook_name, cv.name""",
             params,

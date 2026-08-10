@@ -1,0 +1,35 @@
+TABLEAU ADMIN DASHBOARD - DEPLOYMENT KIT
+
+1. Copy every file in this kit into the ROOT of your tableau-admin-dashboard folder.
+   The root is the folder that already contains app.py, config.py and requirements.txt.
+
+2. If Windows asks whether to replace an existing file such as Dockerfile,
+   .dockerignore, .env.example, startup.ps1, startup.sh, validate-deployment.ps1
+   or DEPLOYMENT.md, STOP and review it first. The patch script backs up files at
+   execution time, but copying over a pre-existing file happens before that backup.
+
+3. In PowerShell, from the project root:
+
+   Set-ExecutionPolicy -Scope Process Bypass
+   .\deployment-readiness-patch.ps1
+
+4. Then validate:
+
+   .\validate-deployment.ps1
+
+5. Start locally:
+
+   .\startup.ps1
+
+6. Test:
+
+   http://127.0.0.1:5000/health
+
+ROLLBACK (stop the app first):
+
+   .\deployment-readiness-patch.ps1 -Rollback
+
+IMPORTANT:
+- Do not commit .env, credential JSON, SQLite DBs or instance/data directories.
+- Keep the first hosted deployment at ONE application instance.
+- Use an approved internal hosting endpoint and secret-management process.

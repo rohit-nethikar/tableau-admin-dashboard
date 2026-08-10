@@ -11,12 +11,14 @@ connectivity, only due to bugs in their own logic (also individually isolated be
 import datetime as dt
 
 import audit
+import config_audit
 import crypto
 import db
 import dqw_detection
 import email_notifier
 import findings_engine
 import health_scoring
+import license_tracking
 import metadata_client
 import orphan_detection
 import permission_risk
@@ -74,6 +76,16 @@ def refresh_all(site: str):
             )
         except Exception as exc:
             errors.append(f"email_alert: {exc}")
+
+    try:
+        license_alerts = license_tracking.compute_and_snapshot(site, _utcnow_iso())
+        if license_alerts:
+            try:
+                email_notifier.send_license_threshold_alert(site, license_alerts)
+            except Exception as exc:
+                errors.append(f"license_alert_email: {exc}")
+    except Exception as exc:
+        errors.append(f"license_tracking: {exc}")
 
     permission_risk_findings = permission_risk.compute(site, errors)
     orphan_findings = orphan_detection.compute(site, errors)
@@ -334,8 +346,15 @@ def _sync_projects_and_content(site, server, errors, alerts):
         errors.append(f"webhooks: {exc}")
 
     try:
+        previous_settings = db.fetch_site_settings(site)
         site_settings_dict = tableau_client.list_site_settings(server)
+        config_changes = config_audit.diff_and_log(site, previous_settings, site_settings_dict, _utcnow_iso())
         db.replace_site_settings(site, site_settings_dict)
+        if config_changes:
+            try:
+                email_notifier.send_config_change_alert(site, config_changes)
+            except Exception as exc:
+                errors.append(f"config_change_alert: {exc}")
     except Exception as exc:
         errors.append(f"site_settings: {exc}")
 

@@ -31,3 +31,7 @@ smtp_host: "smtprelay.mayo.edu"
 smtp_port: 25
 alert_email_from: "nethikar.rohit@mayo.edu"
 alert_email_to: "nethikar.rohit@mayo.edu"
+
+# Email alert when Creator/Explorer/Viewer seat usage crosses this % of licensed
+# capacity for that tier. Uses the smtp_host/alert_email_* settings above.
+license_alert_threshold_pct: 90
