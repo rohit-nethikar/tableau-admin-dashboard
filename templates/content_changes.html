@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Content Changes - Tableau Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="display-5"><i class="bi bi-diagram-2"></i> Content Change Log</h1>
+      <p class="text-muted">Track additions, removals, and modifications to projects, workbooks, data sources, and schedules</p>
+    </div>
+  </div>
+
+  {% if changes %}
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-clock-history"></i> Recent Changes ({{ changes | length }} total)</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-striped table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Detected At</th>
+                  <th>Entity Type</th>
+                  <th>Change Type</th>
+                  <th>Entity Name</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for change in changes %}
+                <tr>
+                  <td><small class="text-muted">{{ change.detected_at | replace('T', ' ') }}</small></td>
+                  <td>
+                    <span class="badge bg-secondary">{{ change.entity_type }}</span>
+                  </td>
+                  <td>
+                    {% if change.change_type == "added" %}
+                      <span class="badge bg-success">✅ Added</span>
+                    {% elif change.change_type == "removed" %}
+                      <span class="badge bg-danger">🗑️ Removed</span>
+                    {% elif change.change_type == "modified" %}
+                      <span class="badge bg-warning">✏️ Modified</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{{ change.change_type }}</span>
+                    {% endif %}
+                  </td>
+                  <td><strong>{{ change.entity_name or "—" }}</strong></td>
+                  <td><small style="color: var(--text-secondary);">{{ change.details or "—" }}</small></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="alert alert-info d-flex align-items-start" role="alert">
+        <i class="bi bi-info-circle me-2 mt-1" style="flex-shrink: 0;"></i>
+        <div>
+          <strong>No content changes detected</strong>
+          <p class="mb-0 mt-1">No additions, removals, or modifications to projects, workbooks, data sources, or schedules have been detected since tracking began.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Last Refresh Info -->
+  {% if last_refresh %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="alert alert-light border" role="alert">
+        <small class="text-muted">
+          Last synced: <strong>{{ last_refresh.finished_at or last_refresh.started_at }}</strong>
+          <span class="badge bg-{{ 'success' if last_refresh.status == 'success' else 'warning' if last_refresh.status == 'partial' else 'danger' }} ms-2">
+            {{ last_refresh.status|capitalize }}
+          </span>
+        </small>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

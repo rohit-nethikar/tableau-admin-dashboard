@@ -75,3 +75,49 @@ def send_license_threshold_alert(site: str, crossed: list):
     msg["To"] = settings.alert_email_to
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
         server.sendmail(settings.alert_email_from, [settings.alert_email_to], msg.as_string())
+
+
+def _format_job_failure_body(failures: list) -> str:
+    lines = [f"{len(failures)} background job failure(s) detected during the latest sync:", ""]
+    for job in failures:
+        lines.append(f"- [{job.get('type') or 'Job'}] {job.get('job_name') or job.get('id')}")
+        if job.get("resource_name"):
+            lines.append(f"  Resource: {job['resource_name']}")
+        lines.append(f"  Started: {job.get('started_at') or 'n/a'}  Ended: {job.get('ended_at') or 'n/a'}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def send_job_failure_alert(failures: list):
+    if not failures or not settings.smtp_host or not settings.alert_email_to:
+        return
+    msg = MIMEText(_format_job_failure_body(failures))
+    msg["Subject"] = f"[Tableau Admin Dashboard] {len(failures)} background job failure(s)"
+    msg["From"] = settings.alert_email_from
+    msg["To"] = settings.alert_email_to
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
+        server.sendmail(settings.alert_email_from, [settings.alert_email_to], msg.as_string())
+
+
+def _format_content_change_body(site: str, changes: list) -> str:
+    lines = [f"{len(changes)} content change(s) detected on site '{site}':", ""]
+    by_type = {}
+    for c in changes:
+        by_type.setdefault(c["entity_type"], []).append(c)
+    for entity_type, items in sorted(by_type.items()):
+        lines.append(f"-- {entity_type.upper()} ({len(items)}) --")
+        for c in items:
+            lines.append(f"  [{c['change_type']}] {c.get('entity_name') or 'unnamed'}: {c['details']}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def send_content_change_alert(site: str, changes: list):
+    if not changes or not settings.smtp_host or not settings.alert_email_to:
+        return
+    msg = MIMEText(_format_content_change_body(site, changes))
+    msg["Subject"] = f"[Tableau Admin Dashboard] {len(changes)} content change(s) on {site}"
+    msg["From"] = settings.alert_email_from
+    msg["To"] = settings.alert_email_to
+    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as server:
+        server.sendmail(settings.alert_email_from, [settings.alert_email_to], msg.as_string())

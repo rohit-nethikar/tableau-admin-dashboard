@@ -12,12 +12,14 @@ import datetime as dt
 
 import audit
 import config_audit
+import content_change_detector
 import crypto
 import db
 import dqw_detection
 import email_notifier
 import findings_engine
 import health_scoring
+import job_failure_tracker
 import license_tracking
 import metadata_client
 import orphan_detection
@@ -55,12 +57,14 @@ def refresh_all(site: str):
     pat_secret = crypto.decrypt_value(pat_encrypted)
 
     alerts = []
+    job_failures = []
+    content_changes = []
     try:
         with tableau_client.signed_in_server(
             settings.server_url, site, pat_name, pat_secret
         ) as server:
             auth_token = server.auth_token
-            _sync_projects_and_content(site, server, errors, alerts)
+            _sync_projects_and_content(site, server, errors, alerts, job_failures, content_changes)
             _sync_lineage_and_usage(site, server, auth_token, errors)
     except Exception as exc:
         db.finish_refresh(run_id, _utcnow_iso(), "failed", f"Sign-in or connection failed: {exc}")
@@ -76,6 +80,28 @@ def refresh_all(site: str):
             )
         except Exception as exc:
             errors.append(f"email_alert: {exc}")
+
+    if job_failures:
+        try:
+            email_notifier.send_job_failure_alert(job_failures)
+            audit.log_action(
+                "system",
+                "job_failure_alert_sent",
+                details=f"Emailed {settings.alert_email_to} about {len(job_failures)} failed job(s)",
+            )
+        except Exception as exc:
+            errors.append(f"job_failure_alert_email: {exc}")
+
+    if content_changes:
+        try:
+            email_notifier.send_content_change_alert(site, content_changes)
+            audit.log_action(
+                "system",
+                "content_change_alert_sent",
+                details=f"Emailed {settings.alert_email_to} about {len(content_changes)} content change(s)",
+            )
+        except Exception as exc:
+            errors.append(f"content_change_alert_email: {exc}")
 
     try:
         license_alerts = license_tracking.compute_and_snapshot(site, _utcnow_iso())
@@ -110,10 +136,16 @@ def _escalated(previous_failures, new_failures) -> bool:
     return new_failures > previous_failures
 
 
-def _sync_projects_and_content(site, server, errors, alerts):
+def _sync_projects_and_content(site, server, errors, alerts, job_failures, content_changes):
     try:
+        previous_projects = db.fetch_projects(site)
         project_rows, projects_by_id = tableau_client.list_projects(server)
         db.replace_projects(site, project_rows)
+        content_changes.extend(content_change_detector.diff_entities(
+            site, "project",
+            previous_projects,
+            [{"id": r[0], "name": r[1], "parent_id": r[2]} for r in project_rows],
+            _utcnow_iso(), content_change_detector._PROJECT_FIELDS))
     except Exception as exc:
         errors.append(f"projects: {exc}")
         projects_by_id = {}
@@ -147,8 +179,9 @@ def _sync_projects_and_content(site, server, errors, alerts):
     workbooks = []
     view_usage_rows = []
     try:
+        previous_workbooks = db.fetch_workbooks(site)
         previous_wb_failures = {
-            row["id"]: row.get("consecutive_extract_failures") for row in db.fetch_workbooks(site)
+            row["id"]: row.get("consecutive_extract_failures") for row in previous_workbooks
         }
         workbooks = tableau_client.list_workbooks(server, users_by_id_name, projects_by_id)
         now = dt.datetime.now(dt.timezone.utc)
@@ -212,6 +245,17 @@ def _sync_projects_and_content(site, server, errors, alerts):
                 )
             )
         db.replace_workbooks(site, wb_rows)
+        new_wb_dicts = [
+            {"id": r[0], "name": r[1], "project_name": r[2], "owner_name": r[3],
+             "sheet_count": r[14], "refresh_schedule_name": r[19],
+             "refresh_frequency": r[20], "refresh_next_run_at": r[21]}
+            for r in wb_rows
+        ]
+        content_changes.extend(content_change_detector.diff_entities(
+            site, "workbook", previous_workbooks, new_wb_dicts,
+            _utcnow_iso(), content_change_detector._WORKBOOK_FIELDS))
+        content_changes.extend(content_change_detector.diff_schedules(
+            site, previous_workbooks, new_wb_dicts, _utcnow_iso(), "workbook"))
         try:
             db.replace_workbook_views(site, view_usage_rows)
         except Exception as exc:
@@ -221,8 +265,9 @@ def _sync_projects_and_content(site, server, errors, alerts):
 
     datasources = []
     try:
+        previous_datasources = db.fetch_datasources(site)
         previous_ds_failures = {
-            row["id"]: row.get("consecutive_extract_failures") for row in db.fetch_datasources(site)
+            row["id"]: row.get("consecutive_extract_failures") for row in previous_datasources
         }
         datasources = tableau_client.list_datasources(server)
         now = dt.datetime.now(dt.timezone.utc)
@@ -291,6 +336,17 @@ def _sync_projects_and_content(site, server, errors, alerts):
                 )
             )
         db.replace_datasources(site, ds_rows)
+        new_ds_dicts = [
+            {"id": r[0], "name": r[1], "project_name": r[2], "owner_name": r[3],
+             "is_certified": r[6], "refresh_schedule_name": r[23],
+             "refresh_frequency": r[24], "refresh_next_run_at": r[25]}
+            for r in ds_rows
+        ]
+        content_changes.extend(content_change_detector.diff_entities(
+            site, "datasource", previous_datasources, new_ds_dicts,
+            _utcnow_iso(), content_change_detector._DATASOURCE_FIELDS))
+        content_changes.extend(content_change_detector.diff_schedules(
+            site, previous_datasources, new_ds_dicts, _utcnow_iso(), "datasource"))
     except Exception as exc:
         errors.append(f"datasources: {exc}")
 
@@ -363,6 +419,16 @@ def _sync_projects_and_content(site, server, errors, alerts):
         db.replace_server_info(server_info)
     except Exception as exc:
         errors.append(f"server_info: {exc}")
+
+    try:
+        workbooks_by_id = {wb.id: wb.name for wb in workbooks}
+        datasources_by_id = {ds.id: ds.name for ds in datasources}
+        jobs = tableau_client.list_background_jobs(server, workbooks_by_id, datasources_by_id)
+        job_failures.extend(job_failure_tracker.detect_new_failures(site, jobs, _utcnow_iso()))
+        cutoff = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=14)).isoformat()
+        db.prune_background_job_log(cutoff)
+    except Exception as exc:
+        errors.append(f"background_jobs: {exc}")
 
 
 def _sync_lineage_and_usage(site, server, auth_token, errors):

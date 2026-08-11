@@ -529,10 +529,13 @@ _JOB_STATUS_LABELS = {
 }
 
 
-def list_background_jobs(server) -> list:
+def list_background_jobs(server, workbooks_by_id=None, datasources_by_id=None) -> list:
     """All current/recent background jobs on the site (extract refreshes,
     subscriptions, flow runs, etc.) via the site-scoped Jobs LIST endpoint
-    (TSC.Pager(server.jobs) -> BackgroundJobItem). No per-job detail call needed."""
+    (TSC.Pager(server.jobs) -> BackgroundJobItem). For failed jobs, makes a per-job
+    detail call to resolve workbook/datasource resource names."""
+    workbooks_by_id = workbooks_by_id or {}
+    datasources_by_id = datasources_by_id or {}
     jobs = []
     for job in TSC.Pager(server.jobs):
         status = getattr(job, "status", None)
@@ -565,6 +568,20 @@ def list_background_jobs(server) -> list:
         else:
             action = status or "Unknown"
 
+        # For failed jobs, try to resolve the resource name (workbook/datasource)
+        resource_name = None
+        if status == "Failed":
+            try:
+                detail = server.jobs.get_by_id(job.id)
+                wb_id = getattr(detail, "workbook_id", None)
+                ds_id = getattr(detail, "datasource_id", None)
+                if wb_id and wb_id in workbooks_by_id:
+                    resource_name = workbooks_by_id[wb_id]
+                elif ds_id and ds_id in datasources_by_id:
+                    resource_name = datasources_by_id[ds_id]
+            except Exception:
+                pass
+
         jobs.append({
             "id": job.id,
             "type": job_type,
@@ -573,6 +590,7 @@ def list_background_jobs(server) -> list:
             "title": title,
             "subtitle": subtitle,
             "job_name": job_name,
+            "resource_name": resource_name,
             "action": action,
             "priority": getattr(job, "priority", None),
             "progress": progress,

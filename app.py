@@ -14,6 +14,7 @@ from routes import (
     background_jobs,
     config_audit,
     connected_apps,
+    content_changes,
     custom_views,
     data_alerts,
     datasources,
@@ -136,6 +137,7 @@ def create_app():
     app.register_blueprint(help.bp)
     app.register_blueprint(analytics.bp)
     app.register_blueprint(overview.bp)
+    app.register_blueprint(content_changes.bp)
     app.register_blueprint(workbooks.bp)
     app.register_blueprint(datasources.bp)
     app.register_blueprint(permissions.bp)

@@ -303,6 +303,31 @@ CREATE TABLE IF NOT EXISTS license_usage_snapshots (
 );
 CREATE INDEX IF NOT EXISTS idx_license_usage_site_tier_time
     ON license_usage_snapshots(site, tier, snapshot_at);
+
+CREATE TABLE IF NOT EXISTS background_job_log (
+    job_id TEXT PRIMARY KEY,
+    site TEXT NOT NULL,
+    type TEXT,
+    job_name TEXT,
+    resource_name TEXT,
+    status TEXT,
+    created_at TEXT,
+    started_at TEXT,
+    ended_at TEXT,
+    last_notified_status TEXT,
+    last_seen_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS content_change_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site TEXT NOT NULL,
+    detected_at TEXT NOT NULL,
+    entity_type TEXT NOT NULL,
+    entity_id TEXT,
+    entity_name TEXT,
+    change_type TEXT NOT NULL,
+    details TEXT
+);
 """
 
 # Tables that hold per-site content. Each gets a `site` column (see
@@ -799,6 +824,52 @@ def latest_license_usage(site: str):
                ) latest ON lus.tier = latest.tier AND lus.snapshot_at = latest.max_at
                WHERE lus.site = ?""",
             (site, site),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def upsert_background_job(job_id, site, type_, job_name, resource_name, status,
+                          created_at, started_at, ended_at, last_notified_status, last_seen_at):
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO background_job_log
+               (job_id, site, type, job_name, resource_name, status, created_at, started_at,
+                ended_at, last_notified_status, last_seen_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(job_id) DO UPDATE SET
+                 status=excluded.status, ended_at=excluded.ended_at,
+                 last_notified_status=excluded.last_notified_status, last_seen_at=excluded.last_seen_at""",
+            (job_id, site, type_, job_name, resource_name, status, created_at, started_at,
+             ended_at, last_notified_status, last_seen_at),
+        )
+
+
+def fetch_background_job(job_id):
+    with get_conn() as conn:
+        row = conn.execute("SELECT * FROM background_job_log WHERE job_id = ?", (job_id,)).fetchone()
+        return dict(row) if row else None
+
+
+def prune_background_job_log(before_iso: str):
+    with get_conn() as conn:
+        conn.execute("DELETE FROM background_job_log WHERE last_seen_at < ?", (before_iso,))
+
+
+def add_content_change(site, detected_at, entity_type, entity_id, entity_name, change_type, details):
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO content_change_log
+               (site, detected_at, entity_type, entity_id, entity_name, change_type, details)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (site, detected_at, entity_type, entity_id, entity_name, change_type, details),
+        )
+
+
+def fetch_content_change_log(site: str, limit: int = 200):
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM content_change_log WHERE site = ? ORDER BY id DESC LIMIT ?",
+            (site, limit),
         ).fetchall()
         return [dict(r) for r in rows]
 
