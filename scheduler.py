@@ -1,11 +1,14 @@
 """Background cache refresh on an interval, plus a manual trigger reused by the
-POST /refresh route."""
+POST /refresh route. Also includes lightweight real-time poller (5-10 min) for
+job failures and content changes, separate from the main sync cycle (60 min)."""
 import threading
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
 import db
 import sync_service
+import background_poller
+import tableau_client
 from config import settings
 
 _scheduler = None
@@ -70,6 +73,20 @@ def _run_pending():
         trigger_refresh_async(site)
 
 
+def _poll_all_sites():
+    """Lightweight poller that runs every 5-10 minutes. Checks for new background
+    job failures and content changes without waiting for the full 60-minute sync.
+    Sends immediate alerts on detection."""
+    for site in settings.sites:
+        try:
+            server = tableau_client.get_server(site)
+            background_poller.poll_site(site, server)
+        except Exception as exc:
+            print(f"[POLLER] Error polling {site}: {exc}")
+            import traceback
+            traceback.print_exc()
+
+
 def start(run_immediately: bool = True):
     global _scheduler
     if _scheduler is not None:
@@ -84,6 +101,13 @@ def start(run_immediately: bool = True):
         "interval",
         minutes=settings.refresh_interval_minutes,
         id="refresh_all",
+        replace_existing=True,
+    )
+    _scheduler.add_job(
+        _poll_all_sites,
+        "interval",
+        minutes=5,
+        id="poll_realtime",
         replace_existing=True,
     )
     _scheduler.start()

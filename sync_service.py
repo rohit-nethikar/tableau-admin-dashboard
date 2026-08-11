@@ -9,6 +9,7 @@ in the local cache - no further Tableau API calls needed, so these can't fail du
 connectivity, only due to bugs in their own logic (also individually isolated below).
 """
 import datetime as dt
+import traceback
 
 import audit
 import config_audit
@@ -32,6 +33,21 @@ def _utcnow_iso() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat()
 
 
+def _log_error(site: str, operation: str, error_message: str, error_trace: str):
+    """Log error with full traceback for email attachments."""
+    try:
+        db.add_error_log(
+            site,
+            _utcnow_iso(),
+            operation,
+            error_code="SYNC_ERROR",
+            error_message=error_message,
+            error_trace=error_trace,
+        )
+    except Exception as exc:
+        print(f"[ERROR_LOG] Failed to log error: {exc}")
+
+
 def _ensure_utc(value: dt.datetime) -> dt.datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=dt.timezone.utc)
@@ -48,11 +64,12 @@ def _is_stale(updated_at: dt.datetime, now: dt.datetime) -> bool:
 def refresh_all(site: str):
     run_id = db.start_refresh(site, _utcnow_iso())
     errors = []
+    now_iso = _utcnow_iso()
 
     pat_name = db.get_config("pat_name")
     pat_encrypted = db.get_config("pat_encrypted")
     if not pat_name or not pat_encrypted:
-        db.finish_refresh(run_id, _utcnow_iso(), "failed", "No PAT configured - complete /setup first.")
+        db.finish_refresh(run_id, now_iso, "failed", "No PAT configured - complete /setup first.")
         return
     pat_secret = crypto.decrypt_value(pat_encrypted)
 
@@ -67,12 +84,15 @@ def refresh_all(site: str):
             _sync_projects_and_content(site, server, errors, alerts, job_failures, content_changes)
             _sync_lineage_and_usage(site, server, auth_token, errors)
     except Exception as exc:
-        db.finish_refresh(run_id, _utcnow_iso(), "failed", f"Sign-in or connection failed: {exc}")
+        db.finish_refresh(run_id, now_iso, "failed", f"Sign-in or connection failed: {exc}")
+        _log_error(site, "sign_in", str(exc), traceback.format_exc())
         return
+
+    error_logs = db.fetch_error_log_recent(site, hours=1, limit=20) if errors else []
 
     if alerts:
         try:
-            email_notifier.send_extract_failure_alert(alerts)
+            email_notifier.send_extract_failure_alert(alerts, error_logs)
             audit.log_action(
                 "system",
                 "extract_failure_alert_sent",
@@ -80,10 +100,11 @@ def refresh_all(site: str):
             )
         except Exception as exc:
             errors.append(f"email_alert: {exc}")
+            _log_error(site, "extract_failure_alert", str(exc), traceback.format_exc())
 
     if job_failures:
         try:
-            email_notifier.send_job_failure_alert(job_failures)
+            email_notifier.send_job_failure_alert(job_failures, error_logs)
             audit.log_action(
                 "system",
                 "job_failure_alert_sent",
@@ -91,10 +112,11 @@ def refresh_all(site: str):
             )
         except Exception as exc:
             errors.append(f"job_failure_alert_email: {exc}")
+            _log_error(site, "job_failure_alert", str(exc), traceback.format_exc())
 
     if content_changes:
         try:
-            email_notifier.send_content_change_alert(site, content_changes)
+            email_notifier.send_content_change_alert(site, content_changes, error_logs)
             audit.log_action(
                 "system",
                 "content_change_alert_sent",
@@ -102,27 +124,33 @@ def refresh_all(site: str):
             )
         except Exception as exc:
             errors.append(f"content_change_alert_email: {exc}")
+            _log_error(site, "content_change_alert", str(exc), traceback.format_exc())
 
     try:
-        license_alerts = license_tracking.compute_and_snapshot(site, _utcnow_iso())
+        license_alerts = license_tracking.compute_and_snapshot(site, now_iso)
         if license_alerts:
             try:
-                email_notifier.send_license_threshold_alert(site, license_alerts)
+                email_notifier.send_license_threshold_alert(site, license_alerts, error_logs)
             except Exception as exc:
                 errors.append(f"license_alert_email: {exc}")
+                _log_error(site, "license_alert", str(exc), traceback.format_exc())
     except Exception as exc:
         errors.append(f"license_tracking: {exc}")
+        _log_error(site, "license_tracking", str(exc), traceback.format_exc())
 
     permission_risk_findings = permission_risk.compute(site, errors)
     orphan_findings = orphan_detection.compute(site, errors)
     dqw_findings = dqw_detection.compute(site, errors)
     health_scoring.compute_and_store(site, errors, permission_risk_findings, orphan_findings)
     findings_engine.run_all_rules(
-        site, errors, permission_risk_findings, orphan_findings, dqw_findings, _utcnow_iso()
+        site, errors, permission_risk_findings, orphan_findings, dqw_findings, now_iso
     )
 
+    cutoff = (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=7)).isoformat()
+    db.prune_error_log(cutoff)
+
     status = "success" if not errors else "partial"
-    db.finish_refresh(run_id, _utcnow_iso(), status, "; ".join(errors) if errors else "OK")
+    db.finish_refresh(run_id, now_iso, status, "; ".join(errors) if errors else "OK")
 
 
 def _escalated(previous_failures, new_failures) -> bool:

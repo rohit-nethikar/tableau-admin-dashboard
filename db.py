@@ -328,6 +328,19 @@ CREATE TABLE IF NOT EXISTS content_change_log (
     change_type TEXT NOT NULL,
     details TEXT
 );
+
+CREATE TABLE IF NOT EXISTS error_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site TEXT NOT NULL,
+    logged_at TEXT NOT NULL,
+    operation TEXT NOT NULL,
+    error_code TEXT,
+    error_message TEXT,
+    error_trace TEXT,
+    context TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_error_log_site_time
+    ON error_log(site, logged_at DESC);
 """
 
 # Tables that hold per-site content. Each gets a `site` column (see
@@ -872,6 +885,42 @@ def fetch_content_change_log(site: str, limit: int = 200):
             (site, limit),
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+# --- error_log ----------------------------------------------------------------
+
+def add_error_log(site, logged_at, operation, error_code, error_message, error_trace, context=None):
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT INTO error_log
+               (site, logged_at, operation, error_code, error_message, error_trace, context)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (site, logged_at, operation, error_code, error_message, error_trace, context),
+        )
+
+
+def fetch_error_log_recent(site: str, hours: int = 1, limit: int = 50):
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT * FROM error_log WHERE site = ? AND logged_at >= datetime('now', '-' || ? || ' hours')
+               ORDER BY id DESC LIMIT ?""",
+            (site, hours, limit),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def fetch_error_log(site: str, limit: int = 200):
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM error_log WHERE site = ? ORDER BY id DESC LIMIT ?",
+            (site, limit),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def prune_error_log(before_iso: str):
+    with get_conn() as conn:
+        conn.execute("DELETE FROM error_log WHERE logged_at < ?", (before_iso,))
 
 
 # --- read helpers for the UI ---------------------------------------------------
