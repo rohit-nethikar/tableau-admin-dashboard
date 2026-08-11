@@ -14,7 +14,10 @@ bp = Blueprint("users", __name__)
 def list_users():
     site = site_context.get_current_site()
     now = datetime.now(timezone.utc)
-    threshold_days = settings.stale_threshold_days
+
+    # Allow custom threshold selection: 30, 60, 90, 120 days, or default
+    custom_threshold = request.args.get("days")
+    threshold_days = int(custom_threshold) if custom_threshold and custom_threshold.isdigit() else settings.stale_threshold_days
     status_filter = request.args.get("status") or None
 
     users = db.fetch_users(site)
@@ -52,6 +55,7 @@ def list_users():
         inactive_count=inactive_count,
         active_count=active_count,
         stale_threshold_days=threshold_days,
+        selected_days=custom_threshold,
         status_filter=status_filter,
         last_refresh=db.latest_refresh(site),
     )

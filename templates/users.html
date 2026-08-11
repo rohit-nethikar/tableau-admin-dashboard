@@ -14,15 +14,27 @@
   separate "last active" signal beyond last login.
 </p>
 
-<!-- User Status Filter -->
+<!-- User Status Filter + Day Threshold Selection -->
 <form method="get" action="{{ url_for('users.list_users') }}" class="mb-3">
-  <div class="d-flex align-items-center gap-2">
-    <label for="status-select" class="text-muted small" style="margin: 0; white-space: nowrap;">Filter by status:</label>
-    <select name="status" id="status-select" class="form-select form-select-sm" style="max-width: 200px;" onchange="this.form.submit();">
-      <option value="">Show all users</option>
-      <option value="active" {{ "selected" if status_filter == "active" else "" }}>✅ Active Users (logged in within {{ stale_threshold_days }} days)</option>
-      <option value="inactive" {{ "selected" if status_filter == "inactive" else "" }}>🔴 Inactive Users (no login for {{ stale_threshold_days }}+ days)</option>
-    </select>
+  <div class="d-flex align-items-center gap-3">
+    <div>
+      <label for="days-select" class="text-muted small" style="margin: 0; white-space: nowrap;">Inactivity threshold:</label>
+      <select name="days" id="days-select" class="form-select form-select-sm" style="max-width: 150px; display: inline-block; width: auto;" onchange="this.form.submit();">
+        <option value="">Default ({{ stale_threshold_days }} days)</option>
+        <option value="30" {{ "selected" if selected_days == "30" else "" }}>30 days</option>
+        <option value="60" {{ "selected" if selected_days == "60" else "" }}>60 days</option>
+        <option value="90" {{ "selected" if selected_days == "90" else "" }}>90 days</option>
+        <option value="120" {{ "selected" if selected_days == "120" else "" }}>120 days</option>
+      </select>
+    </div>
+    <div>
+      <label for="status-select" class="text-muted small" style="margin: 0; white-space: nowrap;">Filter by status:</label>
+      <select name="status" id="status-select" class="form-select form-select-sm" style="max-width: 250px; display: inline-block; width: auto;" onchange="this.form.submit();">
+        <option value="">Show all users</option>
+        <option value="active" {{ "selected" if status_filter == "active" else "" }}>✅ Active Users (logged in within {{ stale_threshold_days }} days)</option>
+        <option value="inactive" {{ "selected" if status_filter == "inactive" else "" }}>🔴 Inactive Users (no login for {{ stale_threshold_days }}+ days)</option>
+      </select>
+    </div>
   </div>
 </form>
 
