@@ -161,10 +161,12 @@ def show_analytics():
     # User login recency buckets (filtered by date range)
     login_buckets = _login_recency_buckets(users, cutoff)
 
-    # Custom views aggregations
-    workbooks_with_custom_views = _workbooks_with_custom_views(custom_views, top_n=10)
-    owner_domain_split = _owner_domain_split(custom_views)
-    top_owners = _top_owners(custom_views, top_n=10)
+    # Custom views aggregations (filtered by workbook and date range)
+    filtered_custom_views = [cv for cv in custom_views if not workbook_filter or cv.get("workbook_id") == workbook_filter]
+    filtered_custom_views = _filter_by_recency(filtered_custom_views, "created_at", cutoff)
+    workbooks_with_custom_views = _workbooks_with_custom_views(filtered_custom_views, top_n=10)
+    owner_domain_split = _owner_domain_split(filtered_custom_views)
+    top_owners = _top_owners(filtered_custom_views, top_n=10)
 
     # Workbook names for dropdown
     workbook_names = sorted({wb["name"] for wb in workbooks if wb.get("name")})

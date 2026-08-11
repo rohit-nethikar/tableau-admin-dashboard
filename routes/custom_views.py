@@ -95,16 +95,16 @@ def list_custom_views():
     elif account_type == "non-mayo":
         filtered_views = [cv for cv in filtered_views if cv.get("owner_name", "") and not cv.get("owner_name", "").lower().endswith("@mayo.edu")]
 
-    # Custom views analytics (computed from all unfiltered views)
+    # Custom views analytics (computed from FILTERED views to respect all filters)
     summary = {
-        "custom_view_count": len(all_custom_views),
-        "custom_view_owners": len({cv.get("owner_name") for cv in all_custom_views if cv.get("owner_name")}),
-        "custom_view_domains": len(_get_unique_domains([cv.get("owner_name") for cv in all_custom_views if cv.get("owner_name")])),
-        "shared_count": sum(1 for cv in all_custom_views if cv.get("shared")),
+        "custom_view_count": len(filtered_views),
+        "custom_view_owners": len({cv.get("owner_name") for cv in filtered_views if cv.get("owner_name")}),
+        "custom_view_domains": len(_get_unique_domains([cv.get("owner_name") for cv in filtered_views if cv.get("owner_name")])),
+        "shared_count": sum(1 for cv in filtered_views if cv.get("shared")),
     }
-    workbooks_with_custom_views = _workbooks_with_custom_views(all_custom_views, top_n=10)
-    owner_domain_split = _owner_domain_split(all_custom_views)
-    top_owners = _top_owners(all_custom_views, top_n=10)
+    workbooks_with_custom_views = _workbooks_with_custom_views(filtered_views, top_n=10)
+    owner_domain_split = _owner_domain_split(filtered_views)
+    top_owners = _top_owners(filtered_views, top_n=10)
 
     return render_template(
         "custom_views.html",
