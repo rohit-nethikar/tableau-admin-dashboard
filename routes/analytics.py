@@ -137,15 +137,16 @@ def show_analytics():
         "custom_view_domains": len(_get_unique_domains([cv.get("owner_name") for cv in custom_views if cv.get("owner_name")])),
     }
 
-    # Top workbooks by hits (filtered by date range)
+    # Top workbooks by hits - show workbooks updated/accessed recently
+    # Note: Uses lifetime views sorted by recency of update
     filtered_workbooks = _filter_by_recency(workbooks, "updated_at", cutoff)
     top_by_hits = sorted(
         filtered_workbooks,
-        key=lambda w: w.get("lifetime_view_count") or 0,
+        key=lambda w: (w.get("lifetime_view_count") or 0, w.get("updated_at") or ""),
         reverse=True,
     )[:10]
 
-    # Top workbooks by avg views/month (filtered by date range)
+    # Top workbooks by avg views/month - shows engagement trend
     top_by_avg_month = _top_avg_views_per_month(filtered_workbooks, top_n=10)
 
     # Top views by hits (optionally filtered by workbook)

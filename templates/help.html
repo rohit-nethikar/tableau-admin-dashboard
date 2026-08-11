@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Help & Guide{% endblock %}
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+  <h1 class="mb-4">📚 Tableau Admin Dashboard Guide</h1>
+
+  <div style="background-color: var(--bg-secondary); border-left: 4px solid var(--primary); padding: 20px; border-radius: 6px; margin-bottom: 24px;">
+    <h3 style="color: var(--primary); margin-top: 0;">What is This Dashboard?</h3>
+    <p style="margin: 0;">
+      The Tableau Admin Dashboard is a centralized management and monitoring tool for Tableau Server administrators.
+      It provides visibility into your Tableau environment's health, usage, content, permissions, and performance metrics.
+    </p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;">
+    <!-- Navigation Guide -->
+    <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 6px; padding: 20px;">
+      <h3 style="color: var(--primary); margin-top: 0;">📖 Pages Overview</h3>
+
+      <h4>Dashboard</h4>
+      <p><strong>Overview:</strong> High-level summary of your Tableau environment with key metrics, findings, and health scores.</p>
+
+      <h4>Users</h4>
+      <p><strong>Manage Users:</strong> View all users on the site. Filter by Active/Inactive status. Monitor user engagement and identify inactive users.</p>
+      <ul style="font-size: 13px; color: var(--text-secondary);">
+        <li>✅ <strong>Active Users:</strong> Logged in within {{ stale_threshold_days }} days</li>
+        <li>🔴 <strong>Inactive Users:</strong> Haven't logged in for {{ stale_threshold_days }}+ days</li>
+      </ul>
+
+      <h4>Workbooks</h4>
+      <p><strong>Content Management:</strong> Browse all workbooks. See ownership, project, refresh status, and usage metrics.</p>
+
+      <h4>Data Sources</h4>
+      <p><strong>Data Governance:</strong> Monitor data sources, certifications, refresh status, and extract health.</p>
+
+      <h4>Custom Views</h4>
+      <p><strong>User-Created Content:</strong> Track custom views created by users. Filter by workbook, owner, account type. View account numbers.</p>
+    </div>
+
+    <!-- More Pages -->
+    <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 6px; padding: 20px;">
+      <h3 style="color: var(--primary); margin-top: 0;">📊 Analysis & Monitoring</h3>
+
+      <h4>Analytics</h4>
+      <p><strong>Usage Insights:</strong> View most viewed workbooks, sheets, and custom view distribution. Filter by date range (7d, 30d, 90d, all).</p>
+
+      <h4>License Usage</h4>
+      <p><strong>Licensing:</strong> Monitor Creator, Explorer, and Viewer seat usage vs. capacity. Track trends over time.</p>
+
+      <h4>Findings</h4>
+      <p><strong>Issues & Insights:</strong> System-identified issues across permissions, content, and configuration. Track and resolve findings.</p>
+
+      <h4>Permissions</h4>
+      <p><strong>Access Control:</strong> View all permission grants on projects and workbooks. Identify risky configurations.</p>
+
+      <h4>Health</h4>
+      <p><strong>Content Health:</strong> Scoring based on usage, ownership, refresh, certification, documentation, and lineage.</p>
+
+      <h4>Background Jobs</h4>
+      <p><strong>Job Queue:</strong> Monitor extract refreshes, subscriptions, and flow runs. Cancel pending jobs if needed.</p>
+    </div>
+  </div>
+
+  <!-- Features Guide -->
+  <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 6px; padding: 20px; margin-bottom: 24px;">
+    <h3 style="color: var(--primary); margin-top: 0;">⚙️ Key Features</h3>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+      <div>
+        <h4>🔍 Filtering & Search</h4>
+        <p style="font-size: 13px;">Most pages support filtering to narrow down results. Use filters to find specific workbooks, users, or content.</p>
+      </div>
+      <div>
+        <h4>📊 Visualizations</h4>
+        <p style="font-size: 13px;">Charts show trends, distributions, and comparisons. Hover over data points for details.</p>
+      </div>
+      <div>
+        <h4>⏱️ Date Ranges</h4>
+        <p style="font-size: 13px;">Analytics page supports date filtering (7 days, 30 days, 90 days, all-time) to see recent trends.</p>
+      </div>
+      <div>
+        <h4>🔄 Real-Time Data</h4>
+        <p style="font-size: 13px;">Dashboard syncs data from Tableau Server periodically. Click "Sync Now" for immediate refresh.</p>
+      </div>
+      <div>
+        <h4>🎯 Multi-Site Support</h4>
+        <p style="font-size: 13px;">Select site from top-right dropdown to switch between Tableau Server sites.</p>
+      </div>
+      <div>
+        <h4>📥 Export Data</h4>
+        <p style="font-size: 13px;">Some pages support CSV export. Look for "Export" buttons to download filtered data.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Common Tasks -->
+  <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 6px; padding: 20px; margin-bottom: 24px;">
+    <h3 style="color: var(--primary); margin-top: 0;">✅ Common Tasks</h3>
+
+    <div style="margin-bottom: 16px;">
+      <h4 style="margin-bottom: 8px;">How to find inactive users?</h4>
+      <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+        Go to <strong>Users</strong> page → Select filter <strong>"🔴 Inactive Users"</strong> → See all users who haven't logged in for {{ stale_threshold_days }}+ days.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <h4 style="margin-bottom: 8px;">How to check license usage?</h4>
+      <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+        Go to <strong>License Usage</strong> page → See current Creator, Explorer, Viewer seat usage and trends over time.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <h4 style="margin-bottom: 8px;">How to monitor extract refreshes?</h4>
+      <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+        Go to <strong>Background Jobs</strong> page → See active/recent jobs and their status. Cancel pending jobs if needed.
+      </p>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <h4 style="margin-bottom: 8px;">How to find unused workbooks?</h4>
+      <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+        Go to <strong>Workbooks</strong> page → Look for low usage metrics and/or stale content (⏱️ indicator).
+      </p>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <h4 style="margin-bottom: 8px;">How to track custom views?</h4>
+      <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+        Go to <strong>Custom Views</strong> page → See all saved views with owner, account number, and account type (Mayo/Non-Mayo).
+      </p>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+      <h4 style="margin-bottom: 8px;">How to see permission issues?</h4>
+      <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+        Go to <strong>Findings</strong> page → Filter for <strong>"permission_risk"</strong> category to see access control issues.
+      </p>
+    </div>
+  </div>
+
+  <!-- Tips & Best Practices -->
+  <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 6px; padding: 20px; margin-bottom: 24px;">
+    <h3 style="color: var(--primary); margin-top: 0;">💡 Tips & Best Practices</h3>
+
+    <ul style="font-size: 13px; color: var(--text-secondary);">
+      <li>📌 <strong>Bookmark frequently used pages:</strong> Overview, Users, Findings, License Usage</li>
+      <li>🔄 <strong>Sync regularly:</strong> Click "🔄 Sync Now" to get fresh data from Tableau Server</li>
+      <li>🎯 <strong>Use filters:</strong> Filters help narrow down large datasets (workbooks, users, findings)</li>
+      <li>📊 <strong>Monitor trends:</strong> Check Analytics and License Usage for trends over time</li>
+      <li>🔴 <strong>Act on Findings:</strong> Review and resolve "Findings" regularly to maintain a healthy Tableau environment</li>
+      <li>👥 <strong>Manage inactive users:</strong> Review and disable/remove inactive users to optimize licensing</li>
+      <li>📦 <strong>Track custom views:</strong> Monitor custom view creation to understand user-created content</li>
+      <li>🛡️ <strong>Review permissions:</strong> Regularly audit permissions to ensure proper access control</li>
+    </ul>
+  </div>
+
+  <!-- Support -->
+  <div style="background-color: rgba(91, 192, 222, 0.1); border-left: 4px solid var(--info); padding: 20px; border-radius: 6px; margin-bottom: 24px;">
+    <h3 style="color: var(--info); margin-top: 0;">❓ Need Help?</h3>
+    <p style="margin: 0; font-size: 13px;">
+      For issues or questions about this dashboard, contact your Tableau Administrator.
+      For Tableau Server documentation, visit <code>https://help.tableau.com/current/server/</code>
+    </p>
+  </div>
+
+  <div style="text-align: center; padding-top: 20px; border-top: 1px solid var(--border-light); color: var(--text-secondary); font-size: 12px;">
+    <p>Tableau Admin Dashboard | Last updated: August 2026</p>
+  </div>
+</div>
+{% endblock %}

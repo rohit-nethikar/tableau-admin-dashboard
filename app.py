@@ -19,6 +19,7 @@ from routes import (
     datasources,
     findings,
     health,
+    help,
     license_usage,
     lineage,
     overview,
@@ -132,6 +133,7 @@ def create_app():
 
     app.register_blueprint(setup.bp)
     app.register_blueprint(auth_routes.bp)
+    app.register_blueprint(help.bp)
     app.register_blueprint(analytics.bp)
     app.register_blueprint(overview.bp)
     app.register_blueprint(workbooks.bp)

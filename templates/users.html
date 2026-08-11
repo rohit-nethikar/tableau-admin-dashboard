@@ -14,27 +14,26 @@
   separate "last active" signal beyond last login.
 </p>
 
-<!-- Inactivity Filter -->
+<!-- User Status Filter -->
 <form method="get" action="{{ url_for('users.list_users') }}" class="mb-3">
   <div class="d-flex align-items-center gap-2">
-    <label for="inactivity-select" class="text-muted small" style="margin: 0; white-space: nowrap;">Filter by inactivity:</label>
-    <select name="inactivity" id="inactivity-select" class="form-select form-select-sm" style="max-width: 200px;" onchange="this.form.submit();">
+    <label for="status-select" class="text-muted small" style="margin: 0; white-space: nowrap;">Filter by status:</label>
+    <select name="status" id="status-select" class="form-select form-select-sm" style="max-width: 200px;" onchange="this.form.submit();">
       <option value="">Show all users</option>
-      <option value="30" {{ "selected" if inactivity_filter == "30" else "" }}>Inactive for 30+ days</option>
-      <option value="60" {{ "selected" if inactivity_filter == "60" else "" }}>Inactive for 60+ days</option>
-      <option value="90" {{ "selected" if inactivity_filter == "90" else "" }}>Inactive for 90+ days</option>
-      <option value="120" {{ "selected" if inactivity_filter == "120" else "" }}>Inactive for 120+ days</option>
-      <option value="365" {{ "selected" if inactivity_filter == "365" else "" }}>Inactive for 1+ year</option>
+      <option value="active" {{ "selected" if status_filter == "active" else "" }}>✅ Active Users (logged in within {{ stale_threshold_days }} days)</option>
+      <option value="inactive" {{ "selected" if status_filter == "inactive" else "" }}>🔴 Inactive Users (no login for {{ stale_threshold_days }}+ days)</option>
     </select>
   </div>
 </form>
 
 <p class="text-muted small" style="margin-bottom: 16px;">
-  <span class="badge badge-error">🔴 Inactive</span>
-  {{ inactive_count }} of {{ all_users | length }} user{{ "s" if all_users | length != 1 else "" }}
-  {{ "hasn't" if inactive_count == 1 else "haven't" }} logged in for {{ stale_threshold_days }}+ days.
-  {% if inactivity_filter %}
-  <br />Showing {{ users | length }} user{{ "s" if users | length != 1 else "" }} inactive for {{ inactivity_filter }}+ days.
+  <span class="badge badge-success">✅ Active:</span> {{ active_count }} users &nbsp;
+  <span class="badge badge-error">🔴 Inactive:</span> {{ inactive_count }} users
+  <br />
+  <small>Inactive = haven't logged in for {{ stale_threshold_days }}+ days</small>
+  {% if status_filter %}
+  <br />
+  <strong>Showing: {{ users | length }} {{ status_filter|capitalize }} user{{ "s" if users | length != 1 else "" }}</strong>
   {% endif %}
 </p>
 

@@ -11,45 +11,8 @@
     </div>
   </div>
 
-  <!-- Current Usage Cards -->
+  <!-- Current Usage Bar Chart Only -->
   {% if current %}
-  <div class="row g-3 mb-4">
-    {% for usage in current %}
-    {% set pct_used = usage.pct_used or 0 %}
-    {% set is_alert = pct_used >= threshold_pct %}
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start mb-3">
-            <h6 class="card-subtitle text-muted">{{ usage.tier }} Tier</h6>
-            {% if is_alert %}
-              <span class="badge bg-danger"><i class="bi bi-exclamation-circle"></i> Alert</span>
-            {% endif %}
-          </div>
-          <p class="mb-2">
-            <strong>{{ usage.used }}/{{ usage.capacity or '∞' }}</strong>
-            <span class="text-muted small">({{ pct_used }}%)</span>
-          </p>
-          <div class="progress" style="height: 1.5rem;">
-            {% set progress_color = 'danger' if is_alert else ('warning' if pct_used >= 75 else 'success') %}
-            {% set bar_width = (pct_used | int) if pct_used <= 100 else 100 %}
-            <div class="progress-bar bg-{{ progress_color }}"
-                 role="progressbar"
-                 style="width: {{ bar_width }}%"
-                 aria-valuenow="{{ pct_used }}" aria-valuemin="0" aria-valuemax="100">
-              {{ pct_used }}%
-            </div>
-          </div>
-          {% if is_alert %}
-            <small class="text-danger d-block mt-2"><i class="bi bi-exclamation-triangle"></i> Usage exceeds {{ threshold_pct }}% threshold</small>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-
-  <!-- Current Usage Bar Chart -->
   <div class="row mb-4">
     <div class="col-md-12">
       <div class="card border-0 shadow-sm">
@@ -57,7 +20,27 @@
           <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Current License Usage by Tier</h5>
         </div>
         <div class="card-body">
-          <canvas id="current-usage-chart" height="80"></canvas>
+          {% if current | length > 0 %}
+            <canvas id="current-usage-chart" height="100"></canvas>
+            <div style="margin-top: 20px; padding: 16px; background-color: rgba(0,0,0,0.02); border-radius: 6px;">
+              <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                {% for usage in current %}
+                  {% set pct_used = usage.pct_used or 0 %}
+                  {% set is_alert = pct_used >= threshold_pct %}
+                  <div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">{{ usage.tier }}</div>
+                    <div style="font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 4px;">{{ usage.used }}/{{ usage.capacity or '∞' }}</div>
+                    <div style="font-size: 14px; color: {% if is_alert %}var(--error){% elif pct_used >= 75 %}var(--warning){% else %}var(--success){% endif %}; font-weight: 600;">
+                      {{ pct_used }}%
+                      {% if is_alert %}<br /><small>⚠️ Exceeds {{ threshold_pct }}%</small>{% endif %}
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% else %}
+            <p class="text-muted small mb-0">No license usage data available. Snapshots are captured during each sync.</p>
+          {% endif %}
         </div>
       </div>
     </div>

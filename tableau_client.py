@@ -539,9 +539,31 @@ def list_background_jobs(server) -> list:
         title = getattr(job, "title", None)
         subtitle = getattr(job, "subtitle", None)
         job_type = getattr(job, "type", None)
+        progress = getattr(job, "progress_number", None)
 
-        # Build a descriptive job name from available fields
-        job_name = title or subtitle or job_type or "Background Job"
+        # Build a descriptive job name: prioritize title and subtitle for context
+        job_name = None
+        if title and title.strip():
+            job_name = title
+        elif subtitle and subtitle.strip():
+            job_name = subtitle
+        elif job_type:
+            job_name = job_type.replace("_", " ").title()
+        else:
+            job_name = "Background Job"
+
+        # Determine action description
+        action = None
+        if status == "Pending" or status == "InProgress":
+            action = "Pending/Running"
+        elif status == "Success":
+            action = "Completed"
+        elif status == "Failed":
+            action = "Failed"
+        elif status == "Cancelled":
+            action = "Cancelled"
+        else:
+            action = status or "Unknown"
 
         jobs.append({
             "id": job.id,
@@ -551,7 +573,9 @@ def list_background_jobs(server) -> list:
             "title": title,
             "subtitle": subtitle,
             "job_name": job_name,
+            "action": action,
             "priority": getattr(job, "priority", None),
+            "progress": progress,
             "created_at": job.created_at.isoformat() if getattr(job, "created_at", None) else None,
             "started_at": job.started_at.isoformat() if getattr(job, "started_at", None) else None,
             "ended_at": job.ended_at.isoformat() if getattr(job, "ended_at", None) else None,
