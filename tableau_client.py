@@ -536,13 +536,21 @@ def list_background_jobs(server) -> list:
     jobs = []
     for job in TSC.Pager(server.jobs):
         status = getattr(job, "status", None)
+        title = getattr(job, "title", None)
+        subtitle = getattr(job, "subtitle", None)
+        job_type = getattr(job, "type", None)
+
+        # Build a descriptive job name from available fields
+        job_name = title or subtitle or job_type or "Background Job"
+
         jobs.append({
             "id": job.id,
-            "type": getattr(job, "type", None),
+            "type": job_type,
             "status": status,
             "status_label": _JOB_STATUS_LABELS.get(status, status),
-            "title": getattr(job, "title", None),
-            "subtitle": getattr(job, "subtitle", None),
+            "title": title,
+            "subtitle": subtitle,
+            "job_name": job_name,
             "priority": getattr(job, "priority", None),
             "created_at": job.created_at.isoformat() if getattr(job, "created_at", None) else None,
             "started_at": job.started_at.isoformat() if getattr(job, "started_at", None) else None,

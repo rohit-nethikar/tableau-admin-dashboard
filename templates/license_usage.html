@@ -48,6 +48,20 @@
     </div>
     {% endfor %}
   </div>
+
+  <!-- Current Usage Bar Chart -->
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Current License Usage by Tier</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="current-usage-chart" height="80"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
   {% endif %}
 
   <!-- Usage Trend Chart -->
@@ -114,14 +128,54 @@
 
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script>
-  $(document).ready(function () {
-    var historyByTier = {{ history_by_tier | tojson }};
+  Chart.register(ChartDataLabels);
 
+  $(document).ready(function () {
+    // Current usage bar chart
+    var currentUsageData = {{ current | tojson if current else '[]' }};
+    if (currentUsageData.length > 0) {
+      var currentCtx = document.getElementById('current-usage-chart');
+      if (currentCtx) {
+        var tierColors = { 'Creator': '#2f5fdb', 'Explorer': '#10b981', 'Viewer': '#f59e0b' };
+        new Chart(currentCtx, {
+          type: 'bar',
+          data: {
+            labels: currentUsageData.map(u => u.tier),
+            datasets: [{
+              label: 'Usage %',
+              data: currentUsageData.map(u => u.pct_used || 0),
+              backgroundColor: currentUsageData.map(u => tierColors[u.tier] || '#999999'),
+              borderRadius: 6,
+              borderSkipped: false
+            }]
+          },
+          options: {
+            indexAxis: 'x',
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { display: false },
+              datalabels: {
+                anchor: 'end',
+                align: 'top',
+                color: '#000',
+                font: { weight: 'bold' },
+                formatter: (v) => v.toFixed(1) + '%'
+              }
+            },
+            scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: 'Usage %' } } }
+          }
+        });
+      }
+    }
+
+    // Usage trend chart
+    var historyByTier = {{ history_by_tier | tojson }};
     if (Object.keys(historyByTier).length > 0) {
       var chartCtx = document.getElementById('usage-trend-chart');
       if (chartCtx) {
-        // Color palette for tiers
         var tierColors = {
           'Creator': '#2f5fdb',
           'Explorer': '#10b981',

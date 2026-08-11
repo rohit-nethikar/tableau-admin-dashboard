@@ -30,8 +30,8 @@
             <table class="table table-sm table-hover mb-0">
               <thead class="table-light">
                 <tr>
+                  <th>Job Name</th>
                   <th>Type</th>
-                  <th>Title</th>
                   <th>Status</th>
                   <th>Created</th>
                   <th>Started</th>
@@ -42,13 +42,13 @@
               <tbody>
                 {% for job in jobs %}
                 <tr>
-                  <td><code class="small">{{ job.type or "—" }}</code></td>
                   <td>
-                    <div>{{ job.title or job.subtitle or "—" }}</div>
-                    {% if job.subtitle and job.title != job.subtitle %}
-                      <small class="text-muted">{{ job.subtitle }}</small>
+                    <strong>{{ job.job_name or "—" }}</strong>
+                    {% if job.subtitle and job.subtitle != job.job_name %}
+                      <div><small class="text-muted">{{ job.subtitle }}</small></div>
                     {% endif %}
                   </td>
+                  <td><code class="small">{{ job.type or "—" }}</code></td>
                   <td>
                     {% if job.status == "Pending" %}
                       <span class="badge bg-info">{{ job.status_label }}</span>
