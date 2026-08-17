@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Dashboard - Automation Overview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: var(--dark);
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: var(--dark);
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 5px solid var(--primary);
+            font-size: 1.8em;
+        }
+        h3 {
+            color: var(--dark);
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 30px 0;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .highlight-box h2 {
+            border: none;
+            padding: 0;
+            margin: 0;
+            font-size: 2em;
+            color: white;
+        }
+        .highlight-box p {
+            font-size: 1.1em;
+            margin: 15px 0 0 0;
+            opacity: 0.95;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 2px solid #ddd;
+        }
+        table th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+        }
+        table tr:hover {
+            background-color: #f5f5f5;
+        }
+        table tr.automated {
+            background-color: #d5f4e6;
+        }
+        table tr.manual {
+            background-color: #fef5e7;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-align: center;
+            min-width: 130px;
+        }
+        .status-automated {
+            background-color: var(--success);
+            color: white;
+        }
+        .status-manual {
+            background-color: var(--warning);
+            color: white;
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .success-box {
+            background-color: #d5f4e6;
+            border-left: 4px solid var(--success);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .warning-box {
+            background-color: #fef5e7;
+            border-left: 4px solid var(--warning);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .component-card {
+            background-color: #f9f9f9;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .component-card h4 {
+            color: var(--primary);
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        .component-card .check {
+            color: var(--success);
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 4px;
+        }
+        .card h4 {
+            color: var(--dark);
+            margin-top: 0;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+        }
+        .card ul {
+            margin-left: 20px;
+        }
+        .card li {
+            margin: 8px 0;
+        }
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+        .timeline-item {
+            display: flex;
+            margin: 30px 0;
+            position: relative;
+        }
+        .timeline-marker {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .timeline-item.automated .timeline-marker {
+            background-color: var(--success);
+        }
+        .timeline-item.manual .timeline-marker {
+            background-color: var(--warning);
+        }
+        .timeline-content {
+            flex-grow: 1;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+        .timeline-item.automated .timeline-content {
+            border-left-color: var(--success);
+            background-color: #d5f4e6;
+        }
+        .timeline-item.manual .timeline-content {
+            border-left-color: var(--warning);
+            background-color: #fef5e7;
+        }
+        .divider {
+            border-top: 2px dashed var(--primary);
+            margin: 40px 0;
+            padding-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #999;
+            font-size: 12px;
+        }
+        .command-box {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            border-radius: 4px;
+            border-left: 4px solid var(--primary);
+        }
+        .checkmark {
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        .x-mark {
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            h2 {
+                page-break-before: always;
+            }
+        }
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 1.8em;
+            }
+            h2 {
+                font-size: 1.4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚙️ Tableau Admin Dashboard - Automation Overview</h1>
+
+        <div class="highlight-box">
+            <h2>Your Dashboard Runs 24/7 Automatically</h2>
+            <p>No manual intervention required for core operations. Just review weekly reports!</p>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>🤖 Automated Components</h2>
+
+        <div class="grid-2">
+            <div class="component-card">
+                <h4><span class="check">✓</span> Service Startup & Persistence</h4>
+                <p><strong>Automated via Task Scheduler</strong></p>
+                <ul style="margin-left: 15px; margin-top: 10px;">
+                    <li>Starts when Windows boots</li>
+                    <li>Runs under your account (m239012)</li>
+                    <li>No manual intervention needed</li>
+                    <li>Scheduled Task: TableauAdminDashboard</li>
+                </ul>
+            </div>
+
+            <div class="component-card">
+                <h4><span class="check">✓</span> Auto-Restart on Crash</h4>
+                <p><strong>Automated via PowerShell Script</strong></p>
+                <ul style="margin-left: 15px; margin-top: 10px;">
+                    <li>Restarts within 10 seconds of crash</li>
+                    <li>Infinite loop monitoring</li>
+                    <li>Script: start-app.ps1</li>
+                    <li>All restarts logged</li>
+                </ul>
+            </div>
+
+            <div class="component-card">
+                <h4><span class="check">✓</span> Weekly Health Check</h4>
+                <p><strong>Automated via Task Scheduler</strong></p>
+                <ul style="margin-left: 15px; margin-top: 10px;">
+                    <li>Runs every Monday 9:00 AM</li>
+                    <li>Checks: task status, port listening, HTTP response, errors</li>
+                    <li>Script: health-check.ps1</li>
+                    <li>Generates report: health-check-log.txt</li>
+                </ul>
+            </div>
+
+            <div class="component-card">
+                <h4><span class="check">✓</span> Logging System</h4>
+                <p><strong>Automated Continuous Logging</strong></p>
+                <ul style="margin-left: 15px; margin-top: 10px;">
+                    <li>Standard output logged automatically</li>
+                    <li>Errors logged separately</li>
+                    <li>Daily health check results saved</li>
+                    <li>Logs rotate automatically</li>
+                </ul>
+            </div>
+
+            <div class="component-card">
+                <h4><span class="check">✓</span> Python Virtual Environment</h4>
+                <p><strong>Automated Environment Management</strong></p>
+                <ul style="margin-left: 15px; margin-top: 10px;">
+                    <li>Automatically activated on service start</li>
+                    <li>Dependencies auto-installed</li>
+                    <li>Isolated environment prevents conflicts</li>
+                    <li>Path: .venv\Scripts\python.exe</li>
+                </ul>
+            </div>
+
+            <div class="component-card">
+                <h4><span class="check">✓</span> Database & Configuration</h4>
+                <p><strong>Automated State Management</strong></p>
+                <ul style="margin-left: 15px; margin-top: 10px;">
+                    <li>Configuration loaded automatically</li>
+                    <li>Database persists across restarts</li>
+                    <li>State recovers from crashes</li>
+                    <li>No data loss on unexpected shutdown</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>📊 Automation Timeline & Schedule</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Action</th>
+                    <th>When</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="automated">
+                    <td><strong>System Boot Start</strong></td>
+                    <td>When computer starts</td>
+                    <td><span class="status-badge status-automated">✓ Automated</span></td>
+                    <td>Dashboard starts automatically</td>
+                </tr>
+                <tr class="automated">
+                    <td><strong>Crash Recovery</strong></td>
+                    <td>Within 10 seconds of crash</td>
+                    <td><span class="status-badge status-automated">✓ Automated</span></td>
+                    <td>Auto-restart with infinite retry loop</td>
+                </tr>
+                <tr class="manual">
+                    <td><strong>Daily Status Check</strong></td>
+                    <td>Every weekday morning</td>
+                    <td><span class="status-badge status-manual">📋 Manual</span></td>
+                    <td>Takes 2 minutes - just verify in browser</td>
+                </tr>
+                <tr class="automated">
+                    <td><strong>Weekly Health Check</strong></td>
+                    <td>Every Monday 9:00 AM</td>
+                    <td><span class="status-badge status-automated">✓ Automated</span></td>
+                    <td>Full system health report generated</td>
+                </tr>
+                <tr class="automated">
+                    <td><strong>Log Rotation</strong></td>
+                    <td>Continuous</td>
+                    <td><span class="status-badge status-automated">✓ Automated</span></td>
+                    <td>Logs managed automatically for space</td>
+                </tr>
+                <tr class="manual">
+                    <td><strong>Monthly Deep Audit</strong></td>
+                    <td>First Monday of month</td>
+                    <td><span class="status-badge status-manual">📋 Manual</span></td>
+                    <td>Takes 15 minutes - review 4 weeks of reports</td>
+                </tr>
+                <tr class="manual">
+                    <td><strong>Quarterly Performance Review</strong></td>
+                    <td>Feb, May, Aug, Nov</td>
+                    <td><span class="status-badge status-manual">📋 Manual</span></td>
+                    <td>Takes 30 minutes - full system audit</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <h2>📋 What You Still Do Manually</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Frequency</th>
+                    <th>Time Required</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Review Health Check Report</strong></td>
+                    <td>Every Monday</td>
+                    <td>2 minutes</td>
+                    <td>Report auto-generated, you just read it</td>
+                </tr>
+                <tr>
+                    <td><strong>Daily Quick Status Check</strong></td>
+                    <td>Every weekday</td>
+                    <td>2 minutes</td>
+                    <td>Visit http://localhost:5000</td>
+                </tr>
+                <tr>
+                    <td><strong>Monthly Deep Audit</strong></td>
+                    <td>1st of month</td>
+                    <td>15 minutes</td>
+                    <td>Review 4 weeks of health reports</td>
+                </tr>
+                <tr>
+                    <td><strong>Quarterly Performance Review</strong></td>
+                    <td>Quarterly (4x/year)</td>
+                    <td>30 minutes</td>
+                    <td>Full system audit and checks</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="success-box">
+            <strong>💡 Bottom Line:</strong> You literally don't need to do anything for the dashboard to keep running 24/7. The only things you do are quick Monday morning checks (2 min) and occasional deep audits. Everything else is automated!
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>📁 Key Automated Files & Scripts</h2>
+
+        <div class="grid-2">
+            <div class="card">
+                <h4>🔄 Service Wrapper</h4>
+                <ul>
+                    <li><strong>run_service.bat</strong><br>Activates venv and runs app.py</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>⚙️ Automation Scripts</h4>
+                <ul>
+                    <li><strong>start-app.ps1</strong><br>Infinite loop with 10-sec auto-restart</li>
+                    <li><strong>health-check.ps1</strong><br>Weekly health monitoring</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>🏗️ Setup Scripts</h4>
+                <ul>
+                    <li><strong>setup-environment.ps1</strong><br>Creates venv and installs dependencies</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>📅 Scheduled Tasks</h4>
+                <ul>
+                    <li><strong>TableauAdminDashboard</strong><br>Configured in Windows Task Scheduler</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>✅ 24/7 Operations Guaranteed</h2>
+
+        <div class="grid-3">
+            <div class="card">
+                <h4><span class="checkmark">✓</span> System Reboot</h4>
+                <p>Dashboard starts automatically when Windows restarts</p>
+            </div>
+
+            <div class="card">
+                <h4><span class="checkmark">✓</span> Crash Recovery</h4>
+                <p>Service restarts automatically within 10 seconds if it fails</p>
+            </div>
+
+            <div class="card">
+                <h4><span class="checkmark">✓</span> Monitoring</h4>
+                <p>Weekly automated health checks run every Monday</p>
+            </div>
+
+            <div class="card">
+                <h4><span class="checkmark">✓</span> Logging</h4>
+                <p>All errors and activity logged automatically with timestamps</p>
+            </div>
+
+            <div class="card">
+                <h4><span class="checkmark">✓</span> Error Handling</h4>
+                <p>Failed components detected and reported in weekly health check</p>
+            </div>
+
+            <div class="card">
+                <h4><span class="checkmark">✓</span> Data Integrity</h4>
+                <p>Database and configuration persist across restarts and crashes</p>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>🎯 Your Weekly Checklist (Takes 2 Minutes)</h2>
+
+        <div class="info-box">
+            <h3 style="margin-top: 0;">Every Monday Morning - Just Do This:</h3>
+            <ol style="margin-left: 20px; margin-top: 15px;">
+                <li><strong>Open health check report:</strong>
+                    <div class="command-box" style="margin: 10px 0;">notepad "C:\Users\m239012\OneDrive - Mayo Clinic\GitHub_claude\tableau-admin-dashboard\health-check-log.txt"</div>
+                </li>
+                <li><strong>Check if all items show ✓ (green):</strong>
+                    <ul style="margin-left: 20px; margin-top: 10px;">
+                        <li>✓ Task Status: RUNNING</li>
+                        <li>✓ Port 5000: LISTENING</li>
+                        <li>✓ Dashboard: OK (HTTP 200)</li>
+                        <li>✓ No recent errors</li>
+                    </ul>
+                </li>
+                <li><strong>If all green:</strong> Done! Status is healthy. Continue to next Monday.</li>
+                <li><strong>If anything red:</strong> Run quick restart command:
+                    <div class="command-box" style="margin: 10px 0;">Restart-ScheduledTask -TaskName "TableauAdminDashboard"</div>
+                </li>
+            </ol>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>🚀 What Happens Automatically Behind the Scenes</h2>
+
+        <div class="timeline">
+            <div class="timeline-item automated">
+                <div class="timeline-marker">1</div>
+                <div class="timeline-content">
+                    <strong>Windows Boots</strong><br>
+                    Task Scheduler sees that TableauAdminDashboard task should be running at startup → Launches start-app.ps1
+                </div>
+            </div>
+
+            <div class="timeline-item automated">
+                <div class="timeline-marker">2</div>
+                <div class="timeline-content">
+                    <strong>Virtual Environment Activates</strong><br>
+                    start-app.ps1 activates .venv and loads all Python dependencies
+                </div>
+            </div>
+
+            <div class="timeline-item automated">
+                <div class="timeline-marker">3</div>
+                <div class="timeline-content">
+                    <strong>Application Starts</strong><br>
+                    Python runs app.py, Flask starts listening on port 5000
+                </div>
+            </div>
+
+            <div class="timeline-item automated">
+                <div class="timeline-marker">4</div>
+                <div class="timeline-content">
+                    <strong>Continuous Monitoring</strong><br>
+                    start-app.ps1 infinite loop continuously checks if process is running
+                </div>
+            </div>
+
+            <div class="timeline-item automated">
+                <div class="timeline-marker">5</div>
+                <div class="timeline-content">
+                    <strong>If Crash Detected</strong><br>
+                    Infinite loop catches the exit, waits 10 seconds, restarts automatically
+                </div>
+            </div>
+
+            <div class="timeline-item automated">
+                <div class="timeline-marker">6</div>
+                <div class="timeline-content">
+                    <strong>Weekly Health Check</strong><br>
+                    Every Monday 9 AM, health-check.ps1 runs and generates detailed report
+                </div>
+            </div>
+
+            <div class="timeline-item automated">
+                <div class="timeline-marker">7</div>
+                <div class="timeline-content">
+                    <strong>Logging & Alerts</strong><br>
+                    All activity and errors logged to stdout.log and stderr.log automatically
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>🔍 How to Verify Everything is Running</h2>
+
+        <h3>Method 1: Check Task Status (PowerShell)</h3>
+        <div class="command-box">Get-ScheduledTask -TaskName "TableauAdminDashboard" | Select-Object State</div>
+        <p style="color: var(--success); font-weight: bold;">Expected: State = Running</p>
+
+        <h3>Method 2: Check Port is Listening</h3>
+        <div class="command-box">netstat -ano | findstr :5000</div>
+        <p style="color: var(--success); font-weight: bold;">Expected: Shows active connections on port 5000</p>
+
+        <h3>Method 3: Access in Browser</h3>
+        <p>Open: <code>http://localhost:5000</code></p>
+        <p style="color: var(--success); font-weight: bold;">Expected: Dashboard loads successfully</p>
+
+        <div class="divider"></div>
+
+        <h2>📞 Quick Reference: Emergency Commands</h2>
+
+        <div class="grid-2">
+            <div class="card">
+                <h4>🟢 Dashboard Won't Start</h4>
+                <div class="command-box" style="font-size: 12px; margin-top: 10px;">Start-ScheduledTask -TaskName "TableauAdminDashboard"</div>
+            </div>
+
+            <div class="card">
+                <h4>🔄 Restart Dashboard</h4>
+                <div class="command-box" style="font-size: 12px; margin-top: 10px;">Restart-ScheduledTask -TaskName "TableauAdminDashboard"</div>
+            </div>
+
+            <div class="card">
+                <h4>⏹️ Stop Dashboard</h4>
+                <div class="command-box" style="font-size: 12px; margin-top: 10px;">Stop-ScheduledTask -TaskName "TableauAdminDashboard"</div>
+            </div>
+
+            <div class="card">
+                <h4>📊 Check Status</h4>
+                <div class="command-box" style="font-size: 12px; margin-top: 10px;">Get-ScheduledTask -TaskName "TableauAdminDashboard"</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Tableau Admin Dashboard - Automation Overview</strong></p>
+            <p>Last Updated: August 11, 2026 | Version: 1.0 | Print-Friendly</p>
+            <p><em>Everything is automated. You just need to review reports!</em></p>
+            <p style="margin-top: 15px; font-weight: 600; color: #2c3e50;">Developed by: Rohit Nethikar</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -68,3 +68,4 @@ site/
 .deployment-backups/
 
 .patch-backups/
+health-check-log.txt

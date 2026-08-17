@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Dashboard - Operations Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.7;
+            color: #333;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: var(--dark);
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: var(--dark);
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 5px solid var(--primary);
+            font-size: 1.8em;
+        }
+        h3 {
+            color: var(--dark);
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        .section {
+            background-color: #f9f9f9;
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .command-box {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            border-radius: 4px;
+            border-left: 4px solid var(--primary);
+        }
+        .success {
+            color: var(--success);
+            font-weight: bold;
+        }
+        .error {
+            color: var(--danger);
+            font-weight: bold;
+        }
+        .warning {
+            color: var(--warning);
+            font-weight: bold;
+        }
+        .info-box {
+            background-color: #e3f2fd;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .success-box {
+            background-color: #d5f4e6;
+            border-left: 4px solid var(--success);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .error-box {
+            background-color: #fadbd8;
+            border-left: 4px solid var(--danger);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table th, table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        table th {
+            background-color: var(--primary);
+            color: white;
+        }
+        table tr:hover {
+            background-color: #f5f5f5;
+        }
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .card h4 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 5px;
+        }
+        .toc {
+            background-color: var(--light);
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 4px;
+        }
+        .toc h3 {
+            margin-top: 0;
+        }
+        .toc ol {
+            margin-bottom: 0;
+        }
+        .toc a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .divider {
+            border-top: 2px dashed var(--primary);
+            margin: 40px 0;
+            padding-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #999;
+            font-size: 12px;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 20px;
+            }
+            .toc {
+                page-break-after: always;
+            }
+            h2 {
+                page-break-before: always;
+            }
+        }
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Tableau Admin Dashboard - Operations Guide</h1>
+
+        <p style="font-size: 16px; margin-bottom: 20px;">
+            <strong>Complete guide for monitoring, maintaining, and troubleshooting your dashboard</strong>
+        </p>
+
+        <div class="toc">
+            <h3>📋 Quick Navigation</h3>
+            <ol>
+                <li><a href="#check-running">How to Check If Running</a></li>
+                <li><a href="#operations">Common Operations</a></li>
+                <li><a href="#logs">Viewing Logs & Errors</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+                <li><a href="#locations">File Locations</a></li>
+            </ol>
+        </div>
+
+        <h2 id="check-running">✅ How to Check If It's Running</h2>
+
+        <h3>Method 1: Check Task Scheduler (Recommended)</h3>
+        <div class="command-box">Get-ScheduledTask -TaskName "TableauAdminDashboard" | Select-Object TaskName, State</div>
+
+        <p><strong>Expected output:</strong></p>
+        <div class="command-box">TaskName                State
+--------                -----
+TableauAdminDashboard   Running</div>
+
+        <h3>Method 2: Check if Port 5000 is Listening</h3>
+        <div class="command-box">netstat -ano | findstr :5000</div>
+
+        <p><strong>Expected output:</strong> (Shows connections on port 5000)</p>
+        <div class="command-box">TCP    127.0.0.1:5000         127.0.0.1:xxxxx        ESTABLISHED</div>
+
+        <h3>Method 3: Test in Browser</h3>
+        <p>Open: <code>http://localhost:5000</code></p>
+        <ul>
+            <li><strong>If it loads:</strong> <span class="success">✅ Running</span></li>
+            <li><strong>If "Connection refused":</strong> <span class="error">❌ Not running</span></li>
+        </ul>
+
+        <div class="divider"></div>
+
+        <h2 id="operations">🛠️ Common Operations</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Command</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Start Dashboard</strong></td>
+                    <td><code>Start-ScheduledTask -TaskName "TableauAdminDashboard"</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Stop Dashboard</strong></td>
+                    <td><code>Stop-ScheduledTask -TaskName "TableauAdminDashboard"</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Restart Dashboard</strong></td>
+                    <td><code>Restart-ScheduledTask -TaskName "TableauAdminDashboard"</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Check Status</strong></td>
+                    <td><code>Get-ScheduledTask -TaskName "TableauAdminDashboard"</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="divider"></div>
+
+        <h2 id="logs">🔍 Viewing Logs & Errors</h2>
+
+        <h3>Log Directory Location</h3>
+        <p><code>C:\Users\m239012\AppData\Local\nssm\TableauAdminDash\</code></p>
+
+        <h3>View Last 50 Lines of Output</h3>
+        <div class="command-box">Get-Content "C:\Users\m239012\AppData\Local\nssm\TableauAdminDash\stdout.log" -Tail 50</div>
+
+        <h3>View Last 50 Lines of Errors</h3>
+        <div class="command-box">Get-Content "C:\Users\m239012\AppData\Local\nssm\TableauAdminDash\stderr.log" -Tail 50</div>
+
+        <h3>Follow Logs Live (Ctrl+C to stop)</h3>
+        <div class="command-box">Get-Content "C:\Users\m239012\AppData\Local\nssm\TableauAdminDash\stdout.log" -Wait</div>
+
+        <div class="divider"></div>
+
+        <h2 id="troubleshooting">⚠️ Troubleshooting</h2>
+
+        <h3>Issue: Dashboard won't start</h3>
+        <div class="section">
+            <h4>Step 1: Check the task status</h4>
+            <div class="command-box">Get-ScheduledTask -TaskName "TableauAdminDashboard" | Select-Object State</div>
+
+            <h4>Step 2: Check the logs</h4>
+            <div class="command-box">Get-Content "$env:APPDATA\Local\nssm\TableauAdminDash\stderr.log" -Tail 100</div>
+
+            <h4>Step 3: Try running manually</h4>
+            <div class="command-box">cd "C:\Users\m239012\OneDrive - Mayo Clinic\GitHub_claude\tableau-admin-dashboard"
+.\.venv\Scripts\python.exe app.py</div>
+
+            <h4>Step 4: Check Python environment</h4>
+            <div class="command-box">.\.venv\Scripts\python --version
+.\.venv\Scripts\pip list | grep -i flask</div>
+        </div>
+
+        <h3>Issue: "Connection refused" when accessing http://localhost:5000</h3>
+        <div class="section">
+            <h4>Check 1: Is the task running?</h4>
+            <div class="command-box">Get-ScheduledTask -TaskName "TableauAdminDashboard" | Select-Object State
+# Should show: Running</div>
+
+            <h4>Check 2: Is port 5000 open?</h4>
+            <div class="command-box">netstat -ano | findstr :5000
+# Should show active connections</div>
+
+            <h4>Check 3: Check Windows Firewall</h4>
+            <ul>
+                <li>Windows Defender Firewall → Allow an app through firewall</li>
+                <li>Verify <code>Python.exe</code> is allowed for Private networks</li>
+            </ul>
+
+            <h4>Check 4: Try from another computer</h4>
+            <div class="command-box">http://YOUR-MACHINE-NAME:5000</div>
+        </div>
+
+        <h3>Issue: Dashboard shows "Internal Server Error"</h3>
+        <div class="section">
+            <h4>Solution:</h4>
+            <div class="command-box"># 1. Stop the task
+Stop-ScheduledTask -TaskName "TableauAdminDashboard"
+
+# 2. Wait 5 seconds
+Start-Sleep -Seconds 5
+
+# 3. Start the task
+Start-ScheduledTask -TaskName "TableauAdminDashboard"</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2 id="locations">📍 Important File Locations</h2>
+
+        <div class="grid-2">
+            <div class="card">
+                <h4>Application</h4>
+                <p><code>C:\Users\m239012\OneDrive - Mayo Clinic\GitHub_claude\tableau-admin-dashboard\</code></p>
+            </div>
+
+            <div class="card">
+                <h4>Configuration</h4>
+                <p><code>...tableau-admin-dashboard\config.yaml</code></p>
+            </div>
+
+            <div class="card">
+                <h4>Database</h4>
+                <p><code>...tableau-admin-dashboard\instance\cache.db</code></p>
+            </div>
+
+            <div class="card">
+                <h4>NSSM Installation</h4>
+                <p><code>C:\tools\nssm\</code></p>
+            </div>
+
+            <div class="card">
+                <h4>Application Logs</h4>
+                <p><code>C:\Users\m239012\AppData\Local\nssm\TableauAdminDash\stdout.log</code></p>
+            </div>
+
+            <div class="card">
+                <h4>Error Logs</h4>
+                <p><code>C:\Users\m239012\AppData\Local\nssm\TableauAdminDash\stderr.log</code></p>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>📅 Daily Health Check</h2>
+
+        <p>Run this daily to verify everything is working:</p>
+
+        <div class="command-box"># Check 1: Task is running
+Get-ScheduledTask -TaskName "TableauAdminDashboard" | Select-Object State
+
+# Check 2: Port 5000 is listening
+netstat -ano | findstr :5000
+
+# Check 3: Dashboard responds
+$response = Invoke-WebRequest -Uri "http://localhost:5000" -UseBasicParsing -ErrorAction SilentlyContinue
+if ($response.StatusCode -eq 200) {
+    Write-Host "✓ Dashboard is responding" -ForegroundColor Green
+} else {
+    Write-Host "✗ Dashboard is not responding" -ForegroundColor Red
+}</div>
+
+        <div class="success-box">
+            <strong>✅ If all three checks pass:</strong> Everything is healthy. Continue to next day.
+        </div>
+
+        <div class="error-box">
+            <strong>❌ If any check fails:</strong> Run restart command and review logs.
+        </div>
+
+        <div class="footer">
+            <p><strong>Tableau Admin Dashboard - Operations Guide</strong></p>
+            <p>Last Updated: August 11, 2026 | Version: 1.0 | Print-Friendly</p>
+            <p style="margin-top: 15px; font-weight: 600; color: #2c3e50;">Developed by: Rohit Nethikar</p>
+        </div>
+    </div>
+</body>
+</html>

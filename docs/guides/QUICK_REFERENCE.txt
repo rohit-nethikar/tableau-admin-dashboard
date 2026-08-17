@@ -1,0 +1,237 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║         Tableau Admin Dashboard - Service Management Quick Reference        ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚀 FIRST TIME SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open PowerShell as Administrator
+   Right-click PowerShell → "Run as Administrator"
+
+2. Navigate to dashboard
+   cd "C:\Users\m239012\OneDrive - Mayo Clinic\GitHub_claude\tableau-admin-dashboard"
+
+3. Allow script execution (one-time)
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
+
+4. Create Python environment
+   .\setup-environment.ps1
+
+5. Configure application
+   notepad config.yaml
+   [Set server_url and site_name, then save]
+
+6. Install as Windows Service
+   .\setup-service.ps1
+
+7. Verify it's running
+   Open browser: http://localhost:5000
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 DAILY OPERATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Check Status
+  .\manage-service.ps1
+
+Start Service
+  .\manage-service.ps1 -Action start
+
+Stop Service
+  .\manage-service.ps1 -Action stop
+
+Restart Service
+  .\manage-service.ps1 -Action restart
+
+View Logs (last 30 lines)
+  .\manage-service.ps1 -Action logs
+
+Follow Logs Live (Ctrl+C to stop)
+  .\manage-service.ps1 -Action logs -Follow
+
+Open Services GUI
+  .\manage-service.ps1 -Action gui
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚙️ CONFIGURATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Edit Configuration
+  notepad config.yaml
+
+  Key settings:
+  - server_url: "https://your-tableau-server.example.com"
+  - site_name: ""          (empty for Default site)
+  - host: "0.0.0.0"        (for network access)
+  - port: 5000
+
+Edit Governance Rules
+  notepad governance.yaml
+
+Then restart service:
+  .\manage-service.ps1 -Action restart
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔧 TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Service Won't Start
+  Step 1: Check logs
+    .\manage-service.ps1 -Action logs -Follow
+
+  Step 2: Verify config.yaml syntax
+    [Open in notepad and check indentation]
+
+  Step 3: Reset environment
+    .\setup-environment.ps1 -Reset
+
+Can't Access http://localhost:5000
+  Step 1: Verify service is running
+    .\manage-service.ps1 -Action status
+
+  Step 2: Check if port is accessible
+    netstat -ano | findstr :5000
+
+  Step 3: Check Windows Firewall
+    [Windows Defender Firewall → Allow Python through]
+
+Service Crashes Repeatedly
+  Step 1: View error logs
+    .\manage-service.ps1 -Action logs -Follow
+
+  Step 2: Verify Tableau Server is accessible
+    [Open Tableau URL in browser]
+
+  Step 3: Check PAT credentials
+    [Edit config.yaml, verify pat_name and pat_secret]
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 DIRECTORY STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+C:\Users\m239012\OneDrive - Mayo Clinic\GitHub_claude\tableau-admin-dashboard\
+├── setup-environment.ps1      → Create Python venv
+├── setup-service.ps1          → Install Windows Service
+├── manage-service.ps1         → Daily management
+├── SETUP_GUIDE.md             → Complete documentation
+├── config.yaml                → Application settings
+├── governance.yaml            → Scoring rules
+├── requirements.txt           → Python dependencies
+├── .venv\                      → Virtual environment (created by setup)
+├── instance\
+│   ├── cache.db               → SQLite database
+│   └── secret.key             → Encryption key for PAT
+└── run_service.bat            → Service wrapper (created by setup)
+
+Logs:
+  C:\Users\m239012\AppData\Local\nssm\TableauAdminDash\
+  ├── stdout.log               → Application output
+  └── stderr.log               → Error messages
+
+NSSM Installation:
+  C:\tools\nssm\nssm.exe
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔑 SERVICE DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Service Name:    TableauAdminDash
+Display Name:    Tableau Admin Dashboard
+Startup Type:    Automatic (starts on reboot)
+Auto-restart:    Yes (30 second delay on crash)
+Log Location:    C:\Users\m239012\AppData\Local\nssm\TableauAdminDash\
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💾 BACKUP & RESTORE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Backup Configuration
+  cd "C:\Users\m239012\OneDrive - Mayo Clinic\GitHub_claude\tableau-admin-dashboard"
+  Copy-Item config.yaml config.yaml.backup
+  Copy-Item governance.yaml governance.yaml.backup
+  Copy-Item instance\cache.db instance\cache.db.backup
+
+Restore from Backup
+  Stop-Service -Name TableauAdminDash -Force
+  Copy-Item config.yaml.backup config.yaml -Force
+  Start-Service -Name TableauAdminDash
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚪 SECURITY CONSIDERATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  For Healthcare Data - ADD HTTPS!
+  1. Use a reverse proxy (IIS, nginx)
+  2. Configure SSL certificate
+  3. Forward traffic to http://localhost:5000
+
+API Token
+  - Stored encrypted at rest (instance/secret.key)
+  - Change in config.yaml: pat_name and pat_secret
+
+Network Access
+  - Restrict to trusted networks if possible
+  - Use Windows Firewall to limit access
+  - Don't expose to public internet without HTTPS
+
+Passcode
+  - Set unique passcode during setup
+  - Currently shared (no per-user accounts)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 RESOURCES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Full Documentation
+  SETUP_GUIDE.md                [Complete setup and troubleshooting]
+
+Dashboard
+  http://localhost:5000         [Access the application]
+
+NSSM
+  https://nssm.cc/              [Service manager documentation]
+  https://nssm.cc/usage         [NSSM usage guide]
+
+Python Documentation
+  https://docs.python.org/3/    [Python documentation]
+
+Tableau REST API
+  https://help.tableau.com/     [Tableau server documentation]
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⌨️ KEYBOARD SHORTCUTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open Services GUI
+  Win + R  →  services.msc  →  Enter
+
+Open Command Line
+  Ctrl + Shift + Esc  →  File → Run new task
+
+Stop Log Following
+  Ctrl + C  (in PowerShell window)
+
+Open Dashboard
+  Ctrl + N  (in browser)  →  localhost:5000
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For complete documentation, see: SETUP_GUIDE.md
+
+Last Updated: 2026-08-11
+Version: 1.0
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║              Print this page for quick reference on your desk!            ║
+╚════════════════════════════════════════════════════════════════════════════╝
