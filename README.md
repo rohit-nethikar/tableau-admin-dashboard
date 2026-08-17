@@ -16,6 +16,25 @@ makes to Tableau-adjacent state are local (owner overrides, finding status), and
 every one of those is recorded in the audit log (queryable via `db.fetch_audit_log`
 directly against `instance/cache.db` for now — no UI for it yet).
 
+## Latest Updates — August 2026
+
+✅ **Comprehensive Test Suite**
+- 67 passing tests across 4 critical modules
+- Email alerting, deduplication, BigQuery sync, account sync covered
+- All tests pass in 3.52s
+- See [Project Status](../sql-optimizer-bq/docs/00-PROJECT-STATUS.md) for full details
+
+📊 **Upcoming Features**
+- Slack integration (Week 1)
+- License forecasting (Week 1-2)
+- Extract refresh health monitoring (Week 3-5)
+- Cluster health & capacity planning (Q2)
+
+📚 **Documentation**
+- [Project Status Overview](../sql-optimizer-bq/docs/00-PROJECT-STATUS.md) — Current state & roadmap
+- [Implementation Guide](../sql-optimizer-bq/docs/OPTION_D_PROJECT_IMPLEMENTATION_GUIDES.md) — Week-by-week plans
+- [Comprehensive Assessment](../sql-optimizer-bq/docs/COMPREHENSIVE_PROJECT_ASSESSMENT.md) — All findings
+
 ## Prerequisites
 
 1. Python 3.10+.
