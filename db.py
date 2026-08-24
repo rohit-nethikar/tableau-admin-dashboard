@@ -1290,6 +1290,173 @@ def fetch_audit_log(limit: int = 200):
         return [dict(r) for r in rows]
 
 
+# --- Aggregation Functions (for performance optimization) ---
+
+def count_workbooks(site: str) -> int:
+    with get_conn() as conn:
+        result = conn.execute("SELECT COUNT(*) as cnt FROM workbooks WHERE site = ?", (site,)).fetchone()
+        return result["cnt"] if result else 0
+
+
+def count_stale_workbooks(site: str) -> int:
+    with get_conn() as conn:
+        result = conn.execute("SELECT COUNT(*) as cnt FROM workbooks WHERE site = ? AND is_stale = 1", (site,)).fetchone()
+        return result["cnt"] if result else 0
+
+
+def count_datasources(site: str) -> int:
+    with get_conn() as conn:
+        result = conn.execute("SELECT COUNT(*) as cnt FROM datasources WHERE site = ?", (site,)).fetchone()
+        return result["cnt"] if result else 0
+
+
+def count_stale_datasources(site: str) -> int:
+    with get_conn() as conn:
+        result = conn.execute("SELECT COUNT(*) as cnt FROM datasources WHERE site = ? AND is_stale = 1", (site,)).fetchone()
+        return result["cnt"] if result else 0
+
+
+def count_custom_views(site: str) -> int:
+    with get_conn() as conn:
+        result = conn.execute("SELECT COUNT(*) as cnt FROM custom_views WHERE site = ?", (site,)).fetchone()
+        return result["cnt"] if result else 0
+
+
+def count_subscriptions(site: str) -> int:
+    with get_conn() as conn:
+        result = conn.execute("SELECT COUNT(*) as cnt FROM subscriptions WHERE site = ?", (site,)).fetchone()
+        return result["cnt"] if result else 0
+
+
+def count_users(site: str) -> int:
+    with get_conn() as conn:
+        result = conn.execute("SELECT COUNT(*) as cnt FROM users WHERE site = ?", (site,)).fetchone()
+        return result["cnt"] if result else 0
+
+
+def count_projects(site: str) -> int:
+    with get_conn() as conn:
+        result = conn.execute("SELECT COUNT(*) as cnt FROM projects WHERE site = ?", (site,)).fetchone()
+        return result["cnt"] if result else 0
+
+
+def get_health_score_stats(site: str) -> dict:
+    with get_conn() as conn:
+        result = conn.execute(
+            """SELECT
+                COUNT(*) as total,
+                AVG(score) as avg_score,
+                SUM(CASE WHEN score >= 80 THEN 1 ELSE 0 END) as good_count,
+                SUM(CASE WHEN score >= 50 AND score < 80 THEN 1 ELSE 0 END) as warning_count,
+                SUM(CASE WHEN score < 50 THEN 1 ELSE 0 END) as critical_count
+            FROM health_scores WHERE site = ?""",
+            (site,)
+        ).fetchone()
+        return dict(result) if result else {"total": 0, "avg_score": None, "good_count": 0, "warning_count": 0, "critical_count": 0}
+
+
+def get_severity_counts(site: str) -> dict:
+    with get_conn() as conn:
+        result = conn.execute(
+            """SELECT
+                SUM(CASE WHEN severity = 'critical' THEN 1 ELSE 0 END) as critical,
+                SUM(CASE WHEN severity = 'high' THEN 1 ELSE 0 END) as high,
+                SUM(CASE WHEN severity = 'medium' THEN 1 ELSE 0 END) as medium,
+                SUM(CASE WHEN severity = 'low' THEN 1 ELSE 0 END) as low
+            FROM findings WHERE site = ? AND status = 'open'""",
+            (site,)
+        ).fetchone()
+        return {
+            "critical": result["critical"] or 0,
+            "high": result["high"] or 0,
+            "medium": result["medium"] or 0,
+            "low": result["low"] or 0,
+        } if result else {"critical": 0, "high": 0, "medium": 0, "low": 0}
+
+
+def get_user_role_distribution(site: str) -> dict:
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT site_role, COUNT(*) as count
+            FROM users WHERE site = ? GROUP BY site_role""",
+            (site,)
+        ).fetchall()
+        return {row["site_role"] or "Unknown": row["count"] for row in rows} if rows else {}
+
+
+def get_extract_stats(site: str) -> dict:
+    with get_conn() as conn:
+        result = conn.execute(
+            """SELECT
+                SUM(CASE WHEN extract_status = 'Success' THEN 1 ELSE 0 END) as success,
+                SUM(CASE WHEN extract_status = 'Failed' THEN 1 ELSE 0 END) as failed,
+                SUM(CASE WHEN extract_status = 'Running' THEN 1 ELSE 0 END) as running,
+                COUNT(*) as total
+            FROM workbooks WHERE site = ? AND extract_status IS NOT NULL""",
+            (site,)
+        ).fetchone()
+        return {
+            "success": result["success"] or 0,
+            "failed": result["failed"] or 0,
+            "running": result["running"] or 0,
+            "total": result["total"] or 0,
+        } if result else {"success": 0, "failed": 0, "running": 0, "total": 0}
+
+
+def fetch_top_findings(site: str, limit: int = 5) -> list:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM findings WHERE site = ? AND status = 'open' ORDER BY severity DESC, last_seen_at DESC LIMIT ?",
+            (site, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_user_activity_stats(site: str) -> dict:
+    with get_conn() as conn:
+        result = conn.execute(
+            """SELECT
+                COUNT(*) as total_users,
+                SUM(CASE WHEN last_login_at IS NOT NULL AND datetime(last_login_at) >= datetime('now', '-30 days') THEN 1 ELSE 0 END) as active_30d,
+                SUM(CASE WHEN last_login_at IS NULL THEN 1 ELSE 0 END) as never_logged_in
+            FROM users WHERE site = ?""",
+            (site,)
+        ).fetchone()
+        return dict(result) if result else {"total_users": 0, "active_30d": 0, "never_logged_in": 0}
+
+
+def fetch_top_workbooks_by_views(site: str, limit: int = 10) -> list:
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT id, name, project_name, owner_name, lifetime_view_count, updated_at
+            FROM workbooks WHERE site = ? AND lifetime_view_count IS NOT NULL AND lifetime_view_count > 0
+            ORDER BY lifetime_view_count DESC LIMIT ?""",
+            (site, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def fetch_top_views(site: str, limit: int = 10) -> list:
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT workbook_id, workbook_name, view_name, total_views
+            FROM workbook_views WHERE site = ? AND total_views IS NOT NULL AND total_views > 0
+            ORDER BY total_views DESC LIMIT ?""",
+            (site, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def fetch_custom_views_summary(site: str, limit: int = 100) -> list:
+    with get_conn() as conn:
+        rows = conn.execute(
+            """SELECT id, name, workbook_name, view_name, owner_name, shared, created_at
+            FROM custom_views WHERE site = ? ORDER BY created_at DESC LIMIT ?""",
+            (site, limit)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
 def update_user_account_number(site: str, user_id: str, account_number: str):
     """Update the account_number for a user."""
     with get_conn() as conn:

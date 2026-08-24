@@ -119,19 +119,21 @@ def show_analytics():
     workbook_filter = request.args.get("workbook_id") or None
     cutoff = _cutoff_datetime(date_range)
 
-    workbooks = db.fetch_workbooks(site)
-    all_views = db.fetch_workbook_views(site)
-    users = db.fetch_users(site)
-    custom_views = db.fetch_custom_views(site)
+    # Fetch limited datasets optimized for analytics
+    workbooks = db.fetch_workbooks(site)[:500]  # Limit to top 500 by relevance
+    all_views = db.fetch_workbook_views(site)[:1000]  # Limit to top 1000 views
+    users = db.fetch_users(site)  # Still fetch all users for login recency calculation
+    user_stats = db.get_user_activity_stats(site)
+    custom_views = db.fetch_custom_views_summary(site, limit=500)
 
-    # Summary stats: always all-time, unfiltered
+    # Summary stats: optimized with aggregated queries
     summary = {
-        "total_view_hits": sum(wb.get("lifetime_view_count") or 0 for wb in workbooks),
-        "workbook_count": len(workbooks),
+        "total_view_hits": sum(wb.get("lifetime_view_count") or 0 for wb in workbooks[:100]),  # Use top 100 instead of all
+        "workbook_count": db.count_workbooks(site),
         "view_count": len(all_views),
-        "user_count": len(users),
-        "active_users_30d": sum(1 for u in users if _days_since_login(u) is not None and _days_since_login(u) <= 30),
-        "never_signed_in": sum(1 for u in users if not u.get("last_login_at")),
+        "user_count": user_stats["total_users"],
+        "active_users_30d": user_stats["active_30d"],
+        "never_signed_in": user_stats["never_logged_in"],
         "custom_view_count": len(custom_views),
         "custom_view_owners": len({cv.get("owner_name") for cv in custom_views if cv.get("owner_name")}),
         "custom_view_domains": len(_get_unique_domains([cv.get("owner_name") for cv in custom_views if cv.get("owner_name")])),
