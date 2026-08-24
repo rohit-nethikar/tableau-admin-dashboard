@@ -339,6 +339,29 @@ p, span, div, li, label, h1, h2, h3, h4, h5, h6 {
 }
 
 /* ================================
+   NAVBAR BUTTON STYLES
+   ================================ */
+
+.btn-outline-light {
+  color: var(--ink) !important;
+  border-color: var(--ink) !important;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-light:hover {
+  background: rgba(47, 95, 219, 0.1);
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+.btn-outline-light:focus {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  box-shadow: 0 0 0 0.25rem rgba(47, 95, 219, 0.25);
+}
+
+/* ================================
    ANIMATIONS
    ================================ */
 
