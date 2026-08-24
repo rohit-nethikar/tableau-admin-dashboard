@@ -341,6 +341,28 @@ CREATE TABLE IF NOT EXISTS error_log (
 );
 CREATE INDEX IF NOT EXISTS idx_error_log_site_time
     ON error_log(site, logged_at DESC);
+
+-- Performance indexes for site-scoped tables (tab switching optimization)
+CREATE INDEX IF NOT EXISTS idx_projects_site ON projects(site);
+CREATE INDEX IF NOT EXISTS idx_workbooks_site ON workbooks(site);
+CREATE INDEX IF NOT EXISTS idx_datasources_site ON datasources(site);
+CREATE INDEX IF NOT EXISTS idx_workbook_datasource_links_site ON workbook_datasource_links(site);
+CREATE INDEX IF NOT EXISTS idx_permission_grants_site ON permission_grants(site);
+CREATE INDEX IF NOT EXISTS idx_group_members_site ON group_members(site);
+CREATE INDEX IF NOT EXISTS idx_refresh_log_site ON refresh_log(site);
+CREATE INDEX IF NOT EXISTS idx_users_site ON users(site);
+CREATE INDEX IF NOT EXISTS idx_health_scores_site ON health_scores(site);
+CREATE INDEX IF NOT EXISTS idx_findings_site ON findings(site);
+CREATE INDEX IF NOT EXISTS idx_asset_owner_overrides_site ON asset_owner_overrides(site);
+CREATE INDEX IF NOT EXISTS idx_custom_views_site ON custom_views(site);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_site ON subscriptions(site);
+CREATE INDEX IF NOT EXISTS idx_connected_apps_site ON connected_apps(site);
+CREATE INDEX IF NOT EXISTS idx_data_alerts_site ON data_alerts(site);
+CREATE INDEX IF NOT EXISTS idx_webhooks_site ON webhooks(site);
+CREATE INDEX IF NOT EXISTS idx_dqw_warnings_site ON dqw_warnings(site);
+CREATE INDEX IF NOT EXISTS idx_workbook_views_site ON workbook_views(site);
+CREATE INDEX IF NOT EXISTS idx_background_job_log_site ON background_job_log(site);
+CREATE INDEX IF NOT EXISTS idx_content_change_log_site ON content_change_log(site);
 """
 
 # Tables that hold per-site content. Each gets a `site` column (see
@@ -417,6 +439,35 @@ def get_conn():
         conn.close()
 
 
+def _create_missing_indexes(conn):
+    index_definitions = [
+        ("idx_projects_site", "projects(site)"),
+        ("idx_workbooks_site", "workbooks(site)"),
+        ("idx_datasources_site", "datasources(site)"),
+        ("idx_workbook_datasource_links_site", "workbook_datasource_links(site)"),
+        ("idx_permission_grants_site", "permission_grants(site)"),
+        ("idx_group_members_site", "group_members(site)"),
+        ("idx_refresh_log_site", "refresh_log(site)"),
+        ("idx_users_site", "users(site)"),
+        ("idx_health_scores_site", "health_scores(site)"),
+        ("idx_findings_site", "findings(site)"),
+        ("idx_asset_owner_overrides_site", "asset_owner_overrides(site)"),
+        ("idx_custom_views_site", "custom_views(site)"),
+        ("idx_subscriptions_site", "subscriptions(site)"),
+        ("idx_connected_apps_site", "connected_apps(site)"),
+        ("idx_data_alerts_site", "data_alerts(site)"),
+        ("idx_webhooks_site", "webhooks(site)"),
+        ("idx_dqw_warnings_site", "dqw_warnings(site)"),
+        ("idx_workbook_views_site", "workbook_views(site)"),
+        ("idx_background_job_log_site", "background_job_log(site)"),
+        ("idx_content_change_log_site", "content_change_log(site)"),
+    ]
+    existing_indexes = {row["name"] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='index'")}
+    for index_name, index_def in index_definitions:
+        if index_name not in existing_indexes:
+            conn.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {index_def}")
+
+
 def _run_migrations(conn):
     for table, column, decl in _COLUMN_MIGRATIONS:
         existing_cols = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
@@ -427,6 +478,7 @@ def _run_migrations(conn):
     # orphaned. No-op on every run after the first (WHERE site = '' matches nothing).
     for table in _SITE_SCOPED_TABLES:
         conn.execute(f"UPDATE {table} SET site = ? WHERE site = ''", (settings.default_site,))
+    _create_missing_indexes(conn)
 
 
 def init_db():
