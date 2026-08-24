@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Admin Dashboard - Manager Presentation Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f4f6fb 0%, #faf8f5 50%, #f0f5f8 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #2f5fdb 0%, #1e3a8a 100%);
+            color: white;
+            padding: 40px 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 24px rgba(16, 24, 40, 0.15);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(16, 24, 40, 0.1);
+        }
+
+        .nav-tab {
+            padding: 10px 16px;
+            background: #f0f0f0;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .nav-tab:hover {
+            background: #e0e0e0;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border-color: #4f46e5;
+        }
+
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tab-content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(16, 24, 40, 0.1);
+        }
+
+        .tab-content h2 {
+            color: #2f5fdb;
+            font-size: 2em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tab-content h3 {
+            color: #1e3a8a;
+            font-size: 1.4em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .purpose {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+            padding: 15px;
+            border-left: 4px solid #6366f1;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .talking-points {
+            margin-bottom: 25px;
+        }
+
+        .talking-points ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .talking-points li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .talking-points li:before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #6366f1;
+            font-weight: bold;
+        }
+
+        .talking-points strong {
+            color: #2f5fdb;
+        }
+
+        .when-to-use {
+            background: #f9f5ff;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border: 1px solid #e9d5ff;
+        }
+
+        .when-to-use strong {
+            color: #6b21a8;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: #f5f3ff;
+            border: 2px solid #e9d5ff;
+            border-radius: 8px;
+            padding: 15px;
+            transition: all 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        .feature-card h4 {
+            color: #6366f1;
+            margin-bottom: 10px;
+        }
+
+        .example-box {
+            background: linear-gradient(135deg, #dbeafe 0%, #ede9fe 100%);
+            border: 2px solid #93c5fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            color: #1e3a8a;
+        }
+
+        .tips-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(16, 24, 40, 0.1);
+            margin-top: 20px;
+        }
+
+        .tips-section h2 {
+            color: #2f5fdb;
+            margin-bottom: 20px;
+        }
+
+        .tip-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+            border-left: 4px solid #10b981;
+            border-radius: 4px;
+        }
+
+        .tip-item h3 {
+            color: #065f46;
+            margin-bottom: 10px;
+        }
+
+        .metric-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-right: 8px;
+            margin-bottom: 8px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            margin-top: 40px;
+            font-size: 0.9em;
+        }
+
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s;
+        }
+
+        .print-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+        }
+
+        @media print {
+            .nav-tabs, .print-button { display: none; }
+            .content-section { display: block !important; page-break-after: always; }
+            body { background: white; }
+            .container { padding: 0; }
+        }
+
+        @media (max-width: 768px) {
+            header h1 { font-size: 1.8em; }
+            .nav-tabs { flex-direction: column; }
+            .print-button { position: static; margin-bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button" onclick="window.print()">🖨️ Print / Save as PDF</button>
+
+    <div class="container">
+        <header>
+            <h1>📊 Tableau Admin Dashboard</h1>
+            <p>Manager Presentation Guide - Complete Feature Walkthrough</p>
+        </header>
+
+        <div class="nav-tabs" id="navTabs"></div>
+
+        <!-- Overview -->
+        <div class="content-section active" id="tab-overview">
+            <div class="tab-content">
+                <h2>🎯 Dashboard Overview</h2>
+                <div class="purpose">
+                    <strong>Purpose:</strong> A comprehensive internal tool for Tableau administrators at Mayo Clinic to monitor, manage, and optimize Tableau Server/Online infrastructure.
+                </div>
+                <div class="purpose">
+                    <strong>Key Value:</strong> Centralized visibility into content health, user activity, and system performance with actionable insights.
+                </div>
+
+                <h3>Primary Objectives</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>💰 Cost Optimization</h4>
+                        <p>Identify over-licensed users, inactive accounts, and opportunities to reduce spend while maintaining service quality.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔒 Risk Reduction</h4>
+                        <p>Ensure compliance, security, and data quality through continuous monitoring and automated alerts.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>⚡ Efficiency Gains</h4>
+                        <p>Replace manual reports with real-time insights, saving administrators 10+ hours per week.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📈 Scalability</h4>
+                        <p>Support growing user base and content without proportional increase in administrative overhead.</p>
+                    </div>
+                </div>
+
+                <h3>How to Use This Guide</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Select each tab above to see detailed talking points</li>
+                        <li>Use the <strong>suggested talking points</strong> when presenting each section</li>
+                        <li>Reference the <strong>"When to Use"</strong> section to determine appropriate contexts</li>
+                        <li>Customize examples with your actual data</li>
+                        <li>Print or save as PDF for reference during presentation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 1: Overview -->
+        <div class="content-section" id="tab-1">
+            <div class="tab-content">
+                <h2>⚡ Tab 1: OVERVIEW</h2>
+                <p><strong>Start Here!</strong> At-a-glance snapshot of your Tableau environment's health and activity.</p>
+
+                <h3>High-Level Metrics</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Workbooks:</strong> Total count across the site</li>
+                        <li><strong>Data Sources:</strong> Available connections and resources</li>
+                        <li><strong>Stale Content:</strong> Items not accessed in 90+ days (maintenance needs)</li>
+                        <li><strong>Custom Views:</strong> User-created views driving engagement</li>
+                        <li><strong>Subscriptions:</strong> Active scheduled deliveries</li>
+                        <li><strong>Users:</strong> Active user base across roles</li>
+                    </ul>
+                </div>
+
+                <h3>Health Score Distribution</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Average Health Score:</strong> Overall environment health (0-100 scale)</li>
+                        <li><strong>Good (80+):</strong> Well-maintained, actively used ✓</li>
+                        <li><strong>Warning (50-79):</strong> Needs attention</li>
+                        <li><strong>Critical (&lt;50):</strong> Requires immediate action</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Weekly check-ins, executive briefings, incident response triage
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Analytics -->
+        <div class="content-section" id="tab-2">
+            <div class="tab-content">
+                <h2>📈 Tab 2: ANALYTICS</h2>
+                <p>Deep-dive into content usage patterns and user engagement metrics.</p>
+
+                <h3>Key Analytics Areas</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Most Viewed Workbooks:</strong> Identify critical, heavily-used content</li>
+                        <li><strong>Average Views/Month:</strong> Engagement trends over time</li>
+                        <li><strong>Created vs. Accessed:</strong> Adoption rate of new content</li>
+                        <li><strong>Usage by Date Range:</strong> 7-day, 30-day, 90-day trends</li>
+                        <li><strong>Stale Workbooks:</strong> Candidates for archival</li>
+                    </ul>
+                </div>
+
+                <h3>Data Source Performance</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Connection frequency and criticality</li>
+                        <li>Certification status (curated vs. uncertified)</li>
+                        <li>Extract vs. live connection performance</li>
+                        <li>Dependency analysis</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Monthly business reviews, adoption tracking, capacity planning
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Workbooks -->
+        <div class="content-section" id="tab-3">
+            <div class="tab-content">
+                <h2>📋 Tab 3: WORKBOOKS</h2>
+                <p>Inventory and manage all workbooks, track ownership and dependencies.</p>
+
+                <h3>Key Workbook Metrics</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Name & Owner:</strong> Clear accountability</li>
+                        <li><strong>Project:</strong> Organizational structure</li>
+                        <li><strong>Created/Updated:</strong> Content freshness tracking</li>
+                        <li><strong>View Count:</strong> Usage indicators</li>
+                        <li><strong>Health Score:</strong> Quality assessment</li>
+                    </ul>
+                </div>
+
+                <h3>Example Use Case</h3>
+                <div class="example-box">
+                    "Show me all workbooks owned by [Department] that haven't been viewed in 90 days"
+                    <br><br>
+                    → Identifies candidates for archival
+                    <br>
+                    → Frees up maintenance burden
+                    <br>
+                    → Improves user experience (less clutter)
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Content governance reviews, ownership audit, retirement planning
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Data Sources -->
+        <div class="content-section" id="tab-4">
+            <div class="tab-content">
+                <h2>🗄️ Tab 4: DATA SOURCES</h2>
+                <p>Centralized view of all data connections, performance, and health.</p>
+
+                <h3>Data Source Monitoring</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Connection Type:</strong> Databases, clouds (AWS, Azure, GCP)</li>
+                        <li><strong>Embedded vs. Published:</strong> Reusability assessment</li>
+                        <li><strong>Certification Status:</strong> Data quality assurance</li>
+                        <li><strong>Last Refresh:</strong> Reliability and SLA compliance</li>
+                        <li><strong>Usage Count:</strong> Business criticality</li>
+                    </ul>
+                </div>
+
+                <h3>Risk Assessment</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Uncertified sources (shadow IT risk)</li>
+                        <li>Overused sources (single point of failure)</li>
+                        <li>Stale refreshes (data pipeline issues)</li>
+                        <li>Failed extracts (production incidents)</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Data governance meetings, vendor management, SLA reviews
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 5: Users -->
+        <div class="content-section" id="tab-5">
+            <div class="tab-content">
+                <h2>👥 Tab 5: USERS</h2>
+                <p>Complete user inventory with activity tracking and role management.</p>
+
+                <h3>User Inventory Insights</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Active Users:</strong> License utilization and costs</li>
+                        <li><strong>User Roles:</strong> Viewer, Explorer, Editor, Admin breakdown</li>
+                        <li><strong>Last Login:</strong> Identify inactive users (cost savings opportunity)</li>
+                        <li><strong>Inactive Users:</strong> Plan for offboarding</li>
+                        <li><strong>New Users:</strong> Onboarding success tracking</li>
+                    </ul>
+                </div>
+
+                <h3>Cost Optimization Example</h3>
+                <div class="example-box">
+                    "If we have 50 Editors with &lt;5 logins in 90 days at $50/month each:<br>
+                    → Current cost: $2,500/month<br>
+                    → Downgrade 40 to Viewers: Save $2,000/month<br>
+                    → Annual savings: $24,000 with no functionality loss"
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Quarterly cost reviews, access audits, license reconciliation
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 6: Permissions -->
+        <div class="content-section" id="tab-6">
+            <div class="tab-content">
+                <h2>🔐 Tab 6: PERMISSIONS</h2>
+                <p>Audit and manage permissions across all content items.</p>
+
+                <h3>Permission Management</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>View/Interact:</strong> Read-only access</li>
+                        <li><strong>Edit:</strong> Create and modify content</li>
+                        <li><strong>Administer:</strong> Full control and publishing rights</li>
+                    </ul>
+                </div>
+
+                <h3>Security & Compliance</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Granular controls at workbook and view level</li>
+                        <li>Group-based access for simplified admin</li>
+                        <li>Complete audit trail of changes</li>
+                        <li>Compliance with HIPAA, SOX requirements</li>
+                    </ul>
+                </div>
+
+                <h3>Risk Detection</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Excessive permissions on user accounts</li>
+                        <li>Orphaned access (inactive with permissions)</li>
+                        <li>Over-shared public content</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Security audits, compliance reviews, incident investigation
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 7: Lineage -->
+        <div class="content-section" id="tab-7">
+            <div class="tab-content">
+                <h2>🔗 Tab 7: LINEAGE</h2>
+                <p>Visualize data flow and dependencies across the platform.</p>
+
+                <h3>Dependency Mapping</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Data Source to Workbook:</strong> What breaks if source goes down</li>
+                        <li><strong>Workbook Relationships:</strong> Cross-dashboard dependencies</li>
+                        <li><strong>User Impact:</strong> How many people affected by each component</li>
+                        <li><strong>Change Management:</strong> Assess impact before modifications</li>
+                    </ul>
+                </div>
+
+                <h3>Common Use Cases</h3>
+                <div class="example-box">
+                    "What happens if [Database] goes down?" → See all dependent workbooks<br>
+                    "Can we deprecate [Data Source]?" → Check if still in use<br>
+                    "Why is [Workbook] running slow?" → Trace to upstream data sources
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Architecture reviews, change control boards, disaster recovery planning
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 8: Custom Views -->
+        <div class="content-section" id="tab-8">
+            <div class="tab-content">
+                <h2>🎨 Tab 8: CUSTOM VIEWS</h2>
+                <p>Track user-created views that drive adoption and engagement.</p>
+
+                <h3>Engagement Metrics</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>User Empowerment:</strong> Ability to create personalized views</li>
+                        <li><strong>Self-Service Adoption:</strong> Reduced IT dependency</li>
+                        <li><strong>Active Usage:</strong> Indicator of platform value</li>
+                        <li><strong>Training Validation:</strong> Shows platform proficiency</li>
+                    </ul>
+                </div>
+
+                <h3>Key Insight</h3>
+                <div class="example-box">
+                    "Users who create custom views are typically 3x more engaged than passive viewers. This is a leading adoption indicator."
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Adoption metrics, user satisfaction surveys, feature tracking
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 9: Subscriptions -->
+        <div class="content-section" id="tab-9">
+            <div class="tab-content">
+                <h2>📧 Tab 9: SUBSCRIPTIONS</h2>
+                <p>Monitor scheduled content delivery and user engagement.</p>
+
+                <h3>Subscription Tracking</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Active Subscriptions:</strong> Engagement level</li>
+                        <li><strong>Frequency:</strong> Daily, weekly, monthly schedules</li>
+                        <li><strong>Recipients:</strong> Who's getting what content</li>
+                        <li><strong>Delivery Status:</strong> Success/failure rates</li>
+                    </ul>
+                </div>
+
+                <h3>Business Value</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Cost of email delivery and compute resources</li>
+                        <li>ROI: Are users actually reading content?</li>
+                        <li>Notification fatigue reduction</li>
+                        <li>Subscription optimization opportunities</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Email governance reviews, notification optimization, cost analysis
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 10: Connected Apps -->
+        <div class="content-section" id="tab-10">
+            <div class="tab-content">
+                <h2>🔌 Tab 10: CONNECTED APPS</h2>
+                <p>Monitor third-party applications integrated with Tableau.</p>
+
+                <h3>Integration Oversight</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Authorized Applications:</strong> Approved integrations only</li>
+                        <li><strong>Approval Status:</strong> Governance compliance</li>
+                        <li><strong>Data Access:</strong> What data leaves Tableau</li>
+                        <li><strong>Security:</strong> Authentication and encryption</li>
+                    </ul>
+                </div>
+
+                <h3>Risk Management</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Unauthorized connections detection</li>
+                        <li>Data exfiltration monitoring</li>
+                        <li>Compliance tracking</li>
+                        <li>Compromised credential response</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Security reviews, vendor management, compliance audits
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 11: Data Alerts -->
+        <div class="content-section" id="tab-11">
+            <div class="tab-content">
+                <h2>🔔 Tab 11: DATA ALERTS</h2>
+                <p>Set up automated alerts based on data thresholds.</p>
+
+                <h3>Alert Management</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Active Alerts:</strong> Monitoring critical metrics</li>
+                        <li><strong>Trigger Conditions:</strong> What activates alerts</li>
+                        <li><strong>Recipients:</strong> Who gets notified</li>
+                        <li><strong>Response Time:</strong> Time to resolution</li>
+                    </ul>
+                </div>
+
+                <h3>Example Use Cases</h3>
+                <div class="example-box">
+                    Alert when revenue drops below $X<br>
+                    Notify if data refresh fails<br>
+                    Flag when KPI misses target
+                </div>
+
+                <h3>Value Proposition</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Proactive management - catch issues first</li>
+                        <li>24/7 monitoring without manual checks</li>
+                        <li>Risk reduction through data-driven alerts</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Operational risk reviews, SLA discussions, executive dashboards
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 12: Site Settings -->
+        <div class="content-section" id="tab-12">
+            <div class="tab-content">
+                <h2>⚙️ Tab 12: SITE SETTINGS</h2>
+                <p>Manage global configuration and site-wide policies.</p>
+
+                <h3>Administrative Controls</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Site name and branding</li>
+                        <li>License allocation limits</li>
+                        <li>Extract performance settings</li>
+                        <li>Email delivery configuration</li>
+                        <li>Security policies (passwords, sessions, auth)</li>
+                    </ul>
+                </div>
+
+                <h3>Governance Framework</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Data retention policies</li>
+                        <li>API access controls</li>
+                        <li>Data certification enforcement</li>
+                        <li>Publication and modification rules</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Security reviews, compliance audits, performance tuning
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 13: Security Certs -->
+        <div class="content-section" id="tab-13">
+            <div class="tab-content">
+                <h2>🛡️ Tab 13: SECURITY CERTS</h2>
+                <p>Track and enforce data certification for trusted sources.</p>
+
+                <h3>Certification Program</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Certified Sources:</strong> Vetted, production-ready data</li>
+                        <li><strong>Certification Status:</strong> Current, expired, or pending</li>
+                        <li><strong>Certifier:</strong> Who approved the data source</li>
+                        <li><strong>Audit Trail:</strong> When and why certification occurred</li>
+                    </ul>
+                </div>
+
+                <h3>Governance Benefits</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Data quality assurance</li>
+                        <li>Compliance documentation</li>
+                        <li>User trust in curated sources</li>
+                        <li>Reduced shadow IT</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Data governance rollouts, quality programs, compliance reviews
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 14: Config Audit -->
+        <div class="content-section" id="tab-14">
+            <div class="tab-content">
+                <h2>📝 Tab 14: CONFIG AUDIT</h2>
+                <p>Track all configuration changes for compliance and troubleshooting.</p>
+
+                <h3>Change Tracking</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>What Changed:</strong> Configuration item and new value</li>
+                        <li><strong>Who Changed It:</strong> Administrator accountability</li>
+                        <li><strong>When It Changed:</strong> Timestamp for correlation</li>
+                        <li><strong>Why (if available):</strong> Change reason/ticket number</li>
+                    </ul>
+                </div>
+
+                <h3>Common Queries</h3>
+                <div class="example-box">
+                    "When did we change the authentication method?"<br>
+                    "Who modified the extract schedule?"<br>
+                    "What changed before this performance issue?"
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Incident post-mortems, compliance audits, performance troubleshooting
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 15: Content Changes -->
+        <div class="content-section" id="tab-15">
+            <div class="tab-content">
+                <h2>📊 Tab 15: CONTENT CHANGES</h2>
+                <p>Monitor modifications to workbooks, dashboards, and data sources.</p>
+
+                <h3>Change Tracking</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Created/Modified:</strong> Content version history</li>
+                        <li><strong>Last Accessed:</strong> Usage recency</li>
+                        <li><strong>Owner Changes:</strong> Identify orphaned content</li>
+                        <li><strong>Documentation Updates:</strong> Description changes</li>
+                    </ul>
+                </div>
+
+                <h3>Quality Assurance</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Rapid changes identification (unstable content)</li>
+                        <li>Deprecated workbooks ready for retirement</li>
+                        <li>New content onboarding tracking</li>
+                        <li>Maintenance review schedules</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Content governance, version control, quality reviews
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 16: License Usage -->
+        <div class="content-section" id="tab-16">
+            <div class="tab-content">
+                <h2>💰 Tab 16: LICENSE USAGE</h2>
+                <p>Monitor license consumption and identify cost optimization.</p>
+
+                <h3>License Tracking</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Active Licenses:</strong> Current spend</li>
+                        <li><strong>License Types:</strong> Viewer, Explorer, Editor distribution</li>
+                        <li><strong>Inactive Users:</strong> Non-using licenses (cost waste)</li>
+                        <li><strong>Over-Provisioning:</strong> Excess capacity</li>
+                    </ul>
+                </div>
+
+                <h3>Cost Optimization Strategy</h3>
+                <div class="example-box">
+                    → Right-sizing: Match roles to actual needs<br>
+                    → Downgrade candidates: Identify users ready for lower tier<br>
+                    → ROI calculation: Cost per active user
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Quarterly business reviews, budget planning, CFO presentations
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 17: Background Jobs -->
+        <div class="content-section" id="tab-17">
+            <div class="tab-content">
+                <h2>⏳ Tab 17: BACKGROUND JOBS</h2>
+                <p>Monitor long-running tasks and system resource usage.</p>
+
+                <h3>Job Monitoring</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Extract Refresh:</strong> Data pipeline performance</li>
+                        <li><strong>Report Generation:</strong> Subscription and scheduled jobs</li>
+                        <li><strong>Data Source Connections:</strong> Query performance</li>
+                        <li><strong>Queue Time:</strong> User experience indicator</li>
+                    </ul>
+                </div>
+
+                <h3>Performance Metrics</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Success rate (job reliability)</li>
+                        <li>Average runtime (performance trends)</li>
+                        <li>Peak times (capacity planning data)</li>
+                        <li>Failed jobs (incident identification)</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Performance optimization, capacity planning, SLA reviews
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 18: Health -->
+        <div class="content-section" id="tab-18">
+            <div class="tab-content">
+                <h2>💚 Tab 18: HEALTH</h2>
+                <p>Comprehensive health scoring for all content items.</p>
+
+                <h3>Health Score Factors</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Freshness:</strong> When was data last updated (0-100)</li>
+                        <li><strong>Usage:</strong> Active access and engagement (0-100)</li>
+                        <li><strong>Dependencies:</strong> Part of larger ecosystem</li>
+                        <li><strong>Maintenance:</strong> Documentation and ownership</li>
+                        <li><strong>Performance:</strong> Load times and resource usage</li>
+                    </ul>
+                </div>
+
+                <h3>Health Status Levels</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><span class="metric-badge">🟢 Good (80+)</span> Well-maintained, actively used</li>
+                        <li><span class="metric-badge">🟡 Warning (50-79)</span> Needs attention, usage declining</li>
+                        <li><span class="metric-badge">🔴 Critical (&lt;50)</span> Immediate action required</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Bi-weekly health reviews, risk assessments, prioritization
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 19: Findings -->
+        <div class="content-section" id="tab-19">
+            <div class="tab-content">
+                <h2>🚩 Tab 19: FINDINGS</h2>
+                <p>Centralized issue tracking and remediation.</p>
+
+                <h3>Issue Management</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Categories:</strong> Data quality, performance, security, maintenance, adoption</li>
+                        <li><strong>Severity:</strong> Critical, High, Medium, Low</li>
+                        <li><strong>Status:</strong> Open, Acknowledged, Resolved, Dismissed</li>
+                    </ul>
+                </div>
+
+                <h3>Key Features</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Filter & prioritize critical issues</li>
+                        <li>Export capability for stakeholder communication</li>
+                        <li>Assignment and ownership tracking</li>
+                        <li>Status history and resolution trends</li>
+                    </ul>
+                </div>
+
+                <h3>Business Value</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Risk management through proactive identification</li>
+                        <li>Compliance documentation</li>
+                        <li>Transparency across team</li>
+                        <li>Accountability and tracking</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Weekly status meetings, sprint planning, escalation management
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 20: Refresh Health -->
+        <div class="content-section" id="tab-20">
+            <div class="tab-content">
+                <h2>🔄 Tab 20: REFRESH HEALTH</h2>
+                <p>Monitor data refresh cycles and extract performance.</p>
+
+                <h3>Refresh Metrics</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li><strong>Success Rate:</strong> Data pipeline reliability</li>
+                        <li><strong>Average Runtime:</strong> Performance trending</li>
+                        <li><strong>Failed Refreshes:</strong> Incident alert</li>
+                        <li><strong>Schedule Adherence:</strong> On-time delivery</li>
+                        <li><strong>Resource Utilization:</strong> CPU, memory, I/O</li>
+                    </ul>
+                </div>
+
+                <h3>SLA Management</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Refresh guarantees and commitments</li>
+                        <li>Recovery procedures</li>
+                        <li>Planned maintenance windows</li>
+                        <li>User communication protocols</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Operational dashboards, incident response, SLA reviews
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 21: Help -->
+        <div class="content-section" id="tab-21">
+            <div class="tab-content">
+                <h2>❓ Tab 21: HELP</h2>
+                <p>Self-service support and FAQ.</p>
+
+                <h3>Support Resources</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Getting started guides</li>
+                        <li>Common task how-tos</li>
+                        <li>Troubleshooting FAQ</li>
+                        <li>Best practices</li>
+                        <li>Support escalation procedures</li>
+                    </ul>
+                </div>
+
+                <h3>Support Efficiency</h3>
+                <div class="talking-points">
+                    <ul>
+                        <li>Reduce support tickets through self-service</li>
+                        <li>Faster user onboarding</li>
+                        <li>Standardized procedures</li>
+                        <li>Continuous improvement feedback loop</li>
+                    </ul>
+                </div>
+
+                <div class="when-to-use">
+                    <strong>When to Use:</strong> Onboarding, user training, support efficiency discussions
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div class="tips-section">
+            <h2>💡 Presentation Tips</h2>
+
+            <div class="tip-item">
+                <h3>1. Start with Overview</h3>
+                <p>Show the dashboard's purpose and value proposition. Highlight key metrics that matter to executives. Explain how it reduces manual work.</p>
+            </div>
+
+            <div class="tip-item">
+                <h3>2. Use Real Data</h3>
+                <p>Navigate to actual data in your environment. Show specific examples relevant to Mayo Clinic. Demonstrate filtering and search capabilities.</p>
+            </div>
+
+            <div class="tip-item">
+                <h3>3. Focus on Business Value</h3>
+                <p><strong>Cost savings:</strong> License optimization, reduced support tickets | <strong>Risk reduction:</strong> Compliance, security, data quality | <strong>Efficiency:</strong> Centralized visibility, automation</p>
+            </div>
+
+            <div class="tip-item">
+                <h3>4. Demo Workflow</h3>
+                <p>Walk through a realistic use case: "Let's find all stale workbooks in [Department]". Show filtering, exporting, and action items. Demonstrate how to assign remediation work.</p>
+            </div>
+
+            <div class="tip-item">
+                <h3>5. Highlight Recent Work</h3>
+                <p>Show the modern design improvements with glassmorphism and 3D effects. Explain performance optimizations (10x faster SQL aggregations). Emphasize reliability and stability.</p>
+            </div>
+        </div>
+
+        <!-- Executive Talking Points -->
+        <div class="tips-section">
+            <h2>👔 Key Talking Points for Executives</h2>
+
+            <div class="tip-item">
+                <h3>Cost Optimization</h3>
+                <p>"The dashboard identified 50 inactive licenses costing $1,500/month. Downgrading them to Viewer tier could save $12,000/year while maintaining read-only access."</p>
+            </div>
+
+            <div class="tip-item">
+                <h3>Risk Reduction</h3>
+                <p>"We now have complete visibility into data freshness, permissions, and dependencies. This enables rapid incident response and compliance documentation."</p>
+            </div>
+
+            <div class="tip-item">
+                <h3>Time Savings</h3>
+                <p>"Instead of manual reports, administrators now see real-time health scores and actionable recommendations. We estimate 10+ hours/week saved on operational tasks."</p>
+            </div>
+
+            <div class="tip-item">
+                <h3>Scalability</h3>
+                <p>"As we grow our Tableau user base, this dashboard gives us the tools to manage at scale without proportional increase in admin headcount."</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>📊 Tableau Admin Dashboard - Manager Presentation Guide</p>
+            <p>Last Updated: August 2026 | Status: ✅ Production Ready</p>
+            <p>Contact: Rohit Nethikar | Print/Save as PDF using the button in the top right</p>
+        </div>
+    </div>
+
+    <script>
+        const tabs = [
+            'overview', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+            '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21'
+        ];
+
+        const labels = [
+            '🎯 Overview', '⚡ Overview', '📈 Analytics', '📋 Workbooks', '🗄️ Data Sources',
+            '👥 Users', '🔐 Permissions', '🔗 Lineage', '🎨 Custom Views', '📧 Subscriptions',
+            '🔌 Connected Apps', '🔔 Data Alerts', '⚙️ Site Settings', '🛡️ Security Certs',
+            '📝 Config Audit', '📊 Content Changes', '💰 License Usage', '⏳ Background Jobs',
+            '💚 Health', '🚩 Findings', '🔄 Refresh Health', '❓ Help'
+        ];
+
+        const navTabs = document.getElementById('navTabs');
+        tabs.forEach((tab, index) => {
+            const btn = document.createElement('button');
+            btn.className = `nav-tab ${index === 0 ? 'active' : ''}`;
+            btn.textContent = labels[index];
+            btn.onclick = () => switchTab(tab);
+            navTabs.appendChild(btn);
+        });
+
+        function switchTab(tab) {
+            tabs.forEach(t => {
+                document.getElementById(`tab-${t}`).classList.remove('active');
+            });
+            document.getElementById(`tab-${tab}`).classList.add('active');
+
+            document.querySelectorAll('.nav-tab').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
