@@ -11,6 +11,15 @@
   --glass-border: rgba(255, 255, 255, 0.5);
 }
 
+/* Ensure all text is visible */
+* {
+  color: inherit;
+}
+
+p, span, div, li, label, h1, h2, h3, h4, h5, h6 {
+  color: var(--ink);
+}
+
 /* ================================
    GLASSMORPHISM EFFECTS
    ================================ */
@@ -67,6 +76,20 @@
   box-shadow: var(--shadow-3d-md);
 }
 
+/* Card Text Elements - Always Visible */
+.card-body {
+  color: var(--ink) !important;
+}
+
+.card-title {
+  color: var(--ink) !important;
+  font-weight: 700;
+}
+
+.card-text {
+  color: #555 !important;
+}
+
 /* ================================
    STAT CARDS - ENHANCED 3D
    ================================ */
@@ -110,6 +133,11 @@
   animation: glow-pulse 1.5s ease-in-out infinite;
 }
 
+.stat-label {
+  color: #666 !important;
+  font-weight: 500;
+}
+
 .stat-icon {
   width: 48px;
   height: 48px;
@@ -121,6 +149,7 @@
   box-shadow: 0 4px 12px rgba(47, 95, 219, 0.2);
   transition: all 0.3s ease;
   background: linear-gradient(135deg, rgba(47, 95, 219, 0.1) 0%, rgba(47, 95, 219, 0.05) 100%);
+  color: var(--accent);
 }
 
 .stat-card:hover .stat-icon {
