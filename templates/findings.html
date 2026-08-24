@@ -9,53 +9,6 @@
   disappears on its own. Every status change is written to the audit log.
 </p>
 
-<div class="row g-3 mb-4">
-  <div class="col-6 col-md-3">
-    <div class="card stat-card h-100">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-flag"></i></div>
-        <div>
-          <div class="stat-number">{{ total_count }}</div>
-          <div class="stat-label">Matching Findings</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card stat-card h-100">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
-        <div>
-          <div class="stat-number">{{ open_count }}</div>
-          <div class="stat-label">Open</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card stat-card h-100">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-octagon"></i></div>
-        <div>
-          <div class="stat-number">{{ critical_count }}</div>
-          <div class="stat-label">Critical</div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-6 col-md-3">
-    <div class="card stat-card h-100">
-      <div class="card-body d-flex align-items-center gap-3">
-        <div class="stat-icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-triangle"></i></div>
-        <div>
-          <div class="stat-number">{{ high_count }}</div>
-          <div class="stat-label">High</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <form method="get" action="{{ url_for('findings.list_findings') }}" class="row g-2 mb-3">
   <div class="col-md-2">
     <select name="severity" class="form-select form-select-sm">

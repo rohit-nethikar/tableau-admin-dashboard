@@ -59,46 +59,6 @@
       </div>
     </div>
   </div>
-  <div class="col-md-2">
-    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
-      <div class="card-body" style="padding: 16px;">
-        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.workbook_count }}</div>
-        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Workbooks</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-2">
-    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
-      <div class="card-body" style="padding: 16px;">
-        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.view_count }}</div>
-        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Views</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-2">
-    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
-      <div class="card-body" style="padding: 16px;">
-        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.user_count }}</div>
-        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Users</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-2">
-    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
-      <div class="card-body" style="padding: 16px;">
-        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.active_users_30d }}</div>
-        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Active (≤30d)</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-2">
-    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
-      <div class="card-body" style="padding: 16px;">
-        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.never_signed_in }}</div>
-        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Never Signed In</div>
-      </div>
-    </div>
-  </div>
 </div>
 
 <!-- Charts Grid (2x2) -->
@@ -172,34 +132,6 @@
       <div class="card-body">
         <h5 style="color: var(--text-primary); margin-bottom: 16px;">🏢 Organization Breakdown</h5>
         <canvas id="owner-domain-chart" height="250"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Custom Views Summary Stats Cards -->
-<div class="row g-3 mb-4">
-  <div class="col-md-4">
-    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
-      <div class="card-body" style="padding: 16px;">
-        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_count }}</div>
-        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Custom Views</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
-      <div class="card-body" style="padding: 16px;">
-        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_owners }}</div>
-        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Distinct Owners</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light); text-align: center;">
-      <div class="card-body" style="padding: 16px;">
-        <div style="font-size: 24px; font-weight: 700; color: var(--accent);">{{ summary.custom_view_domains }}</div>
-        <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">Owner Domains</div>
       </div>
     </div>
   </div>

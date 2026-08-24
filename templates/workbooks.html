@@ -36,9 +36,6 @@
       <th>Name</th>
       <th>Project</th>
       <th>Owner</th>
-      <th>Owner Email</th>
-      <th>Owner Role</th>
-      <th>Owner Last Login</th>
       <th>Last Updated</th>
       <th>Stale?</th>
       <th>Extract Status</th>
@@ -65,9 +62,6 @@
       <td><strong>{{ wb.name }}</strong></td>
       <td>{{ wb.project_name if wb.project_name else ('<span class="badge" style="background-color: var(--neutral); color: white; padding: 4px 8px; border-radius: 4px;">Personal Space</span>' | safe) }}</td>
       <td>{{ wb.owner_name or "" }}</td>
-      <td><span style="font-family: monospace; color: var(--accent);">{{ wb.owner_email or "" }}</span></td>
-      <td><span class="badge badge-info" style="white-space: nowrap;">{{ wb.owner_site_role or "" }}</span></td>
-      <td><span style="color: var(--text-secondary);">{{ wb.owner_last_login_at or "—" }}</span></td>
       <td><span style="color: var(--text-secondary);">{{ wb.updated_at or "—" }}</span></td>
       <td>{% if wb.is_stale %}<span class="badge badge-warning">⚠️ Stale</span>{% else %}<span class="badge badge-success">✅ Fresh</span>{% endif %}</td>
       <td>{% if wb.extract_status %}{{ wb.extract_status }}{% else %}—{% endif %}</td>

@@ -30,9 +30,6 @@
       <th>Name</th>
       <th>Project</th>
       <th>Owner</th>
-      <th>Owner Email</th>
-      <th>Owner Role</th>
-      <th>Owner Last Login</th>
       <th>Certified?</th>
       <th>Description</th>
       <th>Type</th>
@@ -62,9 +59,6 @@
       <td>{{ ds.name }}</td>
       <td>{{ ds.project_name or "" }}</td>
       <td>{{ ds.owner_name or "" }}</td>
-      <td>{{ ds.owner_email or "" }}</td>
-      <td>{{ ds.owner_site_role or "" }}</td>
-      <td>{{ ds.owner_last_login_at or "" }}</td>
       <td>{{ "Yes" if ds.is_certified else "No" }}</td>
       <td>{{ ds.description or "" }}</td>
       <td>{{ ds.datasource_type or "" }}</td>
