@@ -17,7 +17,9 @@ try:
 
     print("Step 3: Starting Waitress server...")
     from waitress import serve
-    serve(app, host=settings.host, port=settings.port)
+    # Waitress defaults to a 1 GiB request body cap, which rejects a multi-GB
+    # .twbx upload (Workbook Compare) before it ever reaches Flask. Raise it.
+    serve(app, host=settings.host, port=settings.port, max_request_body_size=10 * 1024 ** 3)
 
 except Exception as e:
     print(f"\nERROR: {e}")

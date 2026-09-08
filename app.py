@@ -35,6 +35,7 @@ from routes import (
     subscriptions,
     users,
     webhooks,
+    workbook_compare,
     workbooks,
 )
 
@@ -139,6 +140,7 @@ def create_app():
     app.register_blueprint(overview.bp)
     app.register_blueprint(content_changes.bp)
     app.register_blueprint(workbooks.bp)
+    app.register_blueprint(workbook_compare.bp)
     app.register_blueprint(datasources.bp)
     app.register_blueprint(permissions.bp)
     app.register_blueprint(lineage.bp)
@@ -233,7 +235,9 @@ app = create_app()
 
 if __name__ == "__main__":
     print("Starting Tableau Admin Dashboard (HTTP-only mode)")
-    serve(app, host=settings.host, port=settings.port)
+    # Waitress defaults to a 1 GiB request body cap, which rejects a multi-GB
+    # .twbx upload (Workbook Compare) before it ever reaches Flask. Raise it.
+    serve(app, host=settings.host, port=settings.port, max_request_body_size=10 * 1024 ** 3)
 
 
 

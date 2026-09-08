@@ -98,6 +98,30 @@ def list_datasources(server) -> list:
     return list(TSC.Pager(server.datasources))
 
 
+def find_workbook_by_id_or_name(server, id_or_name: str):
+    """Resolves a workbook for Workbook Compare - tries as a LUID first, then falls
+    back to a unique name match (case-insensitive) since the compare UI lets a user
+    pick by name from the cached workbook list."""
+    try:
+        return server.workbooks.get_by_id(id_or_name)
+    except Exception:
+        pass
+
+    matches = [wb for wb in TSC.Pager(server.workbooks) if wb.name.lower() == id_or_name.lower()]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        raise ValueError(f"Workbook name '{id_or_name}' is not unique on this site - {len(matches)} matches.")
+    return None
+
+
+def download_workbook_definition(server, workbook_id: str, download_dir: str) -> str:
+    """Downloads the PUBLISHED workbook's definition (.twbx) WITHOUT the extract, for
+    Workbook Compare. Read-only - never publishes, overwrites, or mutates anything on
+    the server. Returns the local file path."""
+    return server.workbooks.download(workbook_id, filepath=download_dir, include_extract=False)
+
+
 def _summarize_connection_types(connections) -> str:
     """TSC's ConnectionItem.connection_type is the underlying DB driver name (e.g.
     "postgres", "hyper"), not a literal live/extract flag - "hyper" is the value used
