@@ -1,0 +1,579 @@
+<title>Custom View Impact Guide</title>
+<style>
+  :root {
+    --paper: #F2F6F6;
+    --paper-raised: #E9EFEF;
+    --ink: #16232E;
+    --ink-muted: #4B5C66;
+    --line: #C9D8DA;
+    --accent: #2B5C82;
+    --accent-soft: #DCE9EE;
+    --risk-high: #B23A2E;
+    --risk-high-bg: #F6E2DF;
+    --risk-med: #8A5F1B;
+    --risk-med-bg: #F3E6CE;
+    --risk-low: #3F6B52;
+    --risk-low-bg: #DEEBE3;
+    --chip-bg: #E4EDEE;
+    --chip-text: #1E3A50;
+    --serif: "Fraunces", Georgia, "Iowan Old Style", serif;
+    --sans: "Public Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono: "IBM Plex Mono", "SFMono-Regular", Consolas, Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #101A22;
+      --paper-raised: #16232C;
+      --ink: #E7EEEF;
+      --ink-muted: #9FB1B8;
+      --line: #2B3D45;
+      --accent: #8CC1E2;
+      --accent-soft: #1D3444;
+      --risk-high: #E2695A;
+      --risk-high-bg: #3A211E;
+      --risk-med: #E3B564;
+      --risk-med-bg: #3A2E17;
+      --risk-low: #7FBE95;
+      --risk-low-bg: #1E3327;
+      --chip-bg: #1B2932;
+      --chip-text: #9FD1E8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #101A22;
+    --paper-raised: #16232C;
+    --ink: #E7EEEF;
+    --ink-muted: #9FB1B8;
+    --line: #2B3D45;
+    --accent: #8CC1E2;
+    --accent-soft: #1D3444;
+    --risk-high: #E2695A;
+    --risk-high-bg: #3A211E;
+    --risk-med: #E3B564;
+    --risk-med-bg: #3A2E17;
+    --risk-low: #7FBE95;
+    --risk-low-bg: #1E3327;
+    --chip-bg: #1B2932;
+    --chip-text: #9FD1E8;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  ::selection { background: var(--accent-soft); color: var(--ink); }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  code, .tok {
+    font-family: var(--mono);
+    font-size: 0.86em;
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    padding: 0.08em 0.4em;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+
+  .page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 3.2rem 1.5rem 6rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .titleblock { animation: rise 0.5s ease-out; }
+    @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  }
+
+  /* ---------- Title block ---------- */
+  .titleblock {
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--line);
+    padding: 1.6rem 0 1.4rem;
+    margin-bottom: 2.6rem;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.7rem;
+  }
+  h1.doctitle {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0 0 0.6rem;
+  }
+  .dek {
+    font-size: 1.05rem;
+    color: var(--ink-muted);
+    max-width: 62ch;
+    margin: 0 0 1.5rem;
+  }
+  .metarow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.9rem 1.6rem;
+    padding-top: 1.1rem;
+    border-top: 1px dashed var(--line);
+  }
+  .metaitem dt {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    margin: 0 0 0.2rem;
+  }
+  .metaitem dd { margin: 0; font-size: 0.9rem; }
+
+  /* ---------- Contents ---------- */
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.4rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1rem 1.3rem;
+    margin-bottom: 3rem;
+    font-size: 0.9rem;
+  }
+  nav.toc .toclabel {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+    width: 100%;
+    margin-bottom: 0.3rem;
+  }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { color: var(--accent); text-decoration: underline; }
+  nav.toc .n { color: var(--accent); font-family: var(--mono); margin-right: 0.35em; }
+
+  /* ---------- Sections ---------- */
+  section { margin-bottom: 3.4rem; }
+  section > .eyebrow { margin-bottom: 0.5rem; }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.5rem;
+    text-wrap: balance;
+    margin: 0 0 0.9rem;
+  }
+  section > p.lead {
+    max-width: 66ch;
+    color: var(--ink-muted);
+    margin: 0 0 1.4rem;
+  }
+  p { max-width: 68ch; }
+
+  /* ---------- Mental-model diagram ---------- */
+  .diagram-wrap {
+    overflow-x: auto;
+    margin: 1.6rem 0 1.8rem;
+  }
+  .diagram-wrap svg { display: block; min-width: 640px; }
+  .dbox rect { fill: var(--paper-raised); stroke: var(--line); stroke-width: 1; }
+  .dbox.accent rect { stroke: var(--accent); }
+  .dbox text.title { font-family: var(--sans); font-weight: 600; font-size: 13px; fill: var(--ink); }
+  .dbox text.sub { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-muted); }
+  .dedge line { stroke: var(--ink-muted); stroke-width: 1.2; }
+  .dedge text { font-family: var(--mono); font-size: 10px; fill: var(--ink-muted); }
+  .dedge.fragile text { fill: var(--risk-high); }
+  .dedge.stable text { fill: var(--risk-low); }
+  marker path { fill: var(--ink-muted); }
+
+  .identity-pair {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin: 1.6rem 0;
+  }
+  .idcard {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1rem 1.1rem;
+    background: var(--paper-raised);
+  }
+  .idcard h3 {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 0.5rem;
+  }
+  .idcard p { margin: 0; font-size: 0.92rem; color: var(--ink); max-width: none; }
+
+  /* ---------- Risk rows ---------- */
+  .tier-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7rem;
+    margin-bottom: 0.3rem;
+  }
+  .tier-badge {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    padding: 0.15em 0.55em;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .tier-badge.high { color: var(--risk-high); background: var(--risk-high-bg); }
+  .tier-badge.med { color: var(--risk-med); background: var(--risk-med-bg); }
+  .tier-badge.low { color: var(--risk-low); background: var(--risk-low-bg); }
+
+  .rowlist { border-top: 1px solid var(--line); }
+  .row {
+    display: grid;
+    grid-template-columns: minmax(200px, 340px) 1fr;
+    gap: 0.4rem 1.6rem;
+    padding: 1rem 0 1rem 0.9rem;
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .row::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.55rem; bottom: 0.55rem;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--stripe, var(--line));
+  }
+  .row.high { --stripe: var(--risk-high); }
+  .row.med { --stripe: var(--risk-med); }
+  .row.low { --stripe: var(--risk-low); }
+  .row .what { font-weight: 600; font-size: 0.96rem; }
+  .row .why { color: var(--ink-muted); font-size: 0.9rem; max-width: 60ch; }
+  .row .why code { white-space: normal; }
+  @media (max-width: 620px) {
+    .row { grid-template-columns: 1fr; }
+  }
+
+  .safelist {
+    list-style: none;
+    margin: 0; padding: 0;
+    display: grid;
+    gap: 0.6rem;
+  }
+  .safelist li {
+    padding: 0.7rem 0.9rem;
+    border-left: 3px solid var(--risk-low);
+    background: var(--paper-raised);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.92rem;
+  }
+
+  /* ---------- Beyond-the-file callouts ---------- */
+  .callout {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    background: var(--paper-raised);
+    border-radius: 0 4px 4px 0;
+    padding: 1rem 1.2rem;
+    margin: 0 0 1rem;
+  }
+  .callout h3 {
+    font-size: 0.98rem;
+    margin: 0 0 0.35rem;
+    font-family: var(--sans);
+    font-weight: 700;
+  }
+  .callout p { margin: 0; font-size: 0.92rem; color: var(--ink-muted); max-width: none; }
+
+  /* ---------- Checklist ---------- */
+  .checklist {
+    list-style: none;
+    margin: 0; padding: 0;
+    counter-reset: step;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .checklist li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 2.1rem 1fr;
+    gap: 0.9rem;
+    padding: 0.9rem 1.1rem;
+    background: var(--paper);
+    font-size: 0.94rem;
+  }
+  .checklist li:nth-child(odd) { background: var(--paper-raised); }
+  .checklist li:not(:last-child) { border-bottom: 1px solid var(--line); }
+  .checklist li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--mono);
+    color: var(--accent);
+    font-size: 0.85rem;
+    padding-top: 0.05rem;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.2rem;
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+</style>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="page">
+
+  <header class="titleblock">
+    <p class="eyebrow">Reference · Tableau Server &amp; Cloud administration</p>
+    <h1 class="doctitle">What breaks a Custom&nbsp;View</h1>
+    <p class="dek">Every workbook change that breaks, degrades, or leaves untouched a user's saved Custom View — plus the migration risks that live outside the workbook file entirely, where no structural diff can see them.</p>
+    <dl class="metarow">
+      <div class="metaitem"><dt>Scope</dt><dd>Content edits &amp; republish mechanics</dd></div>
+      <div class="metaitem"><dt>Applies to</dt><dd>Tableau Server, Tableau Cloud</dd></div>
+      <div class="metaitem"><dt>Grounded in</dt><dd>.twb structural analysis</dd></div>
+      <div class="metaitem"><dt>Prepared</dt><dd>September 2026</dd></div>
+    </dl>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <span class="toclabel">Contents</span>
+    <a href="#persist"><span class="n">01</span>How a Custom View persists</a>
+    <a href="#tier1"><span class="n">02</span>Tier 1 — Breaks outright</a>
+    <a href="#tier2"><span class="n">03</span>Tier 2 — Degrades silently</a>
+    <a href="#tier3"><span class="n">04</span>Tier 3 — Cosmetic, safe</a>
+    <a href="#beyond"><span class="n">05</span>Beyond the file: migration risk</a>
+    <a href="#checklist"><span class="n">06</span>Pre-migration checklist</a>
+  </nav>
+
+  <section id="persist">
+    <p class="eyebrow">01 · Mental model</p>
+    <h2>How a Custom View actually persists</h2>
+    <p class="lead">A Custom View is not stored inside the workbook file. It's a server-side snapshot — saved filters, sorts, parameter overrides, zoom, and selection state — layered on top of one specific base View. Two identifiers hold that layering together, and nearly every way a workbook change breaks a view is really just one of these two moving out from under it.</p>
+
+    <div class="identity-pair">
+      <div class="idcard">
+        <h3>View identity</h3>
+        <p>Resolved by sheet or dashboard <em>name</em> inside the workbook's LUID. Rename the sheet and the server can no longer connect the saved snapshot to it — a rename looks identical to a delete-and-recreate.</p>
+      </div>
+      <div class="idcard">
+        <h3>Field identity</h3>
+        <p>Native fields are keyed by database column name. Calculated fields get an internal token assigned once, at creation — e.g. <code>[Calculation_1428251562548719617]</code> — that survives a caption rename. Delete and recreate the calc, and it's a new token wearing an old name.</p>
+      </div>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 640 190" role="img" aria-label="Diagram: a workbook contains a named view, which a custom view layers a saved delta on top of, keyed either fragilely by name or stably by internal field token.">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z"></path>
+          </marker>
+        </defs>
+
+        <g class="dbox">
+          <rect x="14" y="70" width="150" height="52" rx="4"></rect>
+          <text class="title" x="30" y="93">Workbook</text>
+          <text class="sub" x="30" y="110">LUID: 8f2c…</text>
+        </g>
+
+        <g class="dedge fragile">
+          <line x1="164" y1="96" x2="248" y2="96" marker-end="url(#arrow)"></line>
+          <text x="168" y="86">keyed by name — fragile</text>
+        </g>
+
+        <g class="dbox">
+          <rect x="250" y="70" width="180" height="52" rx="4"></rect>
+          <text class="title" x="266" y="93">View: "Regional Sales"</text>
+          <text class="sub" x="266" y="110">sheet name = lookup key</text>
+        </g>
+
+        <g class="dedge stable">
+          <line x1="430" y1="96" x2="500" y2="96" marker-end="url(#arrow)"></line>
+          <text x="432" y="86">delta saved on top</text>
+        </g>
+
+        <g class="dbox accent">
+          <rect x="502" y="20" width="126" height="150" rx="4"></rect>
+          <text class="title" x="516" y="44">Custom View</text>
+          <text class="sub" x="516" y="64">"Q3 – East Only"</text>
+          <text class="sub" x="516" y="90">filter</text>
+          <text class="sub" x="516" y="104">[Calculation_884…]</text>
+          <text class="sub" x="516" y="122">sort: Region ↑</text>
+          <text class="sub" x="516" y="140">param: FY = 2026</text>
+          <text class="sub" x="516" y="158">keyed by token</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <section id="tier1">
+    <div class="tier-head">
+      <p class="eyebrow" style="margin:0;">02 · Tier 1</p>
+      <span class="tier-badge high">Breaks outright</span>
+    </div>
+    <h2>Changes that orphan or corrupt saved state</h2>
+    <p class="lead">Each of these severs one of the two identifiers above. The saved view either stops loading, silently resets the piece of state that referenced it, or — in the last row — is destroyed independent of any content change at all.</p>
+
+    <div class="rowlist">
+      <div class="row high">
+        <div class="what">Sheet or dashboard renamed or deleted</div>
+        <div class="why">View lookup is by name inside the workbook's LUID — a rename reads as delete-plus-new. Every custom view built on it orphans.</div>
+      </div>
+      <div class="row high">
+        <div class="what">A calc deleted and recreated with the same caption</div>
+        <div class="why">The internal token is reassigned. Every stored filter, sort, or pill referencing the old <code>[Calculation_…]</code> token now dangles — invisibly, because the caption looks unchanged.</div>
+      </div>
+      <div class="row high">
+        <div class="what">Field removed entirely</div>
+        <div class="why">Stored filters or sorts referencing its internal name can no longer resolve.</div>
+      </div>
+      <div class="row high">
+        <div class="what">Field datatype changed on a field used in a stored filter</div>
+        <div class="why">Saved values — a string vs. a number, a date range — can become invalid on reload.</div>
+      </div>
+      <div class="row high">
+        <div class="what">Parameter removed</div>
+        <div class="why">Any saved override for it resets to nothing.</div>
+      </div>
+      <div class="row high">
+        <div class="what">Filter card removed, or its field removed</div>
+        <div class="why">The saved member or range selection for that filter is dropped.</div>
+      </div>
+      <div class="row high">
+        <div class="what">Workbook republished as a new object, not overwritten in place</div>
+        <div class="why">A Save-As, or a migration path that doesn't preserve the workbook LUID, orphans every custom view for it — regardless of whether a single pixel of content changed. This is the single most common way admins lose custom views during a real migration.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tier2">
+    <div class="tier-head">
+      <p class="eyebrow" style="margin:0;">03 · Tier 2</p>
+      <span class="tier-badge med">Degrades silently</span>
+    </div>
+    <h2>Changes that shift behavior without an error</h2>
+    <p class="lead">Nothing here throws an error or an obviously broken view. The risk is a saved view that loads fine but no longer means what the user thinks it means.</p>
+
+    <div class="rowlist">
+      <div class="row med">
+        <div class="what">Field role changed (dimension ↔ measure)</div>
+        <div class="why">Shelf placement, sort, and legend state built on the old role may not survive reload.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Filter condition narrowed or widened on an unchanged field</div>
+        <div class="why">Default members or range bounds shift; a saved selection may no longer match and can silently reset to the new default.</div>
+      </div>
+      <div class="row med">
+        <div class="what">New filter added to an existing sheet</div>
+        <div class="why">A custom view's underlying data may not satisfy the new filter's default condition — it can render with no data and no error.</div>
+      </div>
+      <div class="row med">
+        <div class="what">A calculation rewritten to reference different fields</div>
+        <div class="why">Downstream filters or sorts built on that calc may behave differently even though the calc "still exists" by name.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Shelf or encoding pills changed (rows, columns, color, size, label)</div>
+        <div class="why">A saved view may not restore its exact pill layout.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Table-calc addressing changed (Compute Using / partitioning) without touching the formula</div>
+        <div class="why">Running totals, rank, and percent-of-total silently recompute differently. The formula text never moved, so a text-only diff misses it entirely.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Group bucket membership edited</div>
+        <div class="why">A saved filter still names the group — what's inside the group changed underneath it.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Set definition or computed condition changed</div>
+        <div class="why">Same failure mode as groups: a set used on a shelf or in a filter silently changes membership.</div>
+      </div>
+      <div class="row med">
+        <div class="what">"Only Relevant Values" dependency changed</div>
+        <div class="why">If the parent filter's field or values change, a dependent filter's saved selection can silently reset.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Filter, highlight, or parameter action retargeted or removed</div>
+        <div class="why">Doesn't corrupt already-saved state, but breaks the interaction a user relied on to reach that state.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Data-source join, relationship, or custom SQL changed</div>
+        <div class="why">Can shift the query grain silently — worksheets don't error, the numbers just move.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Live connection swapped for an extract, or vice versa</div>
+        <div class="why">Changes refresh timing and, in some models, what's queryable at the row level.</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tier3">
+    <div class="tier-head">
+      <p class="eyebrow" style="margin:0;">04 · Tier 3</p>
+      <span class="tier-badge low">Cosmetic, safe</span>
+    </div>
+    <h2>Changes that don't touch saved state</h2>
+    <p class="lead">Internal identifiers are untouched, so the saved view carries over exactly as the user left it.</p>
+    <ul class="safelist">
+      <li>Caption or display-name rename — the internal token underneath is unchanged.</li>
+      <li>Number formatting, default aggregation, or a field's description/comment.</li>
+      <li>Sort order that ends up matching what was already saved.</li>
+      <li>A brand-new sheet or dashboard that nothing else references yet.</li>
+    </ul>
+  </section>
+
+  <section id="beyond">
+    <p class="eyebrow">05 · Outside the file</p>
+    <h2>Migration risk a workbook diff can't see</h2>
+    <p class="lead">These don't show up in any structural comparison of the .twb — the file can be byte-for-byte the same and the view can still land wrong.</p>
+
+    <div class="callout">
+      <h3>Row-level security tied to Group names</h3>
+      <p>A filter using <code>USERNAME()</code> or <code>ISMEMBEROF('Region: West')</code> doesn't error on a new site — it just returns whatever that condition resolves to there. If the destination site has no Group of that exact name, the same custom view quietly shows different, often empty, data.</p>
+    </div>
+    <div class="callout">
+      <h3>Project moves and permission inheritance</h3>
+      <p>Custom views typically inherit permissions from the workbook rather than carrying their own. Moving a workbook to a new project can change who can even open a saved view, independent of anything inside it.</p>
+    </div>
+    <div class="callout">
+      <h3>Publish mechanics, restated</h3>
+      <p>Worth repeating outside Tier 1: overwrite preserves the workbook's LUID and everything hanging off it. Delete-and-republish, or a migration tool that creates a new content object, does not — this is a process risk, not a content risk, and it dwarfs everything else on this page when it goes wrong.</p>
+    </div>
+  </section>
+
+  <section id="checklist">
+    <p class="eyebrow">06 · Before you publish</p>
+    <h2>Pre-migration checklist</h2>
+    <ol class="checklist">
+      <li>Publish via <strong>Overwrite</strong>, or a LUID-preserving migration path — never delete-and-republish an existing workbook.</li>
+      <li>Diff the .twb structurally before and after. A visual side-by-side can't see internal field tokens, so it can't catch a delete-and-recreate hiding behind an unchanged caption.</li>
+      <li>Confirm every field used in a stored filter still exists <em>and</em> kept its datatype.</li>
+      <li>Re-check any calculation that was deleted and recreated during the edit, even when the caption is identical to before.</li>
+      <li>If the destination is a different site, confirm every Group referenced by <code>ISMEMBEROF()</code> or <code>USERNAME()</code> exists there under the same name.</li>
+      <li>Spot-check one custom view per affected sheet after publishing. A diff tool tells you what changed — not that a human confirmed the view still looks right.</li>
+    </ol>
+  </section>
+
+  <footer>
+    <span>Custom View Impact Guide</span>
+    <span>Tableau administration reference</span>
+  </footer>
+
+</div>
