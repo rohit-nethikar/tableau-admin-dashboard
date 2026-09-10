@@ -73,6 +73,38 @@ def _build_root():
     return workbook
 
 
+def _root_with_group():
+    """base_root plus a Group column (<groupfilter> directly under
+    <column>) on the Orders datasource."""
+    root = _build_root()
+    orders_ds = root.find(".//datasource[@caption='Orders']")
+    group_col = ET.SubElement(orders_ds, "column", {
+        "name": "[Region Groups]", "caption": "Region Groups", "datatype": "string", "role": "dimension",
+    })
+    gf = ET.SubElement(group_col, "groupfilter", {"function": "union", "name": "[Region Groups]"})
+    ET.SubElement(gf, "groupfilter", {"function": "member", "level": "[Region]", "member": "East"})
+    ET.SubElement(gf, "groupfilter", {"function": "member", "level": "[Region]", "member": "West"})
+    return root
+
+
+def _root_with_action():
+    """base_root plus one top-level filter action."""
+    root = _build_root()
+    actions = ET.SubElement(root, "actions")
+    action = ET.SubElement(actions, "action", {"name": "Filter Action 1"})
+    ET.SubElement(action, "filter")
+    return root
+
+
+def _root_with_windows():
+    """base_root plus a <windows> section where every sheet has a visible tab."""
+    root = _build_root()
+    windows = ET.SubElement(root, "windows")
+    ET.SubElement(windows, "window", {"class": "worksheet", "name": "Sales Summary"})
+    ET.SubElement(windows, "window", {"class": "dashboard", "name": "Overview"})
+    return root
+
+
 def _bytes(root) -> bytes:
     return ET.tostring(root, encoding="utf-8")
 
@@ -410,3 +442,345 @@ def test_calc_formula_edit_same_fields_no_referenced_field_finding(base_root):
 
     impact = classify_custom_view_impact(published, candidate, diff)
     assert not any(f["category"] == "Calculations" for f in impact["findings"])
+
+
+# --- (a) fixes: data already parsed/diffed but never surfaced to the classifier ---
+
+def test_connection_change_flags_high_data_source_finding(base_root):
+    published = _parse(base_root)
+
+    candidate_root = copy.deepcopy(base_root)
+    conn = candidate_root.find(".//named-connection/connection[@class='postgres']")
+    conn.set("server", "db2.example.com")
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    impact = classify_custom_view_impact(published, candidate, diff)
+
+    assert any(
+        f["category"] == "Data Sources" and f["severity"] == "High" and "connection changed" in f["title"]
+        for f in impact["findings"]
+    )
+    assert impact["risk_level"] == "High"
+
+
+def test_datasource_filter_added_flags_high_finding(base_root):
+    published = _parse(base_root)
+
+    candidate_root = copy.deepcopy(base_root)
+    orders_ds = candidate_root.find(".//datasource[@caption='Orders']")
+    filt = ET.SubElement(orders_ds, "filter", {"class": "categorical", "column": "[Region]"})
+    ET.SubElement(filt, "groupfilter", {"function": "member", "level": "[Region]", "member": "East"})
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    ds_filters_group = next(g for g in diff.groups if g.key == "ds_filters")
+    assert any(i.op == "add" for i in ds_filters_group.items)
+
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Data Source Filters" and f["severity"] == "High" and "added" in f["title"].lower()
+        for f in impact["findings"]
+    )
+
+
+def test_datasource_filter_removed_flags_high_finding(base_root):
+    published_root = copy.deepcopy(base_root)
+    orders_ds = published_root.find(".//datasource[@caption='Orders']")
+    filt = ET.SubElement(orders_ds, "filter", {"class": "categorical", "column": "[Region]"})
+    ET.SubElement(filt, "groupfilter", {"function": "member", "level": "[Region]", "member": "East"})
+    published = _parse(published_root)
+
+    candidate = _parse(base_root)  # no ds-level filter
+
+    diff = compute_diff(published, candidate)
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Data Source Filters" and f["severity"] == "High" and "removed" in f["title"].lower()
+        for f in impact["findings"]
+    )
+
+
+def test_datasource_filter_condition_changed_flags_high_finding(base_root):
+    published_root = copy.deepcopy(base_root)
+    orders_ds = published_root.find(".//datasource[@caption='Orders']")
+    filt = ET.SubElement(orders_ds, "filter", {"class": "categorical", "column": "[Region]"})
+    ET.SubElement(filt, "groupfilter", {"function": "member", "level": "[Region]", "member": "East"})
+    published = _parse(published_root)
+
+    candidate_root = copy.deepcopy(published_root)
+    member = candidate_root.find(".//datasource[@caption='Orders']/filter/groupfilter")
+    member.set("member", "West")
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Data Source Filters" and f["severity"] == "High" and "changed" in f["title"].lower()
+        for f in impact["findings"]
+    )
+
+
+def test_mark_type_change_flags_high_finding(base_root):
+    published = _parse(base_root)
+
+    candidate_root = copy.deepcopy(base_root)
+    view = candidate_root.find(".//worksheet[@name='Sales Summary']/table/view")
+    ET.SubElement(view, "mark", {"class": "Bar"})
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    visuals_group = next(g for g in diff.groups if g.key == "visuals")
+    assert any(any(p["attr"] == "marks" for p in i.parts) for i in visuals_group.items)
+
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Marks" and f["severity"] == "High" and "Mark type changed" in f["title"]
+        for f in impact["findings"]
+    )
+
+
+def test_parameter_caption_change_flags_medium_finding(base_root):
+    published = _parse(base_root)
+
+    candidate_root = copy.deepcopy(base_root)
+    param_col = candidate_root.find(".//datasource[@name='Parameters']/column")
+    param_col.set("caption", "Top N Value")
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Parameters" and f["severity"] == "Medium" and "caption changed" in f["title"]
+        for f in impact["findings"]
+    )
+
+
+def test_new_parameter_added_flags_low_finding(base_root):
+    published = _parse(base_root)
+
+    candidate_root = copy.deepcopy(base_root)
+    params_ds = candidate_root.find(".//datasource[@name='Parameters']")
+    new_col = ET.SubElement(params_ds, "column", {"name": "[Parameter 2]", "caption": "Bottom N", "datatype": "integer"})
+    ET.SubElement(new_col, "calculation", {"class": "tableau", "formula": "5"})
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Parameters" and f["severity"] == "Low" and "New parameter" in f["title"]
+        for f in impact["findings"]
+    )
+
+
+# --- (b) fixes: previously-unparsed constructs (Groups/Sets, Actions, hidden
+# sheets, quick-filter-card visibility, parameter domain) ---
+
+def test_group_parsed_with_members():
+    struct = _parse(_root_with_group())
+    assert "[Region Groups]" in struct.groups
+    assert struct.groups["[Region Groups]"]["members"] == ["East", "West"]
+    # A Group column is still a <column> and shows up as a field too.
+    assert "[Region Groups]" in struct.fields
+
+
+def test_group_membership_change_flags_medium_finding():
+    base = _root_with_group()
+    published = _parse(base)
+
+    candidate_root = copy.deepcopy(base)
+    member = candidate_root.find(".//column[@name='[Region Groups]']//groupfilter[@member='West']")
+    member.set("member", "Central")
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    groups_group = next(g for g in diff.groups if g.key == "groups")
+    assert any(i.op == "change" for i in groups_group.items)
+
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Groups & Sets" and f["severity"] == "Medium" and "membership changed" in f["title"]
+        for f in impact["findings"]
+    )
+
+
+def test_group_removed_flags_high_finding():
+    base = _root_with_group()
+    published = _parse(base)
+
+    candidate_root = copy.deepcopy(base)
+    orders_ds = candidate_root.find(".//datasource[@caption='Orders']")
+    group_col = candidate_root.find(".//column[@name='[Region Groups]']")
+    orders_ds.remove(group_col)
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Groups & Sets" and f["severity"] == "High" and "removed" in f["title"].lower()
+        for f in impact["findings"]
+    )
+
+
+def test_computed_set_parsed_and_condition_change_flags_medium_finding(base_root):
+    orders_ds = base_root.find(".//datasource[@caption='Orders']")
+    set_col = ET.SubElement(orders_ds, "column", {
+        "name": "[Top Customers]", "caption": "Top Customers", "datatype": "boolean", "role": "dimension",
+    })
+    ET.SubElement(set_col, "calculation", {"class": "tableau-app:set-computed", "formula": "[Sales] > 1000"})
+
+    published = _parse(base_root)
+    assert published.computed_sets["[Top Customers]"]["formula"] == "[Sales] > 1000"
+
+    candidate_root = copy.deepcopy(base_root)
+    calc = candidate_root.find(".//column[@name='[Top Customers]']/calculation")
+    calc.set("formula", "[Sales] > 5000")
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    set_group = next(g for g in diff.groups if g.key == "computed_sets")
+    assert any(i.op == "change" for i in set_group.items)
+
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Groups & Sets" and f["severity"] == "Medium" and "condition changed" in f["title"]
+        for f in impact["findings"]
+    )
+
+
+def test_action_type_change_flags_medium_finding():
+    base = _root_with_action()
+    published = _parse(base)
+    assert published.actions["Filter Action 1"]["type"] == "filter"
+
+    candidate_root = copy.deepcopy(base)
+    action = candidate_root.find(".//action[@name='Filter Action 1']")
+    action.remove(action.find("./filter"))
+    ET.SubElement(action, "highlight")
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    actions_group = next(g for g in diff.groups if g.key == "actions")
+    assert any(i.before == "filter" and i.after == "highlight" for i in actions_group.items)
+
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Actions" and f["severity"] == "Medium" and "type changed" in f["title"]
+        for f in impact["findings"]
+    )
+
+
+def test_action_removed_flags_medium_finding():
+    base = _root_with_action()
+    published = _parse(base)
+
+    candidate_root = copy.deepcopy(base)
+    actions_el = candidate_root.find(".//actions")
+    actions_el.remove(candidate_root.find(".//action[@name='Filter Action 1']"))
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Actions" and f["severity"] == "Medium" and "removed" in f["title"].lower()
+        for f in impact["findings"]
+    )
+
+
+def test_sheet_hidden_flags_high_finding():
+    base = _root_with_windows()
+    published = _parse(base)
+    assert published.sheet_windows_known is True
+    assert published.hidden_sheets == set()
+
+    candidate_root = copy.deepcopy(base)
+    windows_el = candidate_root.find(".//windows")
+    windows_el.remove(candidate_root.find(".//window[@name='Sales Summary']"))
+    candidate = _parse(candidate_root)
+    assert candidate.hidden_sheets == {"Sales Summary"}
+
+    diff = compute_diff(published, candidate)
+    vis_group = next(g for g in diff.groups if g.key == "sheet_visibility")
+    assert any(i.before == "Visible" and i.after == "Hidden" for i in vis_group.items)
+
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Sheet Visibility" and f["severity"] == "High" and "now hidden" in f["title"]
+        for f in impact["findings"]
+    )
+
+
+def test_no_windows_section_does_not_flag_hidden_sheets(base_root):
+    """base_root has no <windows> element at all - sheet_windows_known must
+    stay False and hidden_sheets must stay empty rather than assuming every
+    worksheet is hidden just because window state wasn't captured."""
+    struct = _parse(base_root)
+    assert struct.sheet_windows_known is False
+    assert struct.hidden_sheets == set()
+
+
+def test_quick_filter_card_hidden_flags_medium_finding(base_root):
+    """The <filter> condition stays intact, but its <slices> quick-filter-card
+    entry disappears - distinct from 'filter card removed' (which is about
+    the <filter> element itself going away)."""
+    published_root = copy.deepcopy(base_root)
+    view = published_root.find(".//worksheet[@name='Sales Summary']/table/view")
+    slices = ET.SubElement(view, "slices")
+    col = ET.SubElement(slices, "column")
+    col.text = "[federated.0abc123].[Region]"
+    published = _parse(published_root)
+    assert published.filter_cards["Sales Summary"] == {"[Region]": True}
+
+    candidate_root = copy.deepcopy(published_root)
+    view = candidate_root.find(".//worksheet[@name='Sales Summary']/table/view")
+    view.remove(view.find("./slices"))
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    card_group = next(g for g in diff.groups if g.key == "filter_cards")
+    assert any(i.op == "remove" for i in card_group.items)
+
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Filters" and f["severity"] == "Medium" and "Quick filter card hidden" in f["title"]
+        for f in impact["findings"]
+    )
+
+
+def test_parameter_range_parsed_and_change_flags_medium_finding(base_root):
+    param_col = base_root.find(".//datasource[@name='Parameters']/column")
+    ET.SubElement(param_col, "range", {"min": "0", "max": "100", "granularity": "1"})
+
+    published = _parse(base_root)
+    assert published.parameters["[Parameter 1]"]["range"] == {"min": "0", "max": "100", "granularity": "1"}
+
+    candidate_root = copy.deepcopy(base_root)
+    range_el = candidate_root.find(".//datasource[@name='Parameters']/column/range")
+    range_el.set("max", "200")
+    candidate = _parse(candidate_root)
+
+    diff = compute_diff(published, candidate)
+    params_group = next(g for g in diff.groups if g.key == "params")
+    assert any(
+        any(p["attr"] == "range" for p in i.parts)
+        for i in params_group.items if i.op == "change"
+    )
+
+    impact = classify_custom_view_impact(published, candidate, diff)
+    assert any(
+        f["category"] == "Parameters" and f["severity"] == "Medium" and f["title"] == 'Parameter "[Parameter 1]" changed'
+        for f in impact["findings"]
+    )
+
+
+def test_parameter_allowable_values_parsed(base_root):
+    param_col = base_root.find(".//datasource[@name='Parameters']/column")
+    members = ET.SubElement(param_col, "members")
+    ET.SubElement(members, "member", {"value": "10", "alias": "Ten"})
+    ET.SubElement(members, "member", {"value": "20", "alias": "Twenty"})
+
+    struct = _parse(base_root)
+    assert struct.parameters["[Parameter 1]"]["allowable_values"] == [
+        {"value": "10", "alias": "Ten"},
+        {"value": "20", "alias": "Twenty"},
+    ]

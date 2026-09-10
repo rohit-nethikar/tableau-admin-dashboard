@@ -19,6 +19,12 @@ class WorkbookStructure:
     visuals: dict = field(default_factory=dict)  # {worksheet_name: {marks, encodings, sorts}}
     dash_zones: dict = field(default_factory=dict)  # {dashboard_name: {zone_key: {type, name}}}
     connections: dict = field(default_factory=dict)  # {ds_caption: [{class, server, port, ...}]}
+    groups: dict = field(default_factory=dict)  # {internal_name: {caption, members, ds}} - Groups and value-list Sets share the same <groupfilter>-under-<column> XML shape and aren't reliably distinguishable from that element alone, so both land in this one generic bucket.
+    computed_sets: dict = field(default_factory=dict)  # {internal_name: {caption, formula, ds}} - best-effort: keyed off a <calculation class="tableau-app:set-computed"> pattern not independently verified against a real Tableau export; degrades to "not detected" if the class string differs.
+    actions: dict = field(default_factory=dict)  # {action_name: {type}} - top-level <actions>/<action> (filter/highlight/url/parameter)
+    hidden_sheets: set = field(default_factory=set)  # worksheet names with no visible <windows>/<window class="worksheet"> tab
+    sheet_windows_known: bool = False  # whether this workbook's XML carries a <windows> section at all - hidden_sheets is only meaningful when this is True on both sides of a diff
+    filter_cards: dict = field(default_factory=dict)  # {worksheet_name: {field_internal_name: True}} - <slices> quick-filter-card visibility, distinct from the <filter> condition itself
 
 
 def _normalize_column_ref(ref: str) -> str:
@@ -166,6 +172,24 @@ def _parse_worksheet_visuals(ws) -> dict:
     return out
 
 
+def _parse_filter_cards(ws) -> dict:
+    """Best-effort quick-filter-card visibility for a worksheet, via
+    <slices>/<column> - a field listed here shows a visible filter card on
+    the worksheet, which is distinct from <filter> (the applied condition:
+    a card can be hidden while its condition still applies, or vice versa).
+    Schema not independently verified - degrades to "not detected" if the
+    real shape differs, same philosophy as _parse_filter_detail above."""
+    out = {}
+    try:
+        for col in ws.findall('.//slices/column'):
+            ref = (col.text or '').strip()
+            if ref:
+                out[_normalize_column_ref(ref)] = True
+    except Exception:
+        pass
+    return out
+
+
 def _parse_dashboard_zones(db) -> dict:
     """Best-effort dashboard zone inventory, keyed by type+name since zone
     `id`s are commonly reassigned on every save (would otherwise produce
@@ -233,11 +257,35 @@ def parse_workbook(twb_bytes: bytes) -> WorkbookStructure:
                     value = calc.get('formula')
                 if value is None:
                     value = col.get('value')
-                struct.parameters[internal_name] = {
+                param = {
                     'caption': caption,
                     'datatype': datatype,
                     'value': value
                 }
+
+                # Allowable-values domain: a "Range" parameter carries
+                # min/max/granularity on a <range> element, a "List"
+                # parameter carries explicit <members>/<member value= alias=>
+                # entries. Best-effort - only included when actually found.
+                range_el = col.find('.//range')
+                if range_el is not None:
+                    range_info = {
+                        k: range_el.get(k) for k in ('min', 'max', 'granularity')
+                        if range_el.get(k) is not None
+                    }
+                    if range_info:
+                        param['range'] = range_info
+
+                members_el = col.find('.//members')
+                if members_el is not None:
+                    members = [
+                        {'value': m.get('value'), 'alias': m.get('alias')}
+                        for m in members_el.findall('./member') if m.get('value') is not None
+                    ]
+                    if members:
+                        param['allowable_values'] = members
+
+                struct.parameters[internal_name] = param
 
     # Fields and Connections per datasource
     for ds in root.findall('.//datasource'):
@@ -276,6 +324,33 @@ def parse_workbook(twb_bytes: bytes) -> WorkbookStructure:
                 'comment': comment
             }
 
+            # Groups / value-list Sets: a <groupfilter> as a DIRECT child of
+            # <column> (not nested under <filter>, which is the unrelated
+            # filter-condition case handled elsewhere) is Tableau's shape
+            # for both Groups and manual/value-list Sets - see the
+            # WorkbookStructure.groups comment for why these share one bucket.
+            direct_gf = col.find('./groupfilter')
+            if direct_gf is not None:
+                members = sorted({
+                    gf.get('member') for gf in col.findall('.//groupfilter')
+                    if gf.get('member')
+                })
+                struct.groups[internal_name] = {
+                    'caption': caption,
+                    'members': members,
+                    'ds': ds_caption,
+                }
+
+            # Computed/condition Sets - see WorkbookStructure.computed_sets
+            # comment on confidence level.
+            set_calc = col.find("./calculation[@class='tableau-app:set-computed']")
+            if set_calc is not None:
+                struct.computed_sets[internal_name] = {
+                    'caption': caption,
+                    'formula': set_calc.get('formula'),
+                    'ds': ds_caption,
+                }
+
         # Connections (exclude federated and hyper/extract)
         conns = []
         for conn in ds.findall('.//connection'):
@@ -305,7 +380,7 @@ def parse_workbook(twb_bytes: bytes) -> WorkbookStructure:
         if ds_filters:
             struct.datasource_filters.setdefault(ds_caption, {}).update(ds_filters)
 
-    # Filters + visuals per worksheet
+    # Filters + visuals + filter-card visibility per worksheet
     for ws in root.findall('.//worksheet'):
         ws_name = ws.get('name')
         if not ws_name:
@@ -318,6 +393,44 @@ def parse_workbook(twb_bytes: bytes) -> WorkbookStructure:
         visuals = _parse_worksheet_visuals(ws)
         if visuals:
             struct.visuals[ws_name] = visuals
+
+        filter_cards = _parse_filter_cards(ws)
+        if filter_cards:
+            struct.filter_cards[ws_name] = filter_cards
+
+    # Dashboard Actions (filter/highlight/URL/parameter) - top-level
+    # <actions>/<action> elements, keyed by name. The nested element naming
+    # the action's kind is matched against a known-tag allowlist rather than
+    # blindly taking the first child, so an unrelated child (e.g. a comment)
+    # can't masquerade as the type; degrades to 'unknown' type otherwise.
+    _ACTION_TYPE_TAGS = ('filter', 'highlight', 'url', 'parameter', 'go-to-sheet', 'set')
+    for action in root.findall('.//actions/action'):
+        name = action.get('name')
+        if not name:
+            continue
+        action_type = None
+        for child in action:
+            if child.tag in _ACTION_TYPE_TAGS:
+                action_type = child.tag
+                break
+        struct.actions[name] = {'type': action_type}
+
+    # Hidden sheets: a worksheet with no corresponding <windows>/<window
+    # class="worksheet"> entry has no visible tab and is effectively hidden
+    # from end users, even though the sheet/view definition itself still
+    # exists. Only computed when a <windows> section is present at all -
+    # its absence means "unknown", not "everything is hidden", so
+    # sheet_windows_known gates whether this is ever compared downstream.
+    windows_el = root.find('.//windows')
+    if windows_el is not None:
+        struct.sheet_windows_known = True
+        visible_worksheet_windows = {
+            w.get('name') for w in windows_el.findall("./window[@class='worksheet']")
+            if w.get('name')
+        }
+        for ws_name in struct.worksheets:
+            if ws_name not in visible_worksheet_windows:
+                struct.hidden_sheets.add(ws_name)
 
     return struct
 
@@ -542,6 +655,10 @@ def compute_diff(published: WorkbookStructure, candidate: WorkbookStructure) -> 
             parts.append({'attr': 'caption', 'before': pp['caption'], 'after': cp['caption']})
         if pp['value'] != cp['value']:
             parts.append({'attr': 'value', 'before': pp['value'] or 'null', 'after': cp['value'] or 'null'})
+        if pp.get('range') != cp.get('range'):
+            parts.append({'attr': 'range', 'before': _fmt(pp.get('range')), 'after': _fmt(cp.get('range'))})
+        if pp.get('allowable_values') != cp.get('allowable_values'):
+            parts.append({'attr': 'allowable_values', 'before': _fmt(pp.get('allowable_values')), 'after': _fmt(cp.get('allowable_values'))})
 
         if parts:
             param_items.append(DiffItem(op='change', label=f"Parameter: {pk}", parts=parts))
@@ -638,6 +755,99 @@ def compute_diff(published: WorkbookStructure, candidate: WorkbookStructure) -> 
     if conn_items:
         groups['conns'] = DiffGroup(key='conns', title='Data Sources', items=conn_items)
 
+    # Groups & Sets (value-list) - see WorkbookStructure.groups comment
+    group_items = []
+    pub_group_keys = set(published.groups.keys())
+    cand_group_keys = set(candidate.groups.keys())
+
+    for gk in cand_group_keys - pub_group_keys:
+        group_items.append(DiffItem(op='add', label=f"Group/Set: {gk}"))
+    for gk in pub_group_keys - cand_group_keys:
+        group_items.append(DiffItem(op='remove', label=f"Group/Set: {gk}"))
+    for gk in pub_group_keys & cand_group_keys:
+        pg, cg = published.groups[gk], candidate.groups[gk]
+        parts = []
+        if pg.get('caption') != cg.get('caption'):
+            parts.append({'attr': 'caption', 'before': pg.get('caption'), 'after': cg.get('caption')})
+        if pg.get('members') != cg.get('members'):
+            parts.append({'attr': 'members', 'before': _fmt(pg.get('members')), 'after': _fmt(cg.get('members'))})
+        if parts:
+            group_items.append(DiffItem(op='change', label=f"Group/Set: {gk}", parts=parts))
+
+    if group_items:
+        groups['groups'] = DiffGroup(key='groups', title='Groups & Sets', items=group_items)
+
+    # Computed/condition Sets - best-effort, see WorkbookStructure.computed_sets
+    set_items = []
+    pub_set_keys = set(published.computed_sets.keys())
+    cand_set_keys = set(candidate.computed_sets.keys())
+
+    for sk in cand_set_keys - pub_set_keys:
+        set_items.append(DiffItem(op='add', label=f"Computed set: {sk}"))
+    for sk in pub_set_keys - cand_set_keys:
+        set_items.append(DiffItem(op='remove', label=f"Computed set: {sk}"))
+    for sk in pub_set_keys & cand_set_keys:
+        ps, cs = published.computed_sets[sk], candidate.computed_sets[sk]
+        if ps.get('formula') != cs.get('formula'):
+            set_items.append(DiffItem(
+                op='change', label=f"Computed set: {sk}",
+                before=ps.get('formula'), after=cs.get('formula')
+            ))
+
+    if set_items:
+        groups['computed_sets'] = DiffGroup(key='computed_sets', title='Computed Sets', items=set_items)
+
+    # Dashboard Actions
+    action_items = []
+    pub_action_keys = set(published.actions.keys())
+    cand_action_keys = set(candidate.actions.keys())
+
+    for ak in cand_action_keys - pub_action_keys:
+        action_items.append(DiffItem(op='add', label=f"Action: {ak}"))
+    for ak in pub_action_keys - cand_action_keys:
+        action_items.append(DiffItem(op='remove', label=f"Action: {ak}"))
+    for ak in pub_action_keys & cand_action_keys:
+        pa, ca = published.actions[ak], candidate.actions[ak]
+        if pa.get('type') != ca.get('type'):
+            action_items.append(DiffItem(
+                op='change', label=f"Action: {ak}",
+                before=pa.get('type') or '(unknown)', after=ca.get('type') or '(unknown)'
+            ))
+
+    if action_items:
+        groups['actions'] = DiffGroup(key='actions', title='Actions', items=action_items)
+
+    # Sheet visibility (hidden/unhidden) - only meaningful when both sides
+    # actually carry window-state info; see WorkbookStructure.sheet_windows_known.
+    visibility_items = []
+    if published.sheet_windows_known and candidate.sheet_windows_known:
+        for ws in published.worksheets & candidate.worksheets:
+            was_hidden = ws in published.hidden_sheets
+            is_hidden = ws in candidate.hidden_sheets
+            if was_hidden != is_hidden:
+                visibility_items.append(DiffItem(
+                    op='change', label=f"Sheet visibility: {ws}",
+                    before='Hidden' if was_hidden else 'Visible',
+                    after='Hidden' if is_hidden else 'Visible'
+                ))
+
+    if visibility_items:
+        groups['sheet_visibility'] = DiffGroup(key='sheet_visibility', title='Sheet Visibility', items=visibility_items)
+
+    # Quick filter card visibility (<slices>) - distinct from the <filter>
+    # condition itself; only diffed for worksheets present in both.
+    filter_card_items = []
+    for ws in published.worksheets & candidate.worksheets:
+        pub_cards = set(published.filter_cards.get(ws, {}).keys())
+        cand_cards = set(candidate.filter_cards.get(ws, {}).keys())
+        for fk in cand_cards - pub_cards:
+            filter_card_items.append(DiffItem(op='add', label=f"Quick filter card shown: {ws} — {fk}"))
+        for fk in pub_cards - cand_cards:
+            filter_card_items.append(DiffItem(op='remove', label=f"Quick filter card hidden: {ws} — {fk}"))
+
+    if filter_card_items:
+        groups['filter_cards'] = DiffGroup(key='filter_cards', title='Quick Filter Cards', items=filter_card_items)
+
     # Build final diff
     diff.groups = list(groups.values())
     diff.counts = {
@@ -664,6 +874,18 @@ def compute_diff(published: WorkbookStructure, candidate: WorkbookStructure) -> 
         'visuals_changed': len([i for g in groups.values() if g.key == 'visuals' for i in g.items if i.op == 'change']),
         'dash_zones_added': len([i for g in groups.values() if g.key == 'dash_layout' for i in g.items if i.op == 'add']),
         'dash_zones_removed': len([i for g in groups.values() if g.key == 'dash_layout' for i in g.items if i.op == 'remove']),
+        'groups_added': len([i for g in groups.values() if g.key == 'groups' for i in g.items if i.op == 'add']),
+        'groups_removed': len([i for g in groups.values() if g.key == 'groups' for i in g.items if i.op == 'remove']),
+        'groups_changed': len([i for g in groups.values() if g.key == 'groups' for i in g.items if i.op == 'change']),
+        'computed_sets_added': len([i for g in groups.values() if g.key == 'computed_sets' for i in g.items if i.op == 'add']),
+        'computed_sets_removed': len([i for g in groups.values() if g.key == 'computed_sets' for i in g.items if i.op == 'remove']),
+        'computed_sets_changed': len([i for g in groups.values() if g.key == 'computed_sets' for i in g.items if i.op == 'change']),
+        'actions_added': len([i for g in groups.values() if g.key == 'actions' for i in g.items if i.op == 'add']),
+        'actions_removed': len([i for g in groups.values() if g.key == 'actions' for i in g.items if i.op == 'remove']),
+        'actions_changed': len([i for g in groups.values() if g.key == 'actions' for i in g.items if i.op == 'change']),
+        'sheet_visibility_changed': len([i for g in groups.values() if g.key == 'sheet_visibility' for i in g.items if i.op == 'change']),
+        'filter_cards_added': len([i for g in groups.values() if g.key == 'filter_cards' for i in g.items if i.op == 'add']),
+        'filter_cards_removed': len([i for g in groups.values() if g.key == 'filter_cards' for i in g.items if i.op == 'remove']),
     }
 
     diff.total = sum(len(g.items) for g in diff.groups)
@@ -748,6 +970,65 @@ def classify_custom_view_impact(published: WorkbookStructure, candidate: Workboo
                 'sheets': []
             })
 
+    # Data source / connection changes - fully diffed in compute_diff's
+    # 'conns' group but never scored for custom-view impact until now. A
+    # live connection swap (server/dbname/credentials) or an embedded<->
+    # published conversion can silently repoint the workbook at different
+    # data, which breaks saved custom view state even though no field or
+    # filter identity technically changed.
+    for ck in set(published.connections.keys()) & set(candidate.connections.keys()):
+        if published.connections[ck] != candidate.connections[ck]:
+            findings.append({
+                'category': 'Data Sources',
+                'severity': 'High',
+                'title': f'Data source "{ck}" connection changed',
+                'detail': 'Server, database, or credentials changed for this data source. Custom views may silently show different data, or fail to load if the new connection is unreachable.',
+                'sheets': []
+            })
+
+    for ck in set(published.connections.keys()) - set(candidate.connections.keys()):
+        findings.append({
+            'category': 'Data Sources',
+            'severity': 'High',
+            'title': f'Data source "{ck}" live connection info disappeared',
+            'detail': 'No live (non-extract) connection was found for this data source anymore - possibly converted to extract-only, or its connection type changed. Custom views may fail to load or refresh.',
+            'sheets': []
+        })
+
+    # Datasource-level (row-level security) filter changes - fully diffed in
+    # compute_diff's 'ds_filters' group but never scored until now. RLS
+    # filters gate what rows a saved custom view can even see, so any
+    # change here is treated as High regardless of whether it's an
+    # addition, removal, or condition edit - unlike worksheet-level
+    # filters, there's no "cosmetic" version of an RLS change.
+    for dsk in set(published.datasource_filters.keys()) - set(candidate.datasource_filters.keys()):
+        findings.append({
+            'category': 'Data Source Filters',
+            'severity': 'High',
+            'title': f'Row-level security filter removed from "{dsk}"',
+            'detail': 'All row-level filters on this data source were removed. Users may now see rows a saved custom view previously excluded.',
+            'sheets': []
+        })
+
+    for dsk in set(candidate.datasource_filters.keys()) - set(published.datasource_filters.keys()):
+        findings.append({
+            'category': 'Data Source Filters',
+            'severity': 'High',
+            'title': f'Row-level security filter added to "{dsk}"',
+            'detail': 'A new row-level filter now applies to this data source. A saved custom view may unexpectedly show less data, or none at all.',
+            'sheets': []
+        })
+
+    for dsk in set(published.datasource_filters.keys()) & set(candidate.datasource_filters.keys()):
+        if published.datasource_filters[dsk] != candidate.datasource_filters[dsk]:
+            findings.append({
+                'category': 'Data Source Filters',
+                'severity': 'High',
+                'title': f'Row-level security filter changed on "{dsk}"',
+                'detail': 'Condition, membership, or scope of a row-level filter changed on this data source. Saved custom views may see a different row set than before.',
+                'sheets': []
+            })
+
     # Removed parameters
     for pk in set(published.parameters.keys()) - set(candidate.parameters.keys()):
         findings.append({
@@ -758,18 +1039,42 @@ def classify_custom_view_impact(published: WorkbookStructure, candidate: Workboo
             'sheets': []
         })
 
-    # Changed parameters
+    # Changed parameters (type/value/domain) and caption renames, checked
+    # independently so a caption-only rename doesn't get lumped in with a
+    # type/value/domain change - the latter is what actually risks
+    # invalidating a saved selection.
     for pk in set(published.parameters.keys()) & set(candidate.parameters.keys()):
         pp = published.parameters[pk]
         cp = candidate.parameters[pk]
-        if pp['datatype'] != cp['datatype'] or pp['value'] != cp['value']:
+        if (pp['datatype'] != cp['datatype'] or pp['value'] != cp['value']
+                or pp.get('range') != cp.get('range')
+                or pp.get('allowable_values') != cp.get('allowable_values')):
             findings.append({
                 'category': 'Parameters',
                 'severity': 'Medium',
                 'title': f'Parameter "{pk}" changed',
-                'detail': 'Type or default value updated. May invalidate saved selections.',
+                'detail': 'Type, default value, or allowable-values domain updated. May invalidate saved selections.',
                 'sheets': []
             })
+        if pp['caption'] != cp['caption']:
+            findings.append({
+                'category': 'Parameters',
+                'severity': 'Medium',
+                'title': f'Parameter "{pk}" caption changed',
+                'detail': f'"{pp["caption"]}" → "{cp["caption"]}". The control label changes, but stored selections still resolve since the internal identity is unchanged.',
+                'sheets': []
+            })
+
+    # New parameter added (low severity, informational) - mirrors "new view
+    # added" below; nothing depends on it yet.
+    for pk in set(candidate.parameters.keys()) - set(published.parameters.keys()):
+        findings.append({
+            'category': 'Parameters',
+            'severity': 'Low',
+            'title': f'New parameter "{pk}" added',
+            'detail': 'Nothing depends on this yet.',
+            'sheets': []
+        })
 
     # Filters whose underlying field was removed (checked per-field, not just
     # "sheet lost all its filters" - a sheet can keep some filters while one
@@ -844,12 +1149,48 @@ def classify_custom_view_impact(published: WorkbookStructure, candidate: Workboo
                 'sheets': [ws]
             })
 
-    # Worksheet visuals (sort order, shelf/encoding pills) - fully diffed in
-    # compute_diff's 'visuals' group but never scored for custom-view impact
-    # until now.
+    # Quick-filter-card visibility (<slices>) - distinct from the <filter>
+    # condition itself: a card can be hidden ("Show Filter" turned off)
+    # while the underlying filter condition is untouched, or vice versa.
+    for ws in published.worksheets & candidate.worksheets:
+        pub_cards = set(published.filter_cards.get(ws, {}).keys())
+        cand_cards = set(candidate.filter_cards.get(ws, {}).keys())
+        hidden = pub_cards - cand_cards
+        if hidden:
+            findings.append({
+                'category': 'Filters',
+                'severity': 'Medium',
+                'title': f'Quick filter card hidden in "{ws}"',
+                'detail': f"{', '.join(sorted(hidden))}: the filter card is no longer shown on the worksheet "
+                          f"(its condition may still be applied). Users lose the ability to change the saved "
+                          f"selection interactively.",
+                'sheets': [ws]
+            })
+        shown = cand_cards - pub_cards
+        if shown:
+            findings.append({
+                'category': 'Filters',
+                'severity': 'Low',
+                'title': f'Quick filter card shown in "{ws}"',
+                'detail': f"{', '.join(sorted(shown))}: a new quick filter card is now visible on the worksheet.",
+                'sheets': [ws]
+            })
+
+    # Worksheet visuals (mark type, sort order, shelf/encoding pills) - fully
+    # diffed in compute_diff's 'visuals' group but never scored for
+    # custom-view impact until now.
     for ws in published.worksheets & candidate.worksheets:
         pv = published.visuals.get(ws, {})
         cv = candidate.visuals.get(ws, {})
+
+        if pv.get('marks') != cv.get('marks'):
+            findings.append({
+                'category': 'Marks',
+                'severity': 'High',
+                'title': f'Mark type changed in "{ws}"',
+                'detail': f"{_fmt(pv.get('marks'))} → {_fmt(cv.get('marks'))}. Selected marks in a saved custom view can resolve differently or disappear entirely.",
+                'sheets': [ws]
+            })
 
         if pv.get('sorts') != cv.get('sorts'):
             findings.append({
@@ -908,6 +1249,119 @@ def classify_custom_view_impact(published: WorkbookStructure, candidate: Workboo
                           f"Newly-placed pills will use the new default; already-saved custom view pills are unaffected.",
                 'sheets': []
             })
+
+    # Groups & Sets (value-list) - membership/removal changes. Not
+    # distinguished from computed/condition Sets below since both share the
+    # same <groupfilter> XML shape and aren't reliably distinguishable from
+    # that element alone (see WorkbookStructure.groups).
+    for gk in set(published.groups.keys()) - set(candidate.groups.keys()):
+        findings.append({
+            'category': 'Groups & Sets',
+            'severity': 'High',
+            'title': f'Group/Set "{gk}" removed',
+            'detail': 'Saved filters/sorts referencing this group or set will reset or fail to resolve.',
+            'sheets': []
+        })
+    for gk in set(published.groups.keys()) & set(candidate.groups.keys()):
+        pg, cg = published.groups[gk], candidate.groups[gk]
+        if pg.get('members') != cg.get('members'):
+            findings.append({
+                'category': 'Groups & Sets',
+                'severity': 'Medium',
+                'title': f'Group/Set "{gk}" membership changed',
+                'detail': 'Which values belong to this group/set changed. A saved custom view filtered on it may include or exclude different data than before.',
+                'sheets': []
+            })
+    for gk in set(candidate.groups.keys()) - set(published.groups.keys()):
+        findings.append({
+            'category': 'Groups & Sets',
+            'severity': 'Low',
+            'title': f'New Group/Set "{gk}" added',
+            'detail': 'Nothing depends on this yet.',
+            'sheets': []
+        })
+
+    # Computed/condition Sets - best-effort detection (see
+    # WorkbookStructure.computed_sets); silently produces zero findings if
+    # this workbook's sets don't use the matched calculation class.
+    for sk in set(published.computed_sets.keys()) - set(candidate.computed_sets.keys()):
+        findings.append({
+            'category': 'Groups & Sets',
+            'severity': 'High',
+            'title': f'Computed set "{sk}" removed',
+            'detail': 'Saved filters/sorts referencing this set will reset or fail to resolve.',
+            'sheets': []
+        })
+    for sk in set(published.computed_sets.keys()) & set(candidate.computed_sets.keys()):
+        ps, cs = published.computed_sets[sk], candidate.computed_sets[sk]
+        if ps.get('formula') != cs.get('formula'):
+            findings.append({
+                'category': 'Groups & Sets',
+                'severity': 'Medium',
+                'title': f'Computed set "{sk}" condition changed',
+                'detail': 'The membership rule for this set changed. A saved custom view filtered on it may include or exclude different data than before.',
+                'sheets': []
+            })
+    for sk in set(candidate.computed_sets.keys()) - set(published.computed_sets.keys()):
+        findings.append({
+            'category': 'Groups & Sets',
+            'severity': 'Low',
+            'title': f'New computed set "{sk}" added',
+            'detail': 'Nothing depends on this yet.',
+            'sheets': []
+        })
+
+    # Dashboard Actions (filter/highlight/URL/parameter)
+    for ak in set(published.actions.keys()) - set(candidate.actions.keys()):
+        findings.append({
+            'category': 'Actions',
+            'severity': 'Medium',
+            'title': f'Action "{ak}" removed',
+            'detail': 'Interactive behavior (filter/highlight/URL/parameter action) tied to this action is gone. Dashboards relying on it will lose that interaction.',
+            'sheets': []
+        })
+    for ak in set(published.actions.keys()) & set(candidate.actions.keys()):
+        pa, ca = published.actions[ak], candidate.actions[ak]
+        if pa.get('type') != ca.get('type'):
+            findings.append({
+                'category': 'Actions',
+                'severity': 'Medium',
+                'title': f'Action "{ak}" type changed',
+                'detail': f"{pa.get('type') or '(unknown)'} → {ca.get('type') or '(unknown)'}. The interaction this action drives has changed.",
+                'sheets': []
+            })
+    for ak in set(candidate.actions.keys()) - set(published.actions.keys()):
+        findings.append({
+            'category': 'Actions',
+            'severity': 'Low',
+            'title': f'New action "{ak}" added',
+            'detail': 'Nothing depends on this yet.',
+            'sheets': []
+        })
+
+    # Hidden-sheet transitions - only evaluated when both workbooks actually
+    # carry window-state info (see WorkbookStructure.sheet_windows_known);
+    # otherwise this is left unknown rather than guessed.
+    if published.sheet_windows_known and candidate.sheet_windows_known:
+        for ws in published.worksheets & candidate.worksheets:
+            was_hidden = ws in published.hidden_sheets
+            is_hidden = ws in candidate.hidden_sheets
+            if is_hidden and not was_hidden:
+                findings.append({
+                    'category': 'Sheet Visibility',
+                    'severity': 'High',
+                    'title': f'Sheet "{ws}" is now hidden',
+                    'detail': 'Hiding a sheet breaks custom views tied to it, even if it is later unhidden.',
+                    'sheets': [ws]
+                })
+            elif was_hidden and not is_hidden:
+                findings.append({
+                    'category': 'Sheet Visibility',
+                    'severity': 'Low',
+                    'title': f'Sheet "{ws}" is now visible',
+                    'detail': 'This sheet regained a visible tab.',
+                    'sheets': [ws]
+                })
 
     # Added views (low severity, informational)
     for v in cand_views - pub_views:

@@ -240,6 +240,40 @@
   .tier-badge.med { color: var(--risk-med); background: var(--risk-med-bg); }
   .tier-badge.low { color: var(--risk-low); background: var(--risk-low-bg); }
 
+  /* ---------- Detection-status badges ---------- */
+  .detect {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 0.14em 0.5em;
+    border-radius: 3px;
+    margin-left: 0.55em;
+    white-space: nowrap;
+    vertical-align: 1px;
+  }
+  .detect.yes { background: var(--chip-bg); color: var(--chip-text); }
+  .detect.partial { background: transparent; color: var(--ink-muted); border: 1px dashed var(--line); }
+  .detect.no { background: transparent; color: var(--ink-muted); border: 1px solid var(--line); }
+
+  .detectkey {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1.4rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    margin: 0 0 1.6rem;
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+  }
+  .detectkey .detect { margin-left: 0; margin-right: 0.5em; }
+
   .rowlist { border-top: 1px solid var(--line); }
   .row {
     display: grid;
@@ -345,7 +379,7 @@
   <header class="titleblock">
     <p class="eyebrow">Reference · Tableau Server &amp; Cloud administration</p>
     <h1 class="doctitle">What breaks a Custom&nbsp;View</h1>
-    <p class="dek">Every workbook change that breaks, degrades, or leaves untouched a user's saved Custom View — plus the migration risks that live outside the workbook file entirely, where no structural diff can see them.</p>
+    <p class="dek">Every workbook change that breaks, degrades, or leaves untouched a user's saved Custom View — plus the migration risks that live outside the workbook file entirely, where no structural diff can see them. Each item below is tagged with whether this app's Workbook Compare tool catches it automatically today.</p>
     <dl class="metarow">
       <div class="metaitem"><dt>Scope</dt><dd>Content edits &amp; republish mechanics</dd></div>
       <div class="metaitem"><dt>Applies to</dt><dd>Tableau Server, Tableau Cloud</dd></div>
@@ -432,34 +466,60 @@
     <h2>Changes that orphan or corrupt saved state</h2>
     <p class="lead">Each of these severs one of the two identifiers above. The saved view either stops loading, silently resets the piece of state that referenced it, or — in the last row — is destroyed independent of any content change at all.</p>
 
+    <div class="detectkey">
+      <span><span class="detect yes">Auto-detected</span>caught by Workbook Compare today</span>
+      <span><span class="detect partial">Best-effort</span>flagged, but with a known blind spot — see the note</span>
+      <span><span class="detect no">Manual check</span>no structural diff can see this — verify by hand</span>
+    </div>
+
     <div class="rowlist">
       <div class="row high">
-        <div class="what">Sheet or dashboard renamed or deleted</div>
+        <div class="what">Sheet or dashboard renamed or deleted <span class="detect yes">Auto-detected</span></div>
         <div class="why">View lookup is by name inside the workbook's LUID — a rename reads as delete-plus-new. Every custom view built on it orphans.</div>
       </div>
       <div class="row high">
-        <div class="what">A calc deleted and recreated with the same caption</div>
-        <div class="why">The internal token is reassigned. Every stored filter, sort, or pill referencing the old <code>[Calculation_…]</code> token now dangles — invisibly, because the caption looks unchanged.</div>
+        <div class="what">A calc deleted and recreated with the same caption <span class="detect yes">Auto-detected</span></div>
+        <div class="why">The internal token is reassigned. Every stored filter, sort, or pill referencing the old <code>[Calculation_…]</code> token now dangles — invisibly, because the caption looks unchanged. Surfaces as a "field removed" finding; the tool doesn't yet call out the recreation explicitly.</div>
       </div>
       <div class="row high">
-        <div class="what">Field removed entirely</div>
+        <div class="what">Field removed entirely <span class="detect yes">Auto-detected</span></div>
         <div class="why">Stored filters or sorts referencing its internal name can no longer resolve.</div>
       </div>
       <div class="row high">
-        <div class="what">Field datatype changed on a field used in a stored filter</div>
+        <div class="what">Field datatype changed on a field used in a stored filter <span class="detect yes">Auto-detected</span></div>
         <div class="why">Saved values — a string vs. a number, a date range — can become invalid on reload.</div>
       </div>
       <div class="row high">
-        <div class="what">Parameter removed</div>
+        <div class="what">Parameter removed <span class="detect yes">Auto-detected</span></div>
         <div class="why">Any saved override for it resets to nothing.</div>
       </div>
       <div class="row high">
-        <div class="what">Filter card removed, or its field removed</div>
+        <div class="what">Filter card removed, or its field removed <span class="detect yes">Auto-detected</span></div>
         <div class="why">The saved member or range selection for that filter is dropped.</div>
       </div>
       <div class="row high">
-        <div class="what">Workbook republished as a new object, not overwritten in place</div>
-        <div class="why">A Save-As, or a migration path that doesn't preserve the workbook LUID, orphans every custom view for it — regardless of whether a single pixel of content changed. This is the single most common way admins lose custom views during a real migration.</div>
+        <div class="what">Live data-source connection changed (server, database, credentials), or a live connection disappears entirely <span class="detect yes">Auto-detected</span></div>
+        <div class="why">Custom views may silently show different data, or fail to load if the new connection is unreachable.</div>
+      </div>
+      <div class="row high">
+        <div class="what">Row-level security (data-source) filter added, removed, or its condition changed <span class="detect yes">Auto-detected</span></div>
+        <div class="why">Gates what rows a saved custom view can even see — treated as High regardless of direction, since there's no "cosmetic" version of an RLS change.</div>
+      </div>
+      <div class="row high">
+        <div class="what">Mark type changed (e.g. Bar to Line) <span class="detect yes">Auto-detected</span></div>
+        <div class="why">Selected marks and formatting tied to the old mark type in a saved custom view can resolve differently or disappear entirely.</div>
+      </div>
+      <div class="row high">
+        <div class="what">A Group or Set removed <span class="detect yes">Auto-detected</span></div>
+        <div class="why">Saved filters or sorts referencing it will reset or fail to resolve.</div>
+      </div>
+      <div class="row high">
+        <div class="what">A worksheet's tab hidden (removed from <em>Show Sheets as Tabs</em>) <span class="detect partial">Best-effort</span></div>
+        <div class="why">Breaks custom views tied to it, even if it's later unhidden. Only evaluated when both the published and candidate workbook actually carry window-state info; a workbook with no <code>&lt;windows&gt;</code> section at all is left unknown rather than assumed hidden.</div>
+      </div>
+      <div class="row high">
+        <div class="what">Workbook republished as a new object, not overwritten in place <span class="detect no">Manual check</span></div>
+        <div class="why">A Save-As, or a migration path that doesn't preserve the workbook LUID, orphans every custom view for it — regardless of whether a single pixel of content changed. This is the single most common way admins lose custom views during a real migration. The workbook's LUID isn't part of the .twb XML, so no structural diff — this tool included — can see a Save-As coming.</div>
       </div>
     </div>
   </section>
@@ -470,56 +530,64 @@
       <span class="tier-badge med">Degrades silently</span>
     </div>
     <h2>Changes that shift behavior without an error</h2>
-    <p class="lead">Nothing here throws an error or an obviously broken view. The risk is a saved view that loads fine but no longer means what the user thinks it means.</p>
+    <p class="lead">Nothing here throws an error or an obviously broken view. The risk is a saved view that loads fine but no longer means what the user thinks it means. Same detection key as Tier 1 above.</p>
 
     <div class="rowlist">
       <div class="row med">
-        <div class="what">Field role changed (dimension ↔ measure)</div>
+        <div class="what">Field role changed (dimension ↔ measure) <span class="detect yes">Auto-detected</span></div>
         <div class="why">Shelf placement, sort, and legend state built on the old role may not survive reload.</div>
       </div>
       <div class="row med">
-        <div class="what">Filter condition narrowed or widened on an unchanged field</div>
+        <div class="what">Filter condition narrowed or widened on an unchanged field <span class="detect yes">Auto-detected</span></div>
         <div class="why">Default members or range bounds shift; a saved selection may no longer match and can silently reset to the new default.</div>
       </div>
       <div class="row med">
-        <div class="what">New filter added to an existing sheet</div>
+        <div class="what">New filter added to an existing sheet <span class="detect yes">Auto-detected</span></div>
         <div class="why">A custom view's underlying data may not satisfy the new filter's default condition — it can render with no data and no error.</div>
       </div>
       <div class="row med">
-        <div class="what">A calculation rewritten to reference different fields</div>
+        <div class="what">A calculation rewritten to reference different fields <span class="detect yes">Auto-detected</span></div>
         <div class="why">Downstream filters or sorts built on that calc may behave differently even though the calc "still exists" by name.</div>
       </div>
       <div class="row med">
-        <div class="what">Shelf or encoding pills changed (rows, columns, color, size, label)</div>
+        <div class="what">Shelf or encoding pills changed (rows, columns, color, size, label) <span class="detect yes">Auto-detected</span></div>
         <div class="why">A saved view may not restore its exact pill layout.</div>
       </div>
       <div class="row med">
-        <div class="what">Table-calc addressing changed (Compute Using / partitioning) without touching the formula</div>
-        <div class="why">Running totals, rank, and percent-of-total silently recompute differently. The formula text never moved, so a text-only diff misses it entirely.</div>
+        <div class="what">Table-calc addressing changed (Compute Using / partitioning) without touching the formula <span class="detect no">Manual check</span></div>
+        <div class="why">Running totals, rank, and percent-of-total silently recompute differently. The formula text never moved, so a text-only diff misses it entirely — this app doesn't parse table-calc addressing yet.</div>
       </div>
       <div class="row med">
-        <div class="what">Group bucket membership edited</div>
+        <div class="what">Group bucket membership edited <span class="detect yes">Auto-detected</span></div>
         <div class="why">A saved filter still names the group — what's inside the group changed underneath it.</div>
       </div>
       <div class="row med">
-        <div class="what">Set definition or computed condition changed</div>
-        <div class="why">Same failure mode as groups: a set used on a shelf or in a filter silently changes membership.</div>
+        <div class="what">Set definition or computed condition changed <span class="detect partial">Best-effort</span></div>
+        <div class="why">Same failure mode as groups: a set used on a shelf or in a filter silently changes membership. Value-list Sets share Groups' XML shape and are caught the same reliable way; a computed/condition Set is matched by calculation class and hasn't been verified against a real-world export, so treat a clean result here with some caution.</div>
       </div>
       <div class="row med">
-        <div class="what">"Only Relevant Values" dependency changed</div>
-        <div class="why">If the parent filter's field or values change, a dependent filter's saved selection can silently reset.</div>
+        <div class="what">"Only Relevant Values" dependency changed <span class="detect no">Manual check</span></div>
+        <div class="why">If the parent filter's field or values change, a dependent filter's saved selection can silently reset. This dependency link isn't parsed yet.</div>
       </div>
       <div class="row med">
-        <div class="what">Filter, highlight, or parameter action retargeted or removed</div>
-        <div class="why">Doesn't corrupt already-saved state, but breaks the interaction a user relied on to reach that state.</div>
+        <div class="what">Filter, highlight, or parameter action retargeted or removed <span class="detect partial">Best-effort</span></div>
+        <div class="why">Doesn't corrupt already-saved state, but breaks the interaction a user relied on to reach that state. Removal and a change in action <em>type</em> (e.g. filter action swapped for a highlight action) are both caught; a same-type retarget — still a filter action, but now pointing at a different field or sheet — isn't distinguished yet.</div>
       </div>
       <div class="row med">
-        <div class="what">Data-source join, relationship, or custom SQL changed</div>
-        <div class="why">Can shift the query grain silently — worksheets don't error, the numbers just move.</div>
+        <div class="what">Data-source join, relationship, or custom SQL changed <span class="detect no">Manual check</span></div>
+        <div class="why">Can shift the query grain silently — worksheets don't error, the numbers just move. Join/relationship/custom-SQL structure isn't parsed yet.</div>
       </div>
       <div class="row med">
-        <div class="what">Live connection swapped for an extract, or vice versa</div>
-        <div class="why">Changes refresh timing and, in some models, what's queryable at the row level.</div>
+        <div class="what">Parameter caption renamed <span class="detect yes">Auto-detected</span></div>
+        <div class="why">A caption rename alone doesn't invalidate a saved selection — the internal identity is unchanged — but is called out separately from a type/value/domain change, which can.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Parameter's allowable-values domain or range narrowed <span class="detect yes">Auto-detected</span></div>
+        <div class="why">A saved parameter selection that falls outside the new range or member list may invalidate on reload.</div>
+      </div>
+      <div class="row med">
+        <div class="what">Quick-filter card hidden ("Show Filter" turned off) while the filter condition stays applied <span class="detect yes">Auto-detected</span></div>
+        <div class="why">Distinct from the filter card being deleted outright — the condition still applies, but users lose the ability to change the saved selection interactively.</div>
       </div>
     </div>
   </section>
@@ -530,12 +598,14 @@
       <span class="tier-badge low">Cosmetic, safe</span>
     </div>
     <h2>Changes that don't touch saved state</h2>
-    <p class="lead">Internal identifiers are untouched, so the saved view carries over exactly as the user left it.</p>
+    <p class="lead">Internal identifiers are untouched, so the saved view carries over exactly as the user left it. Workbook Compare still surfaces these as informational, Low-severity findings — verified by the test suite to never rank as impacting — since something built on them today may depend on them tomorrow.</p>
     <ul class="safelist">
       <li>Caption or display-name rename — the internal token underneath is unchanged.</li>
       <li>Number formatting, default aggregation, or a field's description/comment.</li>
       <li>Sort order that ends up matching what was already saved.</li>
       <li>A brand-new sheet or dashboard that nothing else references yet.</li>
+      <li>A new parameter, Group/Set, or dashboard action added — nothing references it yet.</li>
+      <li>A quick-filter card newly shown, or a previously-hidden worksheet's tab becoming visible again.</li>
     </ul>
   </section>
 
@@ -545,15 +615,15 @@
     <p class="lead">These don't show up in any structural comparison of the .twb — the file can be byte-for-byte the same and the view can still land wrong.</p>
 
     <div class="callout">
-      <h3>Row-level security tied to Group names</h3>
+      <h3>Row-level security tied to Group names <span class="detect no">Manual check</span></h3>
       <p>A filter using <code>USERNAME()</code> or <code>ISMEMBEROF('Region: West')</code> doesn't error on a new site — it just returns whatever that condition resolves to there. If the destination site has no Group of that exact name, the same custom view quietly shows different, often empty, data.</p>
     </div>
     <div class="callout">
-      <h3>Project moves and permission inheritance</h3>
+      <h3>Project moves and permission inheritance <span class="detect no">Manual check</span></h3>
       <p>Custom views typically inherit permissions from the workbook rather than carrying their own. Moving a workbook to a new project can change who can even open a saved view, independent of anything inside it.</p>
     </div>
     <div class="callout">
-      <h3>Publish mechanics, restated</h3>
+      <h3>Publish mechanics, restated <span class="detect no">Manual check</span></h3>
       <p>Worth repeating outside Tier 1: overwrite preserves the workbook's LUID and everything hanging off it. Delete-and-republish, or a migration tool that creates a new content object, does not — this is a process risk, not a content risk, and it dwarfs everything else on this page when it goes wrong.</p>
     </div>
   </section>
