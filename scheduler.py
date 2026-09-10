@@ -5,6 +5,7 @@ import threading
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
+import crypto
 import db
 import sync_service
 import background_poller
@@ -77,10 +78,18 @@ def _poll_all_sites():
     """Lightweight poller that runs every 5-10 minutes. Checks for new background
     job failures and content changes without waiting for the full 60-minute sync.
     Sends immediate alerts on detection."""
+    pat_name = db.get_config("pat_name")
+    pat_encrypted = db.get_config("pat_encrypted")
+    if not pat_name or not pat_encrypted:
+        return  # setup not complete yet; same guard as sync_service.refresh_all
+    pat_secret = crypto.decrypt_value(pat_encrypted)
+
     for site in settings.sites:
         try:
-            server = tableau_client.get_server(site)
-            background_poller.poll_site(site, server)
+            with tableau_client.signed_in_server(
+                settings.server_url, site, pat_name, pat_secret
+            ) as server:
+                background_poller.poll_site(site, server)
         except Exception as exc:
             print(f"[POLLER] Error polling {site}: {exc}")
             import traceback

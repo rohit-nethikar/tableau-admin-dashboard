@@ -3,6 +3,17 @@
 import sys
 import traceback
 
+# Windows' console (and any redirected-to-file stdout) defaults to the cp1252
+# codepage, which can't encode the checkmarks/emoji used in print() calls
+# throughout this codebase - that raised UnicodeEncodeError and silently
+# aborted whatever background thread hit it (e.g. the account-number sync).
+# Reconfigure before any other module prints anything.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+    except AttributeError:
+        pass
+
 print("Starting Flask app...")
 print(f"Python: {sys.version}")
 
