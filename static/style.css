@@ -115,11 +115,24 @@ a:hover {
 }
 .navbar-nav .nav-link {
   border-radius: 0.5rem;
-  padding: 0.4rem 0.7rem;
-  margin: 0 0.1rem;
+  padding: 0.4rem 0.6rem;
+  margin: 0 0.05rem;
   font-weight: 500;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  white-space: nowrap;
   transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* Keep the always-expanded nav row (>=992px, navbar-expand-lg) from
+   overlapping/wrapping messily on typical laptop-width screens: let it
+   scroll horizontally as a last resort instead of breaking into a ragged
+   second line that collides with the right-side controls below it. */
+@media (min-width: 992px) {
+  .navbar-nav.flex-lg-row {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
 }
 .navbar-nav .nav-link:hover {
   background-color: rgba(255, 255, 255, 0.1);

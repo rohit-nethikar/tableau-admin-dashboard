@@ -33,6 +33,7 @@ from routes import (
     site_settings,
     sites,
     subscriptions,
+    templates,
     users,
     webhooks,
     workbook_compare,
@@ -150,6 +151,7 @@ def create_app():
     app.register_blueprint(refresh.bp)
     app.register_blueprint(custom_views.bp)
     app.register_blueprint(subscriptions.bp)
+    app.register_blueprint(templates.bp)
     app.register_blueprint(connected_apps.bp)
     app.register_blueprint(data_alerts.bp)
     app.register_blueprint(webhooks.bp)

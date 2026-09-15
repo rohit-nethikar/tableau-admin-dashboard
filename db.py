@@ -142,6 +142,19 @@ CREATE TABLE IF NOT EXISTS asset_owner_overrides (
     PRIMARY KEY (resource_type, resource_id)
 );
 
+CREATE TABLE IF NOT EXISTS templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    site TEXT NOT NULL DEFAULT '',
+    workbook_id TEXT NOT NULL,
+    workbook_name TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    category TEXT,
+    added_at TEXT NOT NULL,
+    updated_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_templates_site ON templates(site);
+
 CREATE TABLE IF NOT EXISTS custom_views (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -341,29 +354,12 @@ CREATE TABLE IF NOT EXISTS error_log (
 );
 CREATE INDEX IF NOT EXISTS idx_error_log_site_time
     ON error_log(site, logged_at DESC);
-
--- Performance indexes for site-scoped tables (tab switching optimization)
-CREATE INDEX IF NOT EXISTS idx_projects_site ON projects(site);
-CREATE INDEX IF NOT EXISTS idx_workbooks_site ON workbooks(site);
-CREATE INDEX IF NOT EXISTS idx_datasources_site ON datasources(site);
-CREATE INDEX IF NOT EXISTS idx_workbook_datasource_links_site ON workbook_datasource_links(site);
-CREATE INDEX IF NOT EXISTS idx_permission_grants_site ON permission_grants(site);
-CREATE INDEX IF NOT EXISTS idx_group_members_site ON group_members(site);
-CREATE INDEX IF NOT EXISTS idx_refresh_log_site ON refresh_log(site);
-CREATE INDEX IF NOT EXISTS idx_users_site ON users(site);
-CREATE INDEX IF NOT EXISTS idx_health_scores_site ON health_scores(site);
-CREATE INDEX IF NOT EXISTS idx_findings_site ON findings(site);
-CREATE INDEX IF NOT EXISTS idx_asset_owner_overrides_site ON asset_owner_overrides(site);
-CREATE INDEX IF NOT EXISTS idx_custom_views_site ON custom_views(site);
-CREATE INDEX IF NOT EXISTS idx_subscriptions_site ON subscriptions(site);
-CREATE INDEX IF NOT EXISTS idx_connected_apps_site ON connected_apps(site);
-CREATE INDEX IF NOT EXISTS idx_data_alerts_site ON data_alerts(site);
-CREATE INDEX IF NOT EXISTS idx_webhooks_site ON webhooks(site);
-CREATE INDEX IF NOT EXISTS idx_dqw_warnings_site ON dqw_warnings(site);
-CREATE INDEX IF NOT EXISTS idx_workbook_views_site ON workbook_views(site);
-CREATE INDEX IF NOT EXISTS idx_background_job_log_site ON background_job_log(site);
-CREATE INDEX IF NOT EXISTS idx_content_change_log_site ON content_change_log(site);
 """
+# NOTE: indexes on the `site` column of _SITE_SCOPED_TABLES are NOT created here.
+# Those tables get their `site` column via an ALTER TABLE in _run_migrations()
+# (below), which runs AFTER this SCHEMA script - indexing `site` here, before the
+# column exists, breaks init_db() on a brand-new database. _create_missing_indexes()
+# creates them once the column is guaranteed to exist.
 
 # Tables that hold per-site content. Each gets a `site` column (see
 # _COLUMN_MIGRATIONS below) and every DELETE/SELECT against it is scoped by site.
@@ -424,6 +420,7 @@ _COLUMN_MIGRATIONS = [
     ("datasources", "favorites_count", "INTEGER"),
     ("datasources", "underlying_sources", "TEXT"),
     ("users", "account_number", "TEXT"),
+    ("templates", "standards_notes", "TEXT"),
 ] + [(table, "site", "TEXT NOT NULL DEFAULT ''") for table in _SITE_SCOPED_TABLES]
 
 
@@ -1167,6 +1164,42 @@ def fetch_owner_overrides(site: str) -> dict:
             "SELECT * FROM asset_owner_overrides WHERE site = ?", (site,)
         ).fetchall()
         return {(r["resource_type"], r["resource_id"]): dict(r) for r in rows}
+
+
+# --- templates (admin-curated "starter workbook" registry, surfaced in the
+# standalone Templates section so users can download a proven workbook as a
+# starting point instead of building from scratch) --------------------------
+
+def insert_template(site, workbook_id, workbook_name, title, description, category, added_at, standards_notes=None):
+    with get_conn() as conn:
+        cur = conn.execute(
+            """INSERT INTO templates
+               (site, workbook_id, workbook_name, title, description, category, added_at, updated_at, standards_notes)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (site, workbook_id, workbook_name, title, description, category, added_at, added_at, standards_notes),
+        )
+        return cur.lastrowid
+
+
+def fetch_templates(site: str) -> list:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM templates WHERE site = ? ORDER BY added_at DESC", (site,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def fetch_template(template_id: int, site: str):
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM templates WHERE id = ? AND site = ?", (template_id, site)
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def delete_template(template_id: int, site: str) -> None:
+    with get_conn() as conn:
+        conn.execute("DELETE FROM templates WHERE id = ? AND site = ?", (template_id, site))
 
 
 # --- findings -------------------------------------------------------------------

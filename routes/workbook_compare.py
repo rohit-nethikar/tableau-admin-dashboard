@@ -23,6 +23,7 @@ import workbook_compare_pdf
 from auth import login_required
 from config import settings
 from workbook_compare_engine import (
+    build_plain_language_summary,
     classify_custom_view_impact,
     classify_view_impact,
     compute_diff,
@@ -166,12 +167,15 @@ def run_workbook_compare():
         cv["impact_status"] = _label_for_classification(view_classification)
         cv["impact_severity"] = _severity_for_classification(view_classification)
 
+    plain_summary = build_plain_language_summary(impact, custom_views)
+
     result = {
         "workbook_name": workbook_name,
         "diff": diff,
         "diff_json": dataclasses.asdict(diff),
         "impact": impact,
         "custom_views": custom_views,
+        "plain_summary": plain_summary,
     }
 
     return render_template("workbook_compare.html", workbooks=workbooks, result=result)
@@ -193,6 +197,7 @@ def export_pdf():
         diff=payload.get("diff") or {},
         impact=payload.get("impact") or {},
         custom_views=payload.get("custom_views") or [],
+        plain_summary=payload.get("plain_summary") or {},
     )
 
     safe_name = re.sub(r"[^A-Za-z0-9_-]+", "_", workbook_name).strip("_") or "workbook"

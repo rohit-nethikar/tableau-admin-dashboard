@@ -52,6 +52,37 @@
   </button>
 </div>
 
+<!-- Plain-language summary: written for someone who isn't going to read the
+     technical findings/diff below and just needs to know if/why this is safe. -->
+{% set ps = result.plain_summary %}
+{% set ps_border = {'danger': 'border-danger', 'warning': 'border-warning', 'info': 'border-info', 'success': 'border-success'}.get(ps.tone, 'border-secondary') %}
+<div class="card mb-4 border-start border-4 {{ ps_border }}" style="background-color: var(--bg-secondary); border-top: 1px solid var(--border-light); border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+  <div class="card-body">
+    <h5 style="color: var(--text-primary);">📋 Plain-Language Summary</h5>
+    <p class="mb-3" style="font-size: 1.05rem; color: var(--text-primary);"><strong>{{ ps.headline }}</strong></p>
+
+    {% if ps.total_views %}
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      {% if ps.view_counts.directly_impacted %}<span class="badge bg-danger">{{ ps.view_counts.directly_impacted }} likely affected</span>{% endif %}
+      {% if ps.view_counts.potentially_impacted %}<span class="badge bg-warning text-dark">{{ ps.view_counts.potentially_impacted }} possibly affected</span>{% endif %}
+      {% if ps.view_counts.label_change_only %}<span class="badge bg-info text-dark">{{ ps.view_counts.label_change_only }} label change only</span>{% endif %}
+      {% if ps.view_counts.no_change %}<span class="badge bg-success">{{ ps.view_counts.no_change }} unaffected</span>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if ps.reasons %}
+    <p class="text-muted small mb-1">Why:</p>
+    <ul class="mb-0">
+      {% for r in ps.reasons %}
+      <li style="color: var(--text-primary);">{{ r.text }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted mb-0">Nothing about this candidate file is different from what's currently published, so there's nothing that could change how a saved custom view looks or behaves.</p>
+    {% endif %}
+  </div>
+</div>
+
 <!-- Summary count chips -->
 <div class="mb-4 d-flex flex-wrap gap-2">
   {% for key, val in result.diff.counts.items() %}
@@ -265,7 +296,8 @@
           site: {{ (current_site | tojson) if current_site else '""' }},
           diff: {{ (result.diff_json | tojson) if result else '{}' }},
           impact: {{ (result.impact | tojson) if result else '{}' }},
-          custom_views: {{ (result.custom_views | tojson) if result else '[]' }}
+          custom_views: {{ (result.custom_views | tojson) if result else '[]' }},
+          plain_summary: {{ (result.plain_summary | tojson) if result else '{}' }}
         };
         exportPdfBtn.disabled = true;
         var originalHtml = exportPdfBtn.innerHTML;

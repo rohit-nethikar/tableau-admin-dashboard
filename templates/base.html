@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <script>
   (function () {
     document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('theme') || 'light');
@@ -29,24 +30,34 @@
   ('analytics.show_analytics', 'bi-bar-chart-line', 'Analytics'),
   ('workbooks.list_workbooks', 'bi-grid-3x3-gap', 'Workbooks'),
   ('workbook_compare.show_workbook_compare', 'bi-file-diff', 'Workbook Compare'),
-  ('datasources.list_datasources', 'bi-database', 'Data Sources'),
-  ('users.list_users', 'bi-people', 'Users'),
-  ('permissions.list_permissions', 'bi-shield-lock', 'Permissions'),
-  ('lineage.list_lineage', 'bi-diagram-3', 'Lineage'),
+  ('templates.list_templates', 'bi-collection', 'Templates'),
   ('custom_views.list_custom_views', 'bi-easel', 'Custom Views'),
-  ('subscriptions.list_subscriptions', 'bi-envelope', 'Subscriptions'),
-  ('connected_apps.list_connected_apps', 'bi-plug', 'Connected Apps'),
-  ('data_alerts.list_data_alerts', 'bi-bell', 'Data Alerts'),
-  ('site_settings.show_site_settings', 'bi-gear', 'Site Settings'),
-  ('security_certs.list_security_certs', 'bi-shield-check', 'Security Certs'),
-  ('config_audit.list_config_audit', 'bi-clock-history', 'Config Audit'),
-  ('content_changes.list_content_changes', 'bi-diagram-2', 'Content Changes'),
-  ('license_usage.show_license_usage', 'bi-person-badge', 'License Usage'),
-  ('background_jobs.list_background_jobs', 'bi-list-task', 'Background Jobs'),
-  ('health.list_health', 'bi-heart-pulse', 'Health'),
-  ('findings.list_findings', 'bi-flag', 'Findings'),
-  ('refresh_health.refresh_health', 'bi-arrow-repeat', 'Refresh Health'),
-  ('help.show_help', 'bi-question-circle', 'Help'),
+] %}
+{% set nav_groups = [
+  ('bi-database', 'Data & Content', [
+    ('datasources.list_datasources', 'bi-database', 'Data Sources'),
+    ('lineage.list_lineage', 'bi-diagram-3', 'Lineage'),
+    ('content_changes.list_content_changes', 'bi-diagram-2', 'Content Changes'),
+    ('config_audit.list_config_audit', 'bi-clock-history', 'Config Audit'),
+  ]),
+  ('bi-shield-lock', 'Access & Security', [
+    ('users.list_users', 'bi-people', 'Users'),
+    ('permissions.list_permissions', 'bi-shield-lock', 'Permissions'),
+    ('connected_apps.list_connected_apps', 'bi-plug', 'Connected Apps'),
+    ('security_certs.list_security_certs', 'bi-shield-check', 'Security Certs'),
+  ]),
+  ('bi-heart-pulse', 'Monitoring', [
+    ('health.list_health', 'bi-heart-pulse', 'Health'),
+    ('refresh_health.refresh_health', 'bi-arrow-repeat', 'Refresh Health'),
+    ('background_jobs.list_background_jobs', 'bi-list-task', 'Background Jobs'),
+    ('findings.list_findings', 'bi-flag', 'Findings'),
+    ('license_usage.show_license_usage', 'bi-person-badge', 'License Usage'),
+  ]),
+  ('bi-gear', 'Admin', [
+    ('site_settings.show_site_settings', 'bi-gear', 'Site Settings'),
+    ('data_alerts.list_data_alerts', 'bi-bell', 'Data Alerts'),
+    ('subscriptions.list_subscriptions', 'bi-envelope', 'Subscriptions'),
+  ]),
 ] %}
 <nav class="navbar navbar-expand-lg navbar-dark navbar-gradient sticky-top mb-4">
   <div class="container-fluid">
@@ -59,12 +70,35 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarContent">
-      <div class="navbar-nav me-auto flex-lg-row flex-column flex-wrap">
+      <div class="navbar-nav me-auto flex-lg-row flex-column flex-wrap align-items-lg-center">
         {% for endpoint, icon, label in nav_items %}
         <a class="nav-link d-flex align-items-center gap-1 {{ 'active' if request.endpoint == endpoint else '' }}" href="{{ url_for(endpoint) }}">
           <i class="bi {{ icon }}"></i> {{ label }}
         </a>
         {% endfor %}
+        {% for group_icon, group_label, group_items in nav_groups %}
+        {% set ns = namespace(active=false) %}
+        {% for gendpoint, gicon, glabel in group_items %}
+          {% if request.endpoint == gendpoint %}{% set ns.active = true %}{% endif %}
+        {% endfor %}
+        <div class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle d-flex align-items-center gap-1 {{ 'active' if ns.active else '' }}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi {{ group_icon }}"></i> {{ group_label }}
+          </a>
+          <ul class="dropdown-menu">
+            {% for gendpoint, gicon, glabel in group_items %}
+            <li>
+              <a class="dropdown-item d-flex align-items-center gap-2 {{ 'active' if request.endpoint == gendpoint else '' }}" href="{{ url_for(gendpoint) }}">
+                <i class="bi {{ gicon }}"></i> {{ glabel }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+        <a class="nav-link d-flex align-items-center gap-1 {{ 'active' if request.endpoint == 'help.show_help' else '' }}" href="{{ url_for('help.show_help') }}">
+          <i class="bi bi-question-circle"></i> Help
+        </a>
       </div>
       <div class="d-flex flex-lg-row flex-column align-items-lg-center gap-2 mt-3 mt-lg-0">
         <div class="dropdown me-lg-2">
@@ -95,13 +129,13 @@
           </ul>
         </div>
         <form method="post" action="{{ url_for('refresh.trigger_refresh') }}" class="d-flex me-lg-2" id="refresh-now-form">
-          <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-arrow-clockwise"></i> Refresh Now</button>
+          <button class="btn btn-outline-light btn-sm" type="submit" title="Refresh Now"><i class="bi bi-arrow-clockwise"></i><span class="d-lg-none ms-1">Refresh Now</span></button>
         </form>
         <button id="theme-toggle" class="btn btn-outline-light btn-sm me-lg-2 theme-toggle" type="button" title="Toggle dark mode">
-          🌙 Dark Mode
+          <span aria-hidden="true">🌙</span><span class="d-lg-none ms-1">Dark Mode</span>
         </button>
         <button class="btn btn-outline-light btn-sm me-lg-2" type="button" title="Preferences" onclick="openPreferencesModal()">
-          ⚙️ Preferences
+          <span aria-hidden="true">⚙️</span><span class="d-lg-none ms-1">Preferences</span>
         </button>
         <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('auth_routes.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
       </div>

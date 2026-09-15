@@ -17,6 +17,7 @@ from workbook_compare_engine import (
     _fmt,
     _normalize_column_ref,
     _referenced_fields,
+    build_plain_language_summary,
     classify_custom_view_impact,
     classify_view_impact,
     compute_diff,
@@ -784,3 +785,78 @@ def test_parameter_allowable_values_parsed(base_root):
         {"value": "10", "alias": "Ten"},
         {"value": "20", "alias": "Twenty"},
     ]
+
+
+# --- build_plain_language_summary ---------------------------------------
+
+def _cv(severity):
+    return {"name": "CV", "view_name": "V", "impact_severity": severity}
+
+
+def test_plain_language_summary_no_custom_views():
+    summary = build_plain_language_summary({"findings": []}, [])
+    assert summary["total_views"] == 0
+    assert summary["tone"] == "info"
+    assert "no existing custom views" in summary["headline"]
+    assert summary["view_counts"] == {
+        "directly_impacted": 0, "potentially_impacted": 0, "label_change_only": 0, "no_change": 0,
+    }
+
+
+def test_plain_language_summary_directly_impacted():
+    impact = {"findings": [{"category": "Data Sources", "severity": "High", "title": "t", "detail": "d"}]}
+    custom_views = [_cv("High"), _cv("None")]
+    summary = build_plain_language_summary(impact, custom_views)
+    assert summary["tone"] == "danger"
+    assert summary["headline"].startswith("Yes -")
+    assert summary["view_counts"]["directly_impacted"] == 1
+    assert summary["view_counts"]["no_change"] == 1
+
+
+def test_plain_language_summary_potentially_impacted_when_no_high():
+    impact = {"findings": [{"category": "Filters", "severity": "Medium", "title": "t", "detail": "d"}]}
+    custom_views = [_cv("Medium"), _cv("Medium")]
+    summary = build_plain_language_summary(impact, custom_views)
+    assert summary["tone"] == "warning"
+    assert summary["headline"].startswith("Possibly -")
+    assert summary["view_counts"]["potentially_impacted"] == 2
+
+
+def test_plain_language_summary_label_change_only():
+    impact = {"findings": [{"category": "Parameters", "severity": "Medium", "title": "caption changed", "detail": "d"}]}
+    custom_views = [_cv("Low")]
+    summary = build_plain_language_summary(impact, custom_views)
+    assert summary["tone"] == "info"
+    assert summary["headline"].startswith("Only a cosmetic change")
+    assert summary["view_counts"]["label_change_only"] == 1
+
+
+def test_plain_language_summary_no_change():
+    summary = build_plain_language_summary({"findings": []}, [_cv("None"), _cv("None")])
+    assert summary["tone"] == "success"
+    assert summary["headline"].startswith("No -")
+    assert summary["view_counts"]["no_change"] == 2
+
+
+def test_plain_language_summary_reasons_deduped_and_sorted_by_severity():
+    impact = {
+        "findings": [
+            {"category": "Filters", "severity": "Low", "title": "t1", "detail": "d1"},
+            {"category": "Filters", "severity": "High", "title": "t2", "detail": "d2"},
+            {"category": "Marks", "severity": "Medium", "title": "t3", "detail": "d3"},
+        ]
+    }
+    summary = build_plain_language_summary(impact, [])
+    assert [r["category"] for r in summary["reasons"]] == ["Filters", "Marks"]
+    assert summary["reasons"][0]["severity"] == "High"
+
+
+def test_plain_language_summary_unknown_category_falls_back_to_detail():
+    impact = {"findings": [{"category": "Something New", "severity": "Medium", "title": "t", "detail": "custom detail text"}]}
+    summary = build_plain_language_summary(impact, [])
+    assert summary["reasons"][0]["text"] == "custom detail text"
+
+
+def test_plain_language_summary_no_findings_reasons_empty():
+    summary = build_plain_language_summary({"findings": []}, [])
+    assert summary["reasons"] == []

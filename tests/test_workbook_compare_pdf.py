@@ -124,6 +124,33 @@ def test_build_report_pdf_escapes_hostile_text():
     _assert_pdf_bytes(pdf_bytes)
 
 
+def test_build_report_pdf_with_plain_summary():
+    plain_summary = {
+        "headline": "Yes - 1 of 1 existing custom view(s) will likely be affected by this change.",
+        "tone": "danger",
+        "reasons": [
+            {
+                "category": "Views",
+                "severity": "High",
+                "text": "A sheet or dashboard was renamed or removed.",
+            },
+        ],
+        "view_counts": {"directly_impacted": 1, "potentially_impacted": 0, "label_change_only": 0, "no_change": 0},
+        "total_views": 1,
+    }
+    pdf_bytes = build_report_pdf(
+        "Orders", "SiteA", {}, {}, [], plain_summary=plain_summary
+    )
+    _assert_pdf_bytes(pdf_bytes)
+
+
+def test_build_report_pdf_without_plain_summary_does_not_raise():
+    """plain_summary is optional - older cached JSON payloads in a client's
+    browser (from before this field existed) must still render."""
+    pdf_bytes = build_report_pdf("Orders", "SiteA", {}, {}, [])
+    _assert_pdf_bytes(pdf_bytes)
+
+
 def test_build_report_pdf_unknown_severity_does_not_raise():
     """A severity value absent from _ROW_TINTS must fall back gracefully
     (no tint) rather than raising a KeyError."""

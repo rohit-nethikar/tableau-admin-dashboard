@@ -92,6 +92,60 @@ def _risk_banner(risk_level: str, total_changes: int, custom_view_count: int, st
     return [banner, Spacer(1, 0.12 * inch), summary, Spacer(1, 0.25 * inch)]
 
 
+_TONE_COLORS = {
+    "danger": colors.HexColor("#dc3545"),
+    "warning": colors.HexColor("#e8a100"),
+    "info": colors.HexColor("#0dcaf0"),
+    "success": colors.HexColor("#198754"),
+}
+
+
+def _plain_summary_section(plain_summary: dict, styles) -> list:
+    """Renders the jargon-free "will this affect my custom views" summary as
+    the first thing after the title - for a reader who never gets to the
+    technical Findings/Diff tables below."""
+    if not plain_summary:
+        return []
+
+    story = [Paragraph("Plain-Language Summary", styles["Heading2"])]
+
+    color = _TONE_COLORS.get(plain_summary.get("tone"), colors.grey)
+    headline = Table([[_text(plain_summary.get("headline") or "")]], colWidths=[6.8 * inch])
+    headline.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), color),
+                ("TEXTCOLOR", (0, 0), (-1, -1), colors.white),
+                ("FONTSIZE", (0, 0), (-1, -1), 11),
+                ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+            ]
+        )
+    )
+    story.append(headline)
+    story.append(Spacer(1, 0.12 * inch))
+
+    reasons = plain_summary.get("reasons") or []
+    if reasons:
+        story.append(Paragraph("Why:", styles["BodyText"]))
+        for r in reasons:
+            story.append(Paragraph(f"&bull; {_text(r.get('text'))}", styles["SmallBody"]))
+    else:
+        story.append(
+            Paragraph(
+                "Nothing about this candidate file is different from what's currently "
+                "published, so there's nothing that could change how a saved custom view "
+                "looks or behaves.",
+                styles["BodyText"],
+            )
+        )
+    story.append(Spacer(1, 0.25 * inch))
+    return story
+
+
 def _findings_section(findings: list, styles) -> list:
     story = [Paragraph("Custom View Impact Findings", styles["Heading2"])]
     if not findings:
@@ -221,7 +275,14 @@ def _custom_views_section(custom_views: list, styles) -> list:
     return story
 
 
-def build_report_pdf(workbook_name: str, site: str, diff: dict, impact: dict, custom_views: list) -> bytes:
+def build_report_pdf(
+    workbook_name: str,
+    site: str,
+    diff: dict,
+    impact: dict,
+    custom_views: list,
+    plain_summary: dict = None,
+) -> bytes:
     """Build the full Workbook Compare PDF report and return its bytes.
 
     `diff`, `impact`, and `custom_views` are plain dicts/lists (JSON-shaped),
@@ -251,6 +312,7 @@ def build_report_pdf(workbook_name: str, site: str, diff: dict, impact: dict, cu
     ]
 
     impact = impact or {}
+    story.extend(_plain_summary_section(plain_summary or {}, styles))
     story.extend(
         _risk_banner(
             impact.get("risk_level", "None"),

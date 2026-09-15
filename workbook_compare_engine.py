@@ -1425,3 +1425,106 @@ def classify_view_impact(view_name: str, published: WorkbookStructure, candidate
         return 'potentially_impacted' if diff.total > 0 else 'no_change'
 
     return workbook_classification
+
+
+# Plain-English translation of each finding category, written for someone who
+# doesn't know what a "data source filter" or a "Set" is but still needs to
+# know whether a change is safe to publish. Keyed on the exact 'category'
+# strings produced by classify_custom_view_impact() above.
+_CATEGORY_PLAIN_LANGUAGE = {
+    'Views': 'A sheet or dashboard was renamed or removed - any custom view built on it may stop working entirely.',
+    'Fields': 'A field the workbook depends on was removed, renamed, or had its type changed - filters, sorts, or calculations built on it may break silently.',
+    'Data Sources': "The workbook's data connection changed (a different data source, server, or database) - saved filters and parameters may no longer line up with the new data.",
+    'Data Source Filters': 'A security filter built into the data source was added, removed, or changed - some users may now see more or less data than before, even though nothing on the sheet looks different.',
+    'Parameters': "A parameter's name or allowed values changed - a custom view that saved a specific choice may show something different, or that choice may no longer be valid.",
+    'Filters': 'A filter on a sheet changed - a custom view relying on the old filter setup may now show more, less, or different data.',
+    'Marks': 'The way data is charted changed (for example, bars became a line) - saved formatting or selections in a custom view may no longer line up.',
+    'Sorts': 'The default sort order changed - a custom view with its own saved sort may look different than it used to, or lose that custom order.',
+    'Encodings': 'Which fields drive color, size, shape, or labels changed - a custom view may look visually different than what was originally saved.',
+    'Calculations': "A calculated field's formula changed - any numbers or logic built on it may now come out differently.",
+    'Groups & Sets': 'A saved grouping of values (a Group or Set) changed or was removed - filters and views built on that grouping may show different results or stop working.',
+    'Actions': 'A dashboard action (for example, click-to-filter or a navigation link) changed or was removed - clicking on the dashboard may behave differently.',
+    'Sheet Visibility': 'A worksheet tab was hidden - a dashboard or custom view expecting to show that tab may now be missing it.',
+}
+
+_SEVERITY_RANK = {'High': 0, 'Medium': 1, 'Low': 2}
+
+
+def build_plain_language_summary(impact: dict, custom_views: list) -> dict:
+    """Translates classify_custom_view_impact()'s findings, plus the per-view
+    impact_severity already stamped onto each custom_views entry, into a
+    short, jargon-free summary of whether - and why - this change affects
+    existing custom views. Meant to be read by someone who never opens the
+    Structural Diff or Impact Findings sections below it.
+
+    Returns {'headline': str, 'tone': 'danger'|'warning'|'info'|'success',
+    'reasons': [{'category', 'severity', 'text'}, ...] (highest severity
+    first, one entry per category), 'view_counts': {...}, 'total_views': int}.
+    """
+    findings = impact.get('findings') or []
+
+    best_by_category = {}
+    for f in findings:
+        cat = f.get('category')
+        if cat is None:
+            continue
+        sev = f.get('severity', 'Low')
+        current = best_by_category.get(cat)
+        if current is None or _SEVERITY_RANK.get(sev, 2) < _SEVERITY_RANK.get(current['severity'], 2):
+            best_by_category[cat] = f
+
+    reasons = [
+        {
+            'category': cat,
+            'severity': f.get('severity', 'Low'),
+            'text': _CATEGORY_PLAIN_LANGUAGE.get(cat, f.get('detail') or f.get('title') or cat),
+        }
+        for cat, f in best_by_category.items()
+    ]
+    reasons.sort(key=lambda r: _SEVERITY_RANK.get(r['severity'], 2))
+
+    total_views = len(custom_views or [])
+    severity_counts = {'High': 0, 'Medium': 0, 'Low': 0, 'None': 0}
+    for cv in (custom_views or []):
+        sev = cv.get('impact_severity') or 'None'
+        severity_counts[sev] = severity_counts.get(sev, 0) + 1
+
+    directly = severity_counts['High']
+    potentially = severity_counts['Medium']
+    label_only = severity_counts['Low']
+    unaffected = severity_counts['None']
+
+    if total_views == 0:
+        headline = 'This workbook has no existing custom views on record, so there is nothing this change could affect.'
+        tone = 'info'
+    elif directly:
+        headline = f'Yes - {directly} of {total_views} existing custom view(s) will likely be affected by this change.'
+        tone = 'danger'
+    elif potentially:
+        headline = (
+            f"Possibly - {potentially} of {total_views} existing custom view(s) touch something that changed, "
+            "though it isn't certain every one of them is affected."
+        )
+        tone = 'warning'
+    elif label_only:
+        headline = (
+            f'Only a cosmetic change - {label_only} of {total_views} existing custom view(s) may show a '
+            'different label, but should otherwise keep working.'
+        )
+        tone = 'info'
+    else:
+        headline = f'No - none of the {total_views} existing custom view(s) are expected to be affected by this change.'
+        tone = 'success'
+
+    return {
+        'headline': headline,
+        'tone': tone,
+        'reasons': reasons,
+        'view_counts': {
+            'directly_impacted': directly,
+            'potentially_impacted': potentially,
+            'label_change_only': label_only,
+            'no_change': unaffected,
+        },
+        'total_views': total_views,
+    }
