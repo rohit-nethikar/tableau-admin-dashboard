@@ -255,45 +255,70 @@ CREATE TABLE IF NOT EXISTS dqw_warnings (
     created_at TEXT
 );
 
+-- Column names below match what upsert_user_preferences()/create_dashboard_config()/
+-- insert_alert_rule()/create_filter_preset() (further down this file) actually read and
+-- write. An earlier version of these 4 tables used different, incompatible column names
+-- (theme/language, id/config_json, id/condition only, id/filters_json) - every write
+-- through the real code always raised "no such column", so _fix_phase4_table_schemas()
+-- in _run_migrations() drops and recreates any table still on that old shape (safe: the
+-- broken column names meant it could never have held a row).
 CREATE TABLE IF NOT EXISTS user_preferences (
     user_id TEXT PRIMARY KEY,
-    theme TEXT,
-    language TEXT,
+    dark_mode INTEGER,
+    default_filters TEXT,
+    layout_settings TEXT,
+    notification_email TEXT,
     notifications_enabled INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT,
-    updated_at TEXT
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS dashboard_configs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    config_id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     name TEXT,
-    config_json TEXT,
-    created_at TEXT,
-    updated_at TEXT,
-    UNIQUE(user_id, name)
+    filters TEXT,
+    metric_selection TEXT,
+    layout TEXT,
+    is_shared INTEGER NOT NULL DEFAULT 0,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS filter_presets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    preset_id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL,
     name TEXT NOT NULL,
-    filters_json TEXT,
-    created_at TEXT,
-    updated_at TEXT,
-    UNIQUE(user_id, name)
+    filters TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS alert_rules (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rule_id TEXT PRIMARY KEY,
     user_id TEXT,
     name TEXT NOT NULL,
+    metric TEXT,
     condition TEXT,
+    threshold REAL,
     action TEXT,
     enabled INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT,
-    updated_at TEXT
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Missing prior to this fix: log_alert_trigger()/get_alert_history()/get_active_alerts()
+-- (further down this file) have always queried this table, but nothing ever created it.
+CREATE TABLE IF NOT EXISTS alert_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rule_id TEXT NOT NULL,
+    metric_value REAL,
+    threshold REAL,
+    action_taken TEXT,
+    triggered_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX IF NOT EXISTS idx_alert_history_rule_id ON alert_history(rule_id, triggered_at DESC);
 
 CREATE TABLE IF NOT EXISTS config_change_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -465,7 +490,39 @@ def _create_missing_indexes(conn):
             conn.execute(f"CREATE INDEX IF NOT EXISTS {index_name} ON {index_def}")
 
 
+def _fix_phase4_table_schemas(conn):
+    """user_preferences/dashboard_configs/alert_rules/filter_presets were originally
+    created with columns that don't match what the Phase 4 code (upsert_user_preferences,
+    create_dashboard_config, insert_alert_rule, create_filter_preset, further down this
+    file) actually inserts - every write through that code has always raised
+    sqlite3.OperationalError, so a table still on the old shape is guaranteed empty.
+    Drop and let the SCHEMA script above recreate it correctly. Leaves a table alone
+    (and warns) if it unexpectedly has rows, rather than deleting data.
+    """
+    legacy_marker_column = {
+        "user_preferences": "dark_mode",
+        "dashboard_configs": "config_id",
+        "alert_rules": "rule_id",
+        "filter_presets": "preset_id",
+    }
+    dropped_any = False
+    for table, expected_column in legacy_marker_column.items():
+        existing_cols = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+        if not existing_cols or expected_column in existing_cols:
+            continue  # table doesn't exist yet, or is already on the fixed schema
+        row_count = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        if row_count:
+            print(f"WARNING: {table} has the old Phase 4 schema and {row_count} row(s) - "
+                  "not auto-migrating; needs a manual data migration.")
+            continue
+        conn.execute(f"DROP TABLE {table}")
+        dropped_any = True
+    if dropped_any:
+        conn.executescript(SCHEMA)
+
+
 def _run_migrations(conn):
+    _fix_phase4_table_schemas(conn)
     for table, column, decl in _COLUMN_MIGRATIONS:
         existing_cols = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
         if column not in existing_cols:
