@@ -1,0 +1,1699 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Comprehensive guide to the Tableau Admin Dashboard for managing and monitoring Tableau Server">
+      
+      
+        <meta name="author" content="Mayo Clinic">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="https://www.tableau.com/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+    
+    
+      
+        <title>Tableau Admin Dashboard - Complete Setup Documentation - Tableau Admin Dashboard</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tableau-admin-dashboard-complete-setup-documentation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Tableau Admin Dashboard" class="md-header__button md-logo" aria-label="Tableau Admin Dashboard" data-md-component="logo">
+      
+  <img src="https://www.tableau.com/sites/default/files/pages/2021-04/Tableau_Logo_1.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Tableau Admin Dashboard
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tableau Admin Dashboard - Complete Setup Documentation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/rohit-nethikar/tableau-admin-dashboard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tableau-admin-dashboard
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../features/overview/" class="md-tabs__link">
+          
+  
+  
+  Features
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../account-numbers/overview/" class="md-tabs__link">
+          
+  
+  
+  Account Numbers
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Tableau Admin Dashboard" class="md-nav__button md-logo" aria-label="Tableau Admin Dashboard" data-md-component="logo">
+      
+  <img src="https://www.tableau.com/sites/default/files/pages/2021-04/Tableau_Logo_1.png" alt="logo">
+
+    </a>
+    Tableau Admin Dashboard
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/rohit-nethikar/tableau-admin-dashboard" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    tableau-admin-dashboard
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../workflows/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Common Workflows
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../best-practices/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Best Practices
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Account Numbers
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Account Numbers
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../account-numbers/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#table-of-contents" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📖 Table of Contents
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Overview">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-was-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What Was Done
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeline
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#key-decisions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Decisions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="tableau-admin-dashboard-complete-setup-documentation">Tableau Admin Dashboard - Complete Setup Documentation<a class="headerlink" href="#tableau-admin-dashboard-complete-setup-documentation" title="Permanent link">&para;</a></h1>
+<p><strong>Complete guide documenting every step taken to set up the dashboard as a 24/7 Windows Service</strong></p>
+<hr />
+<h2 id="table-of-contents">📖 Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#part-1-python-environment-setup">Part 1: Python Environment Setup</a></li>
+<li><a href="#part-2-nssm-installation">Part 2: NSSM Installation</a></li>
+<li><a href="#part-3-windows-service-configuration">Part 3: Windows Service Configuration</a></li>
+<li><a href="#part-4-task-scheduler-automation">Part 4: Task Scheduler Automation</a></li>
+<li><a href="#part-5-health-check-automation">Part 5: Health Check Automation</a></li>
+<li><a href="#final-verification">Final Verification</a></li>
+<li><a href="#summary--quick-reference">Summary &amp; Quick Reference</a></li>
+</ol>
+<hr />
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<h3 id="what-was-done">What Was Done<a class="headerlink" href="#what-was-done" title="Permanent link">&para;</a></h3>
+<p>The Tableau Admin Dashboard was successfully set up to run <strong>24/7 as an automated Windows Service</strong> with:</p>
+<p>✅ <strong>Python Virtual Environment</strong> - Isolated dependencies<br />
+✅ <strong>NSSM Service Manager</strong> - Windows Service wrapper<br />
+✅ <strong>Task Scheduler</strong> - Automated startup and monitoring<br />
+✅ <strong>Health Checks</strong> - Weekly automated monitoring<br />
+✅ <strong>Auto-Restart</strong> - Crash recovery<br />
+✅ <strong>Auto-Boot</strong> - Starts on system restart  </p>
+<h3 id="timeline">Timeline<a class="headerlink" href="#timeline" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Total Setup Time:</strong> ~2 hours</li>
+<li><strong>Troubleshooting Time:</strong> ~30 minutes</li>
+<li><strong>Final Status:</strong> Production Ready ✓</li>
+</ul>
+<h3 id="key-decisions">Key Decisions<a class="headerlink" href="#key-decisions" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Decision</th>
+<th>Choice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Service Manager</td>
+<td>NSSM</td>
+<td>Lightweight, reliable, no admin dependencies</td>
+</tr>
+<tr>
+<td>Automation</td>
+<td>Task Scheduler</td>
+<td>Native Windows, no 3rd party tools needed</td>
+</tr>
+<tr>
+<td>Monitoring</td>
+<td>Weekly automated checks</td>
+<td>Catch issues before users notice</td>
+</tr>
+<tr>
+<td>Restart Strategy</td>
+<td>Auto-restart on crash</td>
+<td>Self-healing, minimal downtime</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h1 id="part-1-python-environment-setup">Part 1: Python Environment Setup<a class="headerlink" href="#part-1-python-environment-setup" title="Permanent link">&para;</a></h1>
+<h2 id="step-11-verify-python-installation">Step 1.1: Verify Python Installation<a class="headerlink" href="#step-11-verify-python-installation" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Ensure Python 3.10+ is installed on the system</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="n">python</span> <span class="p">-</span><span class="n">-version</span>
+</code></pre></div></p>
+<p><strong>Expected Output:</strong>
+<div class="highlight"><pre><span></span><code>Python 3.13.14
+</code></pre></div></p>
+<p><strong>If Not Found:</strong>
+- Download Python 3.10+ from https://www.python.org/downloads/
+- <strong>Important:</strong> Check "Add Python to PATH" during installation
+- Restart PowerShell after installation</p>
+<hr />
+<h2 id="step-12-create-virtual-environment">Step 1.2: Create Virtual Environment<a class="headerlink" href="#step-12-create-virtual-environment" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Isolate project dependencies from system Python</p>
+<p><strong>Location:</strong> <code>C:\path\to\tableau-admin-dashboard</code></p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">cd </span><span class="s2">"C:\path\to\tableau-admin-dashboard"</span>
+
+<span class="n">python</span> <span class="n">-m</span> <span class="n">venv</span> <span class="p">.</span><span class="n">venv</span>
+</code></pre></div></p>
+<p><strong>What It Creates:</strong>
+<div class="highlight"><pre><span></span><code>.venv/
+├── Scripts/
+│   ├── python.exe          (Python interpreter for this venv)
+│   ├── pip.exe             (Package manager)
+│   └── activate.bat        (Activation script)
+├── Lib/
+│   └── site-packages/      (Project dependencies)
+└── pyvenv.cfg
+</code></pre></div></p>
+<p><strong>Verify:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">Test-Path</span> <span class="s2">".\.venv\Scripts\python.exe"</span>
+<span class="c"># Should return: True</span>
+</code></pre></div></p>
+<hr />
+<h2 id="step-13-activate-virtual-environment">Step 1.3: Activate Virtual Environment<a class="headerlink" href="#step-13-activate-virtual-environment" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Use the isolated Python environment</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">activate</span><span class="p">.</span><span class="n">bat</span>
+</code></pre></div></p>
+<p><strong>Expected Output:</strong>
+<div class="highlight"><pre><span></span><code>(.venv) PS C:\path\to\tableau-admin-dashboard&gt;
+</code></pre></div></p>
+<p><strong>Note:</strong> The <code>(.venv)</code> prefix indicates venv is active</p>
+<hr />
+<h2 id="step-14-install-project-dependencies">Step 1.4: Install Project Dependencies<a class="headerlink" href="#step-14-install-project-dependencies" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Install all required Python packages for the dashboard</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="c"># First, upgrade pip to latest version</span>
+<span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">pip</span> <span class="n">install</span> <span class="p">-</span><span class="n">-upgrade</span> <span class="n">pip</span>
+
+<span class="c"># Then install all requirements</span>
+<span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">pip</span> <span class="n">install</span> <span class="n">-r</span> <span class="n">requirements</span><span class="p">.</span><span class="n">txt</span>
+</code></pre></div></p>
+<p><strong>What Gets Installed:</strong>
+- Flask (web framework)
+- Click (CLI utilities)
+- BigQuery client libraries
+- Tableau Server client
+- SQLite ORM
+- And ~30 other dependencies</p>
+<p><strong>Verify Installation:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">pip</span> <span class="n">list</span> <span class="p">|</span> <span class="n">grep</span> <span class="n">-i</span> <span class="n">flask</span>
+<span class="c"># Should show: Flask 3.0.3</span>
+</code></pre></div></p>
+<p><strong>Troubleshooting - If Packages Missing:</strong>
+<div class="highlight"><pre><span></span><code><span class="c"># Reset and reinstall</span>
+<span class="nb">Remove-Item</span> <span class="s2">".\.venv"</span> <span class="n">-Recurse</span> <span class="n">-Force</span>
+<span class="n">python</span> <span class="n">-m</span> <span class="n">venv</span> <span class="p">.</span><span class="n">venv</span>
+<span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">pip</span> <span class="n">install</span> <span class="p">-</span><span class="n">-upgrade</span> <span class="n">pip</span>
+<span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">pip</span> <span class="n">install</span> <span class="n">-r</span> <span class="n">requirements</span><span class="p">.</span><span class="n">txt</span>
+</code></pre></div></p>
+<hr />
+<h2 id="step-15-test-python-environment">Step 1.5: Test Python Environment<a class="headerlink" href="#step-15-test-python-environment" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Verify the app can start without errors</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">.\.</span><span class="n">venv</span><span class="p">\</span><span class="n">Scripts</span><span class="p">\</span><span class="n">python</span><span class="p">.</span><span class="n">exe</span> <span class="n">app</span><span class="p">.</span><span class="n">py</span>
+</code></pre></div></p>
+<p><strong>Expected Output:</strong>
+<div class="highlight"><pre><span></span><code>Starting BigQuery account number sync on app startup...
+Starting Tableau Admin Dashboard (HTTP-only mode)
+Query job ID: ...
+</code></pre></div></p>
+<p><strong>If Successful:</strong>
+- App is running ✓
+- Can access <code>http://localhost:5000</code> in browser ✓
+- Press <code>Ctrl+C</code> to stop ✓</p>
+<hr />
+<h1 id="part-2-nssm-installation">Part 2: NSSM Installation<a class="headerlink" href="#part-2-nssm-installation" title="Permanent link">&para;</a></h1>
+<h2 id="step-21-create-installation-directory">Step 2.1: Create Installation Directory<a class="headerlink" href="#step-21-create-installation-directory" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Create a standard location for NSSM</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">New-Item</span> <span class="n">-ItemType</span> <span class="n">Directory</span> <span class="n">-Path</span> <span class="s2">"C:\tools\nssm"</span> <span class="n">-Force</span>
+</code></pre></div></p>
+<p><strong>Result:</strong>
+<div class="highlight"><pre><span></span><code>C:\tools\nssm\  (empty directory created)
+</code></pre></div></p>
+<hr />
+<h2 id="step-22-download-nssm">Step 2.2: Download NSSM<a class="headerlink" href="#step-22-download-nssm" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Get the NSSM executable from GitHub</p>
+<p><strong>Method 1: Automated Download</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c"># Set variables</span>
+<span class="nv">$NssmUrl</span> <span class="p">=</span> <span class="s2">"https://github.com/nssm-service-manager/nssm/releases/download/2.24-101-g897c7ad/nssm-2.24-101-g897c7ad.zip"</span>
+<span class="nv">$ZipFile</span> <span class="p">=</span> <span class="s2">"C:\tools\nssm-download.zip"</span>
+
+<span class="c"># Download</span>
+<span class="nb">Invoke-WebRequest</span> <span class="n">-Uri</span> <span class="nv">$NssmUrl</span> <span class="n">-OutFile</span> <span class="nv">$ZipFile</span> <span class="n">-UseBasicParsing</span>
+
+<span class="c"># Verify download</span>
+<span class="nb">Test-Path</span> <span class="nv">$ZipFile</span>
+<span class="c"># Should return: True</span>
+</code></pre></div>
+<p><strong>Method 2: Manual Download (If Automated Fails)</strong></p>
+<ol>
+<li>Go to: https://github.com/nssm-service-manager/nssm/releases</li>
+<li>Download the latest <code>.zip</code> file</li>
+<li>Extract to <code>C:\tools\nssm\</code></li>
+</ol>
+<hr />
+<h2 id="step-23-extract-nssm">Step 2.3: Extract NSSM<a class="headerlink" href="#step-23-extract-nssm" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Unzip NSSM files to the installation directory</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="c"># Extract</span>
+<span class="nb">Expand-Archive</span> <span class="n">-Path</span> <span class="s2">"C:\tools\nssm-download.zip"</span> <span class="n">-DestinationPath</span> <span class="s2">"C:\tools"</span> <span class="n">-Force</span>
+
+<span class="c"># Check what was extracted</span>
+<span class="nb">Get-ChildItem</span> <span class="s2">"C:\tools"</span> <span class="n">-Directory</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span><span class="nv">$_</span><span class="p">.</span><span class="n">Name</span> <span class="o">-match</span> <span class="s2">"nssm"</span><span class="p">}</span>
+<span class="c"># Shows: nssm-2.24\nssm-2.24\win64\nssm.exe</span>
+</code></pre></div></p>
+<hr />
+<h2 id="step-24-organize-nssm-files">Step 2.4: Organize NSSM Files<a class="headerlink" href="#step-24-organize-nssm-files" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Put nssm.exe in the expected location</p>
+<p><strong>Problem:</strong> NSSM extracted to nested folder: <code>C:\tools\nssm-2.24\nssm-2.24\win64\nssm.exe</code></p>
+<p><strong>Solution:</strong> Copy to main directory</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="c"># Copy from nested location to main directory</span>
+<span class="nb">Copy-Item</span> <span class="s2">"C:\tools\nssm-2.24\nssm-2.24\win64\nssm.exe"</span> <span class="s2">"C:\tools\nssm\nssm.exe"</span> <span class="n">-Force</span>
+
+<span class="c"># Clean up old folder</span>
+<span class="nb">Remove-Item</span> <span class="s2">"C:\tools\nssm-2.24"</span> <span class="n">-Recurse</span> <span class="n">-Force</span> <span class="n">-ErrorAction</span> <span class="n">SilentlyContinue</span>
+
+<span class="c"># Verify</span>
+<span class="nb">Test-Path</span> <span class="s2">"C:\tools\nssm\nssm.exe"</span>
+<span class="c"># Should return: True</span>
+</code></pre></div></p>
+<p><strong>Final Structure:</strong>
+<div class="highlight"><pre><span></span><code>C:\tools\nssm\
+└── nssm.exe              (Ready to use!)
+</code></pre></div></p>
+<hr />
+<h2 id="step-25-verify-nssm-installation">Step 2.5: Verify NSSM Installation<a class="headerlink" href="#step-25-verify-nssm-installation" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Ensure NSSM works correctly</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="n">C</span><span class="p">:\</span><span class="n">tools</span><span class="p">\</span><span class="n">nssm</span><span class="p">\</span><span class="n">nssm</span><span class="p">.</span><span class="n">exe</span> <span class="n">-version</span>
+</code></pre></div></p>
+<p><strong>Expected Output:</strong>
+<div class="highlight"><pre><span></span><code>NSSM: The non-sucking service manager
+Version 2.24 64-bit, 2014-08-31
+</code></pre></div></p>
+<hr />
+<h1 id="part-3-windows-service-configuration">Part 3: Windows Service Configuration<a class="headerlink" href="#part-3-windows-service-configuration" title="Permanent link">&para;</a></h1>
+<h2 id="step-31-create-service-wrapper-batch-script">Step 3.1: Create Service Wrapper Batch Script<a class="headerlink" href="#step-31-create-service-wrapper-batch-script" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Create a batch file that activates venv and runs the app</p>
+<p><strong>File:</strong> <code>run_service.bat</code></p>
+<p><strong>Location:</strong> <code>C:\path\to\tableau-admin-dashboard\run_service.bat</code></p>
+<p><strong>Content:</strong>
+<div class="highlight"><pre><span></span><code><span class="p">@</span><span class="k">echo</span> off
+<span class="k">cd</span> /d <span class="s2">"C:\path\to\tableau-admin-dashboard"</span>
+<span class="k">call</span> .venv\Scripts\activate.bat
+python app.py
+</code></pre></div></p>
+<p><strong>Creation Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="nv">$DashboardPath</span> <span class="p">=</span> <span class="s2">"C:\path\to\tableau-admin-dashboard"</span>
+<span class="nv">$BatchContent</span> <span class="p">=</span> <span class="sh">@"</span>
+<span class="sh">@echo off</span>
+<span class="sh">cd /d "$DashboardPath"</span>
+<span class="sh">call .venv\Scripts\activate.bat</span>
+<span class="sh">python app.py</span>
+<span class="sh">"@</span>
+
+<span class="nb">Set-Content</span> <span class="n">-Path</span> <span class="s2">"$DashboardPath\run_service.bat"</span> <span class="n">-Value</span> <span class="nv">$BatchContent</span> <span class="n">-Encoding</span> <span class="n">ASCII</span> <span class="n">-Force</span>
+</code></pre></div></p>
+<p><strong>Why This Works:</strong>
+- <code>cd /d</code> - Changes directory (even if on different drive)
+- <code>call .venv\Scripts\activate.bat</code> - Activates the virtual environment
+- <code>python app.py</code> - Runs the application</p>
+<hr />
+<h2 id="step-32-install-windows-service-with-nssm">Step 3.2: Install Windows Service with NSSM<a class="headerlink" href="#step-32-install-windows-service-with-nssm" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Register the dashboard as a Windows Service</p>
+<p><strong>Prerequisites:</strong>
+- ✓ PowerShell running as Administrator
+- ✓ NSSM installed at <code>C:\tools\nssm\nssm.exe</code>
+- ✓ Batch wrapper created</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="n">C</span><span class="p">:\</span><span class="n">tools</span><span class="p">\</span><span class="n">nssm</span><span class="p">\</span><span class="n">nssm</span><span class="p">.</span><span class="n">exe</span> <span class="n">install</span> <span class="n">TableauAdminDash</span> <span class="s2">"C:\path\to\tableau-admin-dashboard\run_service.bat"</span>
+</code></pre></div></p>
+<p><strong>Expected Output:</strong>
+<div class="highlight"><pre><span></span><code>Service "TableauAdminDash" installed successfully!
+</code></pre></div></p>
+<p><strong>What This Does:</strong>
+- Creates a Windows Service named <code>TableauAdminDash</code>
+- Registers it to run the batch script
+- Sets it up in Windows Service Control Manager</p>
+<hr />
+<h2 id="step-33-configure-service-properties">Step 3.3: Configure Service Properties<a class="headerlink" href="#step-33-configure-service-properties" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Set service behavior and options</p>
+<p><strong>Commands:</strong>
+<div class="highlight"><pre><span></span><code><span class="nv">$ServiceName</span> <span class="p">=</span> <span class="s2">"TableauAdminDash"</span>
+<span class="nv">$NssmExe</span> <span class="p">=</span> <span class="s2">"C:\tools\nssm\nssm.exe"</span>
+
+<span class="c"># Set display name</span>
+<span class="p">&amp;</span> <span class="nv">$NssmExe</span> <span class="nb">set </span><span class="nv">$ServiceName</span> <span class="n">DisplayName</span> <span class="s2">"Tableau Admin Dashboard"</span>
+
+<span class="c"># Set service to auto-start</span>
+<span class="p">&amp;</span> <span class="nv">$NssmExe</span> <span class="nb">set </span><span class="nv">$ServiceName</span> <span class="nb">Start </span><span class="n">SERVICE_AUTO_START</span>
+
+<span class="c"># Set to auto-restart on exit</span>
+<span class="p">&amp;</span> <span class="nv">$NssmExe</span> <span class="nb">set </span><span class="nv">$ServiceName</span> <span class="n">AppExit</span> <span class="k">Default</span> <span class="n">Restart</span>
+
+<span class="c"># Set shutdown timeout (30 seconds)</span>
+<span class="p">&amp;</span> <span class="nv">$NssmExe</span> <span class="nb">set </span><span class="nv">$ServiceName</span> <span class="n">AppThrottle</span> <span class="n">30000</span>
+
+<span class="c"># Configure logging</span>
+<span class="nv">$LogDir</span> <span class="p">=</span> <span class="s2">"$env:APPDATA\Local\nssm\$ServiceName"</span>
+<span class="p">&amp;</span> <span class="nv">$NssmExe</span> <span class="nb">set </span><span class="nv">$ServiceName</span> <span class="n">AppStdout</span> <span class="s2">"$LogDir\stdout.log"</span>
+<span class="p">&amp;</span> <span class="nv">$NssmExe</span> <span class="nb">set </span><span class="nv">$ServiceName</span> <span class="n">AppStderr</span> <span class="s2">"$LogDir\stderr.log"</span>
+</code></pre></div></p>
+<p><strong>What Each Setting Does:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Setting</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DisplayName</td>
+<td>How it appears in Services GUI</td>
+</tr>
+<tr>
+<td>Start SERVICE_AUTO_START</td>
+<td>Starts automatically on boot</td>
+</tr>
+<tr>
+<td>AppExit Default Restart</td>
+<td>Auto-restarts if app crashes</td>
+</tr>
+<tr>
+<td>AppThrottle 30000</td>
+<td>Waits 30 seconds before restarting</td>
+</tr>
+<tr>
+<td>AppStdout/AppStderr</td>
+<td>Logs output for debugging</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="step-34-start-the-service">Step 3.4: Start the Service<a class="headerlink" href="#step-34-start-the-service" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Begin running the service</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">Start-Service</span> <span class="n">-Name</span> <span class="n">TableauAdminDash</span>
+</code></pre></div></p>
+<p><strong>Verify It's Running:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">Get-Service</span> <span class="n">-Name</span> <span class="n">TableauAdminDash</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">Status</span><span class="p">,</span> <span class="n">StartType</span>
+</code></pre></div></p>
+<p><strong>Expected Output:</strong>
+<div class="highlight"><pre><span></span><code>Status  StartType
+------  ---------
+Running Automatic
+</code></pre></div></p>
+<hr />
+<h2 id="step-35-test-the-service">Step 3.5: Test the Service<a class="headerlink" href="#step-35-test-the-service" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Verify dashboard is accessible</p>
+<p><strong>Commands:</strong>
+<div class="highlight"><pre><span></span><code><span class="c"># Wait for app to start</span>
+<span class="nb">Start-Sleep</span> <span class="n">-Seconds</span> <span class="n">5</span>
+
+<span class="c"># Check if port is listening</span>
+<span class="n">netstat</span> <span class="n">-ano</span> <span class="p">|</span> <span class="n">findstr</span> <span class="p">:</span><span class="n">5000</span>
+
+<span class="c"># Test in browser</span>
+<span class="nb">Start-Process</span> <span class="s2">"http://localhost:5000"</span>
+</code></pre></div></p>
+<p><strong>Expected Results:</strong>
+- ✓ Port 5000 shows active connections
+- ✓ Browser loads dashboard
+- ✓ No errors displayed</p>
+<hr />
+<h1 id="part-4-task-scheduler-automation">Part 4: Task Scheduler Automation<a class="headerlink" href="#part-4-task-scheduler-automation" title="Permanent link">&para;</a></h1>
+<h2 id="step-41-create-powershell-script-for-starting-app">Step 4.1: Create PowerShell Script for Starting App<a class="headerlink" href="#step-41-create-powershell-script-for-starting-app" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Create a script that runs the app with auto-restart on crash</p>
+<p><strong>File:</strong> <code>start-app.ps1</code></p>
+<p><strong>Location:</strong> <code>C:\path\to\tableau-admin-dashboard\start-app.ps1</code></p>
+<p><strong>Content:</strong>
+<div class="highlight"><pre><span></span><code><span class="c"># Use full path to python in venv</span>
+<span class="nv">$pythonExe</span> <span class="p">=</span> <span class="s2">"C:\path\to\tableau-admin-dashboard\.venv\Scripts\python.exe"</span>
+<span class="nv">$appPath</span> <span class="p">=</span> <span class="s2">"C:\path\to\tableau-admin-dashboard\app.py"</span>
+
+<span class="k">while</span> <span class="p">(</span><span class="nv">$true</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c"># Run the app</span>
+    <span class="p">&amp;</span> <span class="nv">$pythonExe</span> <span class="nv">$appPath</span>
+
+    <span class="c"># If it crashes, wait 10 seconds before restarting</span>
+    <span class="nb">Start-Sleep</span> <span class="n">-Seconds</span> <span class="n">10</span>
+<span class="p">}</span>
+</code></pre></div></p>
+<p><strong>Why This Approach:</strong>
+- Uses explicit paths (no venv activation needed)
+- Auto-restarts on crash
+- Runs in infinite loop
+- Logs to Task Scheduler</p>
+<hr />
+<h2 id="step-42-enable-powershell-script-execution">Step 4.2: Enable PowerShell Script Execution<a class="headerlink" href="#step-42-enable-powershell-script-execution" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Allow PowerShell scripts to run</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">Set-ExecutionPolicy</span> <span class="n">-ExecutionPolicy</span> <span class="n">RemoteSigned</span> <span class="n">-Scope</span> <span class="n">CurrentUser</span> <span class="n">-Force</span>
+</code></pre></div></p>
+<p><strong>What This Does:</strong>
+- Allows downloaded scripts to run
+- Still blocks dangerous scripts
+- Only for current user (safe)</p>
+<hr />
+<h2 id="step-43-create-task-scheduler-job">Step 4.3: Create Task Scheduler Job<a class="headerlink" href="#step-43-create-task-scheduler-job" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Register a scheduled task that starts the app on boot</p>
+<p><strong>Prerequisites:</strong>
+- PowerShell as Administrator</p>
+<p><strong>Commands:</strong>
+<div class="highlight"><pre><span></span><code><span class="c"># Define task details</span>
+<span class="nv">$taskName</span> <span class="p">=</span> <span class="s2">"TableauAdminDashboard"</span>
+<span class="nv">$scriptPath</span> <span class="p">=</span> <span class="s2">"C:\path\to\tableau-admin-dashboard\start-app.ps1"</span>
+
+<span class="c"># Create action (what to run)</span>
+<span class="nv">$action</span> <span class="p">=</span> <span class="nb">New-ScheduledTaskAction</span> <span class="n">-Execute</span> <span class="s2">"powershell.exe"</span> <span class="p">`</span>
+    <span class="n">-Argument</span> <span class="s2">"-NoProfile -WindowStyle Hidden -File </span><span class="se">`"</span><span class="s2">$scriptPath</span><span class="se">`"</span><span class="s2">"</span>
+
+<span class="c"># Create trigger (when to run)</span>
+<span class="nv">$trigger</span> <span class="p">=</span> <span class="nb">New-ScheduledTaskTrigger</span> <span class="n">-AtStartup</span>
+
+<span class="c"># Create settings (behavior)</span>
+<span class="nv">$settings</span> <span class="p">=</span> <span class="nb">New-ScheduledTaskSettingsSet</span> <span class="p">`</span>
+    <span class="n">-AllowStartIfOnBatteries</span> <span class="p">`</span>
+    <span class="n">-DontStopIfGoingOnBatteries</span> <span class="p">`</span>
+    <span class="n">-StartWhenAvailable</span> <span class="p">`</span>
+    <span class="n">-MultipleInstances</span> <span class="n">IgnoreNew</span>
+
+<span class="c"># Register the task</span>
+<span class="nb">Register-ScheduledTask</span> <span class="n">-TaskName</span> <span class="nv">$taskName</span> <span class="p">`</span>
+    <span class="n">-Action</span> <span class="nv">$action</span> <span class="p">`</span>
+    <span class="n">-Trigger</span> <span class="nv">$trigger</span> <span class="p">`</span>
+    <span class="n">-Settings</span> <span class="nv">$settings</span> <span class="p">`</span>
+    <span class="n">-Description</span> <span class="s2">"Run Tableau Admin Dashboard 24/7"</span> <span class="p">`</span>
+    <span class="n">-Force</span>
+</code></pre></div></p>
+<p><strong>What This Creates:</strong>
+- Task named <code>TableauAdminDashboard</code>
+- Runs at system startup
+- Runs PowerShell script
+- Script runs app in infinite loop
+- Auto-restarts on crash</p>
+<hr />
+<h2 id="step-44-start-the-task-manually">Step 4.4: Start the Task Manually<a class="headerlink" href="#step-44-start-the-task-manually" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Begin running the task</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">Start-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauAdminDashboard"</span>
+</code></pre></div></p>
+<p><strong>Verify:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">Get-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauAdminDashboard"</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">TaskName</span><span class="p">,</span> <span class="n">State</span>
+</code></pre></div></p>
+<p><strong>Expected Output:</strong>
+<div class="highlight"><pre><span></span><code>TaskName                 State
+--------                 -----
+TableauAdminDashboard    Running
+</code></pre></div></p>
+<hr />
+<h2 id="step-45-test-dashboard-access">Step 4.5: Test Dashboard Access<a class="headerlink" href="#step-45-test-dashboard-access" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Verify dashboard is running and accessible</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="c"># Wait a moment</span>
+<span class="nb">Start-Sleep</span> <span class="n">-Seconds</span> <span class="n">5</span>
+
+<span class="c"># Test in browser</span>
+<span class="nb">Start-Process</span> <span class="s2">"http://localhost:5000"</span>
+
+<span class="c"># Verify port is listening</span>
+<span class="n">netstat</span> <span class="n">-ano</span> <span class="p">|</span> <span class="n">findstr</span> <span class="p">:</span><span class="n">5000</span>
+</code></pre></div></p>
+<p><strong>Expected Results:</strong>
+- ✓ Browser loads dashboard
+- ✓ Port 5000 shows active connections
+- ✓ All pages work correctly</p>
+<hr />
+<h1 id="part-5-health-check-automation">Part 5: Health Check Automation<a class="headerlink" href="#part-5-health-check-automation" title="Permanent link">&para;</a></h1>
+<h2 id="step-51-create-health-check-script">Step 5.1: Create Health Check Script<a class="headerlink" href="#step-51-create-health-check-script" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>health-check.ps1</code></p>
+<p><strong>Purpose:</strong> Monitor dashboard health and log results</p>
+<p><strong>Key Features:</strong>
+- Checks service status
+- Checks port listening
+- Checks HTTP accessibility
+- Checks for recent errors
+- Logs results to file
+- Optional email alerts</p>
+<p><strong>How to Create:</strong>
+See the provided <code>health-check.ps1</code> script in the project</p>
+<hr />
+<h2 id="step-52-create-health-check-setup-script">Step 5.2: Create Health Check Setup Script<a class="headerlink" href="#step-52-create-health-check-setup-script" title="Permanent link">&para;</a></h2>
+<p><strong>File:</strong> <code>setup-health-check-task.ps1</code></p>
+<p><strong>Purpose:</strong> Automate creation of weekly health check task</p>
+<p><strong>How to Create:</strong>
+See the provided <code>setup-health-check-task.ps1</code> script in the project</p>
+<hr />
+<h2 id="step-53-register-weekly-health-check-task">Step 5.3: Register Weekly Health Check Task<a class="headerlink" href="#step-53-register-weekly-health-check-task" title="Permanent link">&para;</a></h2>
+<p><strong>Objective:</strong> Set up automated weekly monitoring</p>
+<p><strong>Command:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">cd </span><span class="s2">"C:\path\to\tableau-admin-dashboard"</span>
+
+<span class="c"># Run as Administrator</span>
+<span class="p">.\</span><span class="n">setup-health-check-task</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div></p>
+<p><strong>What It Does:</strong>
+- Creates scheduled task <code>TableauDashboardHealthCheck</code>
+- Runs every Monday at 9:00 AM
+- Executes health check script
+- Logs results to file
+- Optionally sends email alerts</p>
+<p><strong>Verify:</strong>
+<div class="highlight"><pre><span></span><code><span class="nb">Get-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauDashboardHealthCheck"</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">TaskName</span><span class="p">,</span> <span class="n">State</span>
+</code></pre></div></p>
+<hr />
+<h1 id="final-verification">Final Verification<a class="headerlink" href="#final-verification" title="Permanent link">&para;</a></h1>
+<h2 id="step-61-verify-all-components">Step 6.1: Verify All Components<a class="headerlink" href="#step-61-verify-all-components" title="Permanent link">&para;</a></h2>
+<p><strong>Checklist:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c"># 1. Python Environment</span>
+<span class="nb">Write-Host</span> <span class="s2">"1. Python Environment"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Test-Path</span> <span class="s2">".\.venv\Scripts\python.exe"</span>  <span class="c"># Should be True</span>
+<span class="nb">Get-Item</span> <span class="s2">".\.venv"</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">FullName</span>
+
+<span class="c"># 2. NSSM Installation</span>
+<span class="nb">Write-Host</span> <span class="s2">"2. NSSM Installation"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Test-Path</span> <span class="s2">"C:\tools\nssm\nssm.exe"</span>     <span class="c"># Should be True</span>
+<span class="n">C</span><span class="p">:\</span><span class="n">tools</span><span class="p">\</span><span class="n">nssm</span><span class="p">\</span><span class="n">nssm</span><span class="p">.</span><span class="n">exe</span> <span class="n">-version</span>        <span class="c"># Shows version</span>
+
+<span class="c"># 3. Service Wrapper</span>
+<span class="nb">Write-Host</span> <span class="s2">"3. Service Wrapper"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Test-Path</span> <span class="s2">".\run_service.bat"</span>          <span class="c"># Should be True</span>
+
+<span class="c"># 4. Windows Service</span>
+<span class="nb">Write-Host</span> <span class="s2">"4. Windows Service"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Get-Service</span> <span class="n">-Name</span> <span class="n">TableauAdminDash</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">Status</span><span class="p">,</span> <span class="n">StartType</span>
+
+<span class="c"># 5. Task Scheduler</span>
+<span class="nb">Write-Host</span> <span class="s2">"5. Task Scheduler"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Get-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauAdminDashboard"</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">State</span>
+
+<span class="c"># 6. Health Check Task</span>
+<span class="nb">Write-Host</span> <span class="s2">"6. Health Check Task"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Get-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauDashboardHealthCheck"</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">State</span>
+
+<span class="c"># 7. Dashboard Accessibility</span>
+<span class="nb">Write-Host</span> <span class="s2">"7. Dashboard Accessibility"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nv">$response</span> <span class="p">=</span> <span class="nb">Invoke-WebRequest</span> <span class="n">-Uri</span> <span class="s2">"http://localhost:5000"</span> <span class="n">-UseBasicParsing</span> <span class="n">-ErrorAction</span> <span class="n">SilentlyContinue</span>
+<span class="nb">Write-Host</span> <span class="s2">"Status Code: </span><span class="p">$(</span><span class="nv">$response</span><span class="p">.</span><span class="n">StatusCode</span><span class="p">)</span><span class="s2">"</span>
+
+<span class="c"># 8. Port Listening</span>
+<span class="nb">Write-Host</span> <span class="s2">"8. Port Listening"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="n">netstat</span> <span class="n">-ano</span> <span class="p">|</span> <span class="n">findstr</span> <span class="p">:</span><span class="n">5000</span>
+</code></pre></div>
+<hr />
+<h2 id="step-62-check-key-locations">Step 6.2: Check Key Locations<a class="headerlink" href="#step-62-check-key-locations" title="Permanent link">&para;</a></h2>
+<p><strong>Verify all files are in place:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c"># Configuration and scripts</span>
+<span class="nb">Test-Path</span> <span class="s2">".\config.yaml"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\governance.yaml"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\requirements.txt"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\run_service.bat"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\start-app.ps1"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\health-check.ps1"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\setup-health-check-task.ps1"</span>
+
+<span class="c"># Documentation</span>
+<span class="nb">Test-Path</span> <span class="s2">".\OPERATIONS_GUIDE.md"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\MAINTENANCE_SCHEDULE.md"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\daily-weekly-checklist.html"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\SETUP_DOCUMENTATION.md"</span>
+
+<span class="c"># Database and logs</span>
+<span class="nb">Test-Path</span> <span class="s2">".\instance\cache.db"</span>
+<span class="nb">Test-Path</span> <span class="s2">".\instance\secret.key"</span>
+<span class="nb">Test-Path</span> <span class="s2">"$env:APPDATA\Local\nssm\TableauAdminDash"</span>
+</code></pre></div>
+<hr />
+<h2 id="step-63-final-system-test">Step 6.3: Final System Test<a class="headerlink" href="#step-63-final-system-test" title="Permanent link">&para;</a></h2>
+<p><strong>Complete test of the entire system:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nb">Write-Host</span> <span class="s2">"=== COMPLETE SYSTEM TEST ==="</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Write-Host</span> <span class="s2">""</span>
+
+<span class="c"># Test 1: Service running</span>
+<span class="nb">Write-Host</span> <span class="s2">"Test 1: Service Running"</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nv">$service</span> <span class="p">=</span> <span class="nb">Get-Service</span> <span class="n">-Name</span> <span class="n">TableauAdminDash</span>
+<span class="nb">Write-Host</span> <span class="s2">"Status: </span><span class="p">$(</span><span class="nv">$service</span><span class="p">.</span><span class="n">Status</span><span class="p">)</span><span class="s2">"</span> <span class="n">-ForegroundColor</span> <span class="p">$(</span><span class="k">if</span> <span class="p">(</span><span class="nv">$service</span><span class="p">.</span><span class="n">Status</span> <span class="o">-eq</span> <span class="s1">'Running'</span><span class="p">)</span> <span class="p">{</span> <span class="s1">'Green'</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="s1">'Red'</span> <span class="p">})</span>
+
+<span class="c"># Test 2: Port listening</span>
+<span class="nb">Write-Host</span> <span class="s2">""</span>
+<span class="nb">Write-Host</span> <span class="s2">"Test 2: Port Listening"</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nv">$port</span> <span class="p">=</span> <span class="n">netstat</span> <span class="n">-ano</span> <span class="n">2</span><span class="p">&gt;</span><span class="nv">$null</span> <span class="p">|</span> <span class="n">findstr</span> <span class="p">:</span><span class="n">5000</span>
+<span class="nb">Write-Host</span> <span class="s2">"Port 5000: </span><span class="p">$(</span><span class="k">if</span> <span class="p">(</span><span class="nv">$port</span><span class="p">)</span> <span class="p">{</span> <span class="s1">'Listening ✓'</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="s1">'Not Listening ✗'</span> <span class="p">})</span><span class="s2">"</span> <span class="n">-ForegroundColor</span> <span class="p">$(</span><span class="k">if</span> <span class="p">(</span><span class="nv">$port</span><span class="p">)</span> <span class="p">{</span> <span class="s1">'Green'</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="s1">'Red'</span> <span class="p">})</span>
+
+<span class="c"># Test 3: Dashboard accessible</span>
+<span class="nb">Write-Host</span> <span class="s2">""</span>
+<span class="nb">Write-Host</span> <span class="s2">"Test 3: Dashboard Accessible"</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nv">$response</span> <span class="p">=</span> <span class="nb">Invoke-WebRequest</span> <span class="n">-Uri</span> <span class="s2">"http://localhost:5000"</span> <span class="n">-UseBasicParsing</span> <span class="n">-ErrorAction</span> <span class="n">SilentlyContinue</span>
+<span class="nb">Write-Host</span> <span class="s2">"Status: </span><span class="p">$(</span><span class="k">if</span> <span class="p">(</span><span class="nv">$response</span><span class="p">.</span><span class="n">StatusCode</span> <span class="o">-eq</span> <span class="n">200</span><span class="p">)</span> <span class="p">{</span> <span class="s1">'OK ✓'</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="s1">'Failed ✗'</span> <span class="p">})</span><span class="s2">"</span> <span class="n">-ForegroundColor</span> <span class="p">$(</span><span class="k">if</span> <span class="p">(</span><span class="nv">$response</span><span class="p">.</span><span class="n">StatusCode</span> <span class="o">-eq</span> <span class="n">200</span><span class="p">)</span> <span class="p">{</span> <span class="s1">'Green'</span> <span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="s1">'Red'</span> <span class="p">})</span>
+
+<span class="c"># Test 4: Tasks scheduled</span>
+<span class="nb">Write-Host</span> <span class="s2">""</span>
+<span class="nb">Write-Host</span> <span class="s2">"Test 4: Tasks Scheduled"</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nv">$main</span> <span class="p">=</span> <span class="nb">Get-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauAdminDashboard"</span> <span class="n">-ErrorAction</span> <span class="n">SilentlyContinue</span>
+<span class="nv">$health</span> <span class="p">=</span> <span class="nb">Get-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauDashboardHealthCheck"</span> <span class="n">-ErrorAction</span> <span class="n">SilentlyContinue</span>
+<span class="nb">Write-Host</span> <span class="s2">"Main Task: </span><span class="p">$(</span><span class="nv">$main</span><span class="p">.</span><span class="n">State</span><span class="p">)</span><span class="s2"> ✓"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+<span class="nb">Write-Host</span> <span class="s2">"Health Check: </span><span class="p">$(</span><span class="nv">$health</span><span class="p">.</span><span class="n">State</span><span class="p">)</span><span class="s2"> ✓"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+
+<span class="nb">Write-Host</span> <span class="s2">""</span>
+<span class="nb">Write-Host</span> <span class="s2">"=== ALL SYSTEMS GO! ==="</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+</code></pre></div>
+<hr />
+<h1 id="summary-quick-reference">Summary &amp; Quick Reference<a class="headerlink" href="#summary-quick-reference" title="Permanent link">&para;</a></h1>
+<h2 id="what-was-accomplished">What Was Accomplished<a class="headerlink" href="#what-was-accomplished" title="Permanent link">&para;</a></h2>
+<h3 id="infrastructure">Infrastructure<a class="headerlink" href="#infrastructure" title="Permanent link">&para;</a></h3>
+<p>✅ Python 3.13 with isolated virtual environment<br />
+✅ NSSM (Non-Sucking Service Manager) installed<br />
+✅ Windows Service registered and running<br />
+✅ Task Scheduler automation for startup<br />
+✅ Health monitoring system  </p>
+<h3 id="automation">Automation<a class="headerlink" href="#automation" title="Permanent link">&para;</a></h3>
+<p>✅ Starts automatically on system boot<br />
+✅ Auto-restarts on crash<br />
+✅ Weekly health checks<br />
+✅ Logging for troubleshooting<br />
+✅ Optional email alerts  </p>
+<h3 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h3>
+<p>✅ Operations guide<br />
+✅ Maintenance schedule<br />
+✅ Daily/weekly checklists<br />
+✅ Setup documentation (this file)  </p>
+<hr />
+<h2 id="quick-recap-complete-setup-timeline">Quick Recap: Complete Setup Timeline<a class="headerlink" href="#quick-recap-complete-setup-timeline" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>1. Python Environment (10 minutes)
+   ├── Verify Python 3.10+
+   ├── Create virtual environment (.venv)
+   └── Install dependencies (pip install -r requirements.txt)
+
+2. NSSM Installation (5 minutes)
+   ├── Create C:\tools\nssm directory
+   ├── Download NSSM from GitHub
+   ├── Extract to C:\tools\nssm\
+   └── Verify nssm.exe works
+
+3. Service Configuration (10 minutes)
+   ├── Create run_service.bat wrapper
+   ├── Install service with NSSM
+   ├── Configure service properties
+   ├── Start the service
+   └── Test dashboard access
+
+4. Task Scheduler Setup (10 minutes)
+   ├── Create start-app.ps1 script
+   ├── Enable script execution
+   ├── Register scheduled task
+   ├── Set to start at boot
+   └── Test task execution
+
+5. Health Monitoring (10 minutes)
+   ├── Create health-check.ps1 script
+   ├── Create setup script
+   ├── Register weekly task
+   └── Verify monitoring
+
+Total Time: ~45 minutes (+ troubleshooting as needed)
+</code></pre></div>
+<hr />
+<h2 id="key-files-created">Key Files Created<a class="headerlink" href="#key-files-created" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+<th>Location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.venv/</code></td>
+<td>Python virtual environment</td>
+<td>Dashboard root</td>
+</tr>
+<tr>
+<td><code>run_service.bat</code></td>
+<td>Service wrapper script</td>
+<td>Dashboard root</td>
+</tr>
+<tr>
+<td><code>start-app.ps1</code></td>
+<td>App startup script</td>
+<td>Dashboard root</td>
+</tr>
+<tr>
+<td><code>health-check.ps1</code></td>
+<td>Health monitoring script</td>
+<td>Dashboard root</td>
+</tr>
+<tr>
+<td><code>setup-health-check-task.ps1</code></td>
+<td>Health check setup</td>
+<td>Dashboard root</td>
+</tr>
+<tr>
+<td><code>OPERATIONS_GUIDE.md</code></td>
+<td>Operations reference</td>
+<td>Dashboard root</td>
+</tr>
+<tr>
+<td><code>MAINTENANCE_SCHEDULE.md</code></td>
+<td>Maintenance procedures</td>
+<td>Dashboard root</td>
+</tr>
+<tr>
+<td><code>daily-weekly-checklist.html</code></td>
+<td>Printable checklist</td>
+<td>Dashboard root</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="key-directories">Key Directories<a class="headerlink" href="#key-directories" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>C:\tools\nssm\
+└── nssm.exe                    (Service manager)
+
+C:\Users\&lt;your-user&gt;\AppData\Local\nssm\TableauAdminDash\
+├── stdout.log                  (Application output)
+└── stderr.log                  (Error logs)
+
+C:\path\to\tableau-admin-dashboard\
+├── .venv/                      (Python environment)
+├── instance/                   (Database and keys)
+├── routes/                     (Application routes)
+├── templates/                  (HTML templates)
+├── config.yaml                 (Configuration)
+├── app.py                      (Main application)
+└── [Setup scripts]             (All scripts above)
+</code></pre></div>
+<hr />
+<h2 id="services-tasks-created">Services &amp; Tasks Created<a class="headerlink" href="#services-tasks-created" title="Permanent link">&para;</a></h2>
+<h3 id="windows-service">Windows Service<a class="headerlink" href="#windows-service" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Name:</strong> <code>TableauAdminDash</code></li>
+<li><strong>Display Name:</strong> <code>Tableau Admin Dashboard</code></li>
+<li><strong>Status:</strong> Running</li>
+<li><strong>Start Type:</strong> Automatic</li>
+<li><strong>Auto-restart:</strong> Yes (on crash)</li>
+</ul>
+<h3 id="scheduled-tasks">Scheduled Tasks<a class="headerlink" href="#scheduled-tasks" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>TableauAdminDashboard</strong></li>
+<li>Trigger: At startup</li>
+<li>Action: Run start-app.ps1</li>
+<li>
+<p>Status: Running</p>
+</li>
+<li>
+<p><strong>TableauDashboardHealthCheck</strong></p>
+</li>
+<li>Trigger: Weekly (Monday, 9:00 AM)</li>
+<li>Action: Run health-check.ps1</li>
+<li>Status: Running</li>
+</ol>
+<hr />
+<h2 id="how-it-all-works-together">How It All Works Together<a class="headerlink" href="#how-it-all-works-together" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>System Boots
+    ↓
+Task Scheduler: TableauAdminDashboard starts
+    ↓
+PowerShell: start-app.ps1 executes
+    ↓
+Python: app.py runs in infinite loop
+    ↓
+Dashboard: Listening on http://localhost:5000
+    ↓
+If App Crashes: Auto-restart after 10 seconds
+    ↓
+Every Monday 9 AM: Health check runs automatically
+    ↓
+Results logged to file for review
+    ↓
+If Issues found: You review and take action
+</code></pre></div>
+<hr />
+<h2 id="troubleshooting-reference">Troubleshooting Reference<a class="headerlink" href="#troubleshooting-reference" title="Permanent link">&para;</a></h2>
+<h3 id="if-service-wont-start">If Service Won't Start<a class="headerlink" href="#if-service-wont-start" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c"># Check logs</span>
+<span class="nb">Get-Content</span> <span class="s2">"$env:APPDATA\Local\nssm\TableauAdminDash\stderr.log"</span> <span class="n">-Tail</span> <span class="n">50</span>
+
+<span class="c"># Restart</span>
+<span class="nb">Restart-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauAdminDashboard"</span>
+</code></pre></div>
+<h3 id="if-dashboard-not-responding">If Dashboard Not Responding<a class="headerlink" href="#if-dashboard-not-responding" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c"># Verify service is running</span>
+<span class="nb">Get-Service</span> <span class="n">TableauAdminDash</span> <span class="p">|</span> <span class="nb">Select-Object</span> <span class="n">Status</span>
+
+<span class="c"># Check port</span>
+<span class="n">netstat</span> <span class="n">-ano</span> <span class="p">|</span> <span class="n">findstr</span> <span class="p">:</span><span class="n">5000</span>
+
+<span class="c"># Restart if needed</span>
+<span class="nb">Restart-ScheduledTask</span> <span class="n">-TaskName</span> <span class="s2">"TableauAdminDashboard"</span>
+</code></pre></div>
+<h3 id="if-health-check-fails">If Health Check Fails<a class="headerlink" href="#if-health-check-fails" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><span class="c"># View health report</span>
+<span class="n">notepad</span> <span class="s2">"$env:APPDATA\Local\nssm\TableauAdminDash\health-check-log.txt"</span>
+
+<span class="c"># Run manually</span>
+<span class="nb">cd </span><span class="s2">"C:\path\to\tableau-admin-dashboard"</span>
+<span class="p">.\</span><span class="n">health-check</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
+<hr />
+<h2 id="success-criteria">Success Criteria<a class="headerlink" href="#success-criteria" title="Permanent link">&para;</a></h2>
+<p>The setup is complete and successful when:</p>
+<p>✅ Service shows "Running" status<br />
+✅ Dashboard loads at http://localhost:5000<br />
+✅ Port 5000 is listening<br />
+✅ Weekly health checks run automatically<br />
+✅ Logs are being created<br />
+✅ Task restarts on system boot  </p>
+<p><strong>Current Status:</strong> ✅ <strong>ALL CRITERIA MET - PRODUCTION READY</strong></p>
+<hr />
+<h2 id="for-future-reference">For Future Reference<a class="headerlink" href="#for-future-reference" title="Permanent link">&para;</a></h2>
+<p>When setting up this on another machine:
+1. Follow Parts 1-5 in order
+2. Keep all setup scripts in the dashboard directory
+3. Update file paths if installing in different location
+4. Run PowerShell as Administrator for all setup steps
+5. Test each component before moving to next</p>
+<hr />
+<p><strong>Document Version:</strong> 1.0<br />
+<strong>Last Updated:</strong> August 11, 2026<br />
+<strong>Status:</strong> Complete Setup Documented<br />
+<strong>Production Status:</strong> ✅ Ready for 24/7 Operation</p>
+<hr />
+<p><strong>Developed by:</strong> Rohit Nethikar</p>
+
+
+
+
+
+
+
+  
+    
+  
+  
+    
+  
+
+
+  <aside class="md-source-file">
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Last update">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 17, 2026 17:55:51 UTC">November 17, 2026</span>
+  </span>
+
+    
+    
+      
+  <span class="md-source-file__fact">
+    <span class="md-icon" title="Created">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14.47 15.08 11 13V7h1.5v5.25l3.08 1.83c-.41.28-.79.62-1.11 1m-1.39 4.84c-.36.05-.71.08-1.08.08-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8c0 .37-.03.72-.08 1.08.69.1 1.33.32 1.92.64.1-.56.16-1.13.16-1.72 0-5.5-4.5-10-10-10S2 6.5 2 12s4.47 10 10 10c.59 0 1.16-.06 1.72-.16-.32-.59-.54-1.23-.64-1.92M18 15v3h-3v2h3v3h2v-3h3v-2h-3v-3z"/></svg>
+    </span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="November 17, 2026 17:55:51 UTC">November 17, 2026</span>
+  </span>
+
+    
+    
+    
+  </aside>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 Mayo Clinic. All rights reserved.
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/rohit-nethikar/tableau-admin-dashboard" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
