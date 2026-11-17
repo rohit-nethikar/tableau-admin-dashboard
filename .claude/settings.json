@@ -1,0 +1,27 @@
+{
+  "ignore_patterns": [
+    "*.db",
+    "*.log",
+    ".venv/",
+    "__pycache__/",
+    "instance/logs/",
+    "instance/account_backups/",
+    ".git/"
+  ],
+  "rules": [
+    ".claude/rules/flask-routes.md",
+    ".claude/rules/database.md",
+    ".claude/rules/services.md",
+    ".claude/rules/configuration.md"
+  ],
+  "agents": {
+    "explorer": ".claude/agents/explorer.md",
+    "reviewer": ".claude/agents/reviewer.md"
+  },
+  "skills": {
+    "investigate": ".claude/skills/investigate.md",
+    "fix-bug": ".claude/skills/fix-bug.md",
+    "add-feature": ".claude/skills/add-feature.md",
+    "review-pr": ".claude/skills/review-pr.md"
+  }
+}

@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}Security Certificates - Tableau Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="display-5"><i class="bi bi-shield-check"></i> Security Certificates</h1>
+      <p class="text-muted">SSL/TLS certificate details for your Tableau server</p>
+    </div>
+  </div>
+
+  <!-- Tableau Server Information -->
+  {% if server_info %}
+  <div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-server"></i> Tableau Server Information</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            <tbody>
+              <tr>
+                <td class="fw-bold text-muted" style="width: 50%;">Product Version:</td>
+                <td>{{ server_info.product_version or 'N/A' }}</td>
+              </tr>
+              {% if server_info.build_number %}
+              <tr>
+                <td class="fw-bold text-muted">Build Number:</td>
+                <td><code class="small">{{ server_info.build_number }}</code></td>
+              </tr>
+              {% endif %}
+              {% if server_info.rest_api_version %}
+              <tr>
+                <td class="fw-bold text-muted">REST API Version:</td>
+                <td>{{ server_info.rest_api_version }}</td>
+              </tr>
+              {% endif %}
+              <tr>
+                <td class="fw-bold text-muted">Server URL:</td>
+                <td><code class="small">{{ server_url }}</code></td>
+              </tr>
+              {% if server_info.fetched_at %}
+              <tr>
+                <td class="fw-bold text-muted">Info Fetched:</td>
+                <td><small class="text-muted">{{ server_info.fetched_at }}</small></td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-diagram-2"></i> Network Information</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            <tbody>
+              <tr>
+                <td class="fw-bold text-muted" style="width: 50%;">Hostname:</td>
+                <td><code class="small">{{ hostname }}</code></td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">SSL/TLS Port:</td>
+                <td><code class="small">{{ port }}</code></td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Scheme:</td>
+                <td>HTTPS</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Backend Server Nodes -->
+  {% if nodes_info.success and nodes_info.nodes %}
+  <div class="row mb-4">
+    <div class="col-md-12 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-cpu"></i> Backend Server Nodes ({{ nodes_info.node_count }})</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Node Name</th>
+                  <th>IP Address</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for node in nodes_info.nodes %}
+                <tr>
+                  <td>
+                    <code class="small">{{ node.name }}</code>
+                  </td>
+                  <td>
+                    <code class="small">{{ node.ip }}</code>
+                  </td>
+                  <td>
+                    {% if node.status.lower() == 'active' %}
+                      <span class="badge bg-success">{{ node.status }}</span>
+                    {% elif node.status.lower() == 'passive' %}
+                      <span class="badge bg-warning text-dark">{{ node.status }}</span>
+                    {% else %}
+                      <span class="badge bg-secondary">{{ node.status }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% elif nodes_info and not nodes_info.success %}
+  <div class="row mb-4">
+    <div class="col-md-12">
+      {% if nodes_info.admin_confirmed %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-success" style="font-size: 2rem;">
+              <i class="bi bi-check-circle-fill"></i>
+            </div>
+            <div>
+              <h5 class="mb-1">Backend Nodes - Admin Access Confirmed</h5>
+              <p class="mb-0 text-muted">Your admin PAT is working correctly! Node information is not available through the REST API in your Tableau version, but you can manually add your backend node details.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Manual Backend Nodes Configuration -->
+      <div class="row">
+        <div class="col-md-12">
+          <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light border-0">
+              <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Add Backend Node Information</h5>
+            </div>
+            <div class="card-body">
+              <p class="text-muted small mb-3">Enter your backend nodes manually (SIETAB100A, SIETAB100B, SIETAB100C, etc.):</p>
+
+              <form method="post" action="{{ url_for('security_certs.add_node') }}" class="mb-4">
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <input type="text" class="form-control" name="node_name" placeholder="Node name (e.g., SIETAB100A)" required>
+                  </div>
+                  <div class="col-md-4">
+                    <input type="text" class="form-control" name="node_ip" placeholder="IP address (e.g., 192.168.1.100)" required>
+                  </div>
+                  <div class="col-md-2">
+                    <select class="form-select" name="node_status" required>
+                      <option value="">Status</option>
+                      <option value="Active">Active</option>
+                      <option value="Passive">Passive</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Add</button>
+                  </div>
+                </div>
+              </form>
+
+              {% if stored_nodes %}
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Node Name</th>
+                      <th>IP Address</th>
+                      <th>Status</th>
+                      <th style="width: 100px;">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for node in stored_nodes %}
+                    <tr>
+                      <td><code class="small">{{ node.name }}</code></td>
+                      <td><code class="small">{{ node.ip }}</code></td>
+                      <td>
+                        {% if node.status.lower() == 'active' %}
+                          <span class="badge bg-success">{{ node.status }}</span>
+                        {% elif node.status.lower() == 'passive' %}
+                          <span class="badge bg-warning text-dark">{{ node.status }}</span>
+                        {% else %}
+                          <span class="badge bg-secondary">{{ node.status }}</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <form method="post" action="{{ url_for('security_certs.delete_node_route', node_name=node.name) }}" style="display: inline;">
+                          <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete node {{ node.name }}?');">Delete</button>
+                        </form>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="alert alert-warning d-flex align-items-start" role="alert">
+        <i class="bi bi-exclamation-triangle me-2 mt-1" style="flex-shrink: 0;"></i>
+        <div>
+          <strong>Backend Nodes - Information Not Available</strong>
+          <p class="mb-2 mt-1">{{ nodes_info.error }}</p>
+          <div class="small text-muted">
+            <p class="mb-2"><strong>Possible causes:</strong></p>
+            <ul class="mb-0">
+              <li>Your Tableau PAT may not have admin-level permissions</li>
+              <li>The API endpoint may be unavailable in your Tableau Server version</li>
+              <li>Try using a PAT created by a Tableau Server admin</li>
+              <li>Check that your PAT has "Server Admin" role permissions</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <hr class="my-4">
+  {% endif %}
+
+  {% if cert_info.success %}
+  <div class="row mb-4">
+    <!-- Status Card -->
+    <div class="col-md-12 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h5 class="card-title mb-1">Certificate Status</h5>
+              <p class="text-muted mb-0">{{ hostname }}:{{ port }}</p>
+            </div>
+            <div class="text-end">
+              {% if cert_info.status == 'expired' %}
+                <span class="badge bg-danger fs-6"><i class="bi bi-exclamation-circle"></i> EXPIRED</span>
+                <p class="text-danger fw-bold mt-2">{{ cert_info.days_remaining }} days</p>
+              {% elif cert_info.status == 'warning' %}
+                <span class="badge bg-warning text-dark fs-6"><i class="bi bi-exclamation-triangle"></i> EXPIRES SOON</span>
+                <p class="text-warning fw-bold mt-2">{{ cert_info.days_remaining }} days</p>
+              {% else %}
+                <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> VALID</span>
+                <p class="text-success fw-bold mt-2">{{ cert_info.days_remaining }} days</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Certificate Details -->
+    <div class="col-lg-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-file-text"></i> Certificate Details</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            <tbody>
+              <tr>
+                <td class="fw-bold text-muted" style="width: 40%;">Subject CN:</td>
+                <td>{{ cert_info.subject_cn }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Subject Organization:</td>
+                <td>{{ cert_info.subject_org }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Subject Country:</td>
+                <td>{{ cert_info.subject_country }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Serial Number:</td>
+                <td><code class="small">{{ cert_info.serial_number }}</code></td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Version:</td>
+                <td>v{{ cert_info.version }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Issuer Details -->
+    <div class="col-lg-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-building"></i> Issuer Details</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            <tbody>
+              <tr>
+                <td class="fw-bold text-muted" style="width: 40%;">Issuer CN:</td>
+                <td>{{ cert_info.issuer_cn }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Issuer Organization:</td>
+                <td>{{ cert_info.issuer_org }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Validity Period -->
+    <div class="col-lg-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-calendar-event"></i> Validity Period</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            <tbody>
+              <tr>
+                <td class="fw-bold text-muted" style="width: 40%;">Valid From:</td>
+                <td>{{ cert_info.not_before }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Valid Until:</td>
+                <td class="{% if cert_info.status == 'expired' %}text-danger fw-bold{% elif cert_info.status == 'warning' %}text-warning fw-bold{% endif %}">
+                  {{ cert_info.not_after }}
+                </td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Days Remaining:</td>
+                <td class="{% if cert_info.status == 'expired' %}text-danger fw-bold{% elif cert_info.status == 'warning' %}text-warning fw-bold{% endif %}">
+                  {{ cert_info.days_remaining }} days
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject Alternative Names (SANs) -->
+    {% if cert_info.san_list %}
+    <div class="col-lg-6 mb-3">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-link-45deg"></i> Subject Alternative Names</h5>
+        </div>
+        <div class="card-body">
+          <div class="list-group list-group-flush">
+            {% for san in cert_info.san_list %}
+            <div class="list-group-item px-0 py-2">
+              <code class="small">{{ san }}</code>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <!-- Error State -->
+  <div class="row">
+    <div class="col-md-12">
+      <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <div>
+          <strong>Error fetching certificate:</strong> {{ cert_info.error }}
+        </div>
+      </div>
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Troubleshooting Tips:</h5>
+          <ul class="mb-0">
+            <li>Verify the server URL is correct: <code>{{ server_url }}</code></li>
+            <li>Check that the server is accessible from this machine</li>
+            <li>Ensure port {{ port }} is open and reachable</li>
+            <li>If using a self-signed certificate, it may require additional certificate chain configuration</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .card {
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .badge {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .display-5 {
+    color: var(--bs-body-color);
+    font-weight: 600;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Refresh Health{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+  <h3 class="mb-3"><i class="bi bi-arrow-repeat"></i> Refresh Reliability</h3>
+  <div class="d-flex gap-2">
+    <form method="post" action="{{ url_for('refresh_health.validate_sites') }}">
+      <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-shield-check"></i> Validate PAT access to all sites</button>
+    </form>
+    <form method="post" action="{{ url_for('refresh.trigger_refresh_all_sites') }}">
+      <button type="submit" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-repeat"></i> Refresh all sites now</button>
+    </form>
+  </div>
+</div>
+<p class="text-muted small">
+  Computed from the sync run history below. Failure details are redacted before
+  display (raw text is retained in the database for admin debugging). Note the
+  distinction below: "Last Successful Refresh" is when <em>this app</em> last
+  pulled data from Tableau, while "Most Recent Extract Refresh" is when Tableau
+  itself last ran an extract-refresh job on any workbook or data source &mdash;
+  two different clocks. "Consecutive Sync Failures" counts this app's own failed
+  refresh runs, not Tableau extract failures (see the per-item "Extract Failures"
+  column on Workbooks/Data Sources for that).
+</p>
+
+{% if site_validation %}
+<div class="card mb-4">
+  <div class="card-body">
+    <h6 class="card-subtitle text-muted mb-3">Site Validation Results</h6>
+    <table class="table table-sm mb-0">
+      <thead><tr><th>Site</th><th>Status</th><th>Detail</th></tr></thead>
+      <tbody>
+        {% for result in site_validation %}
+        <tr class="{{ '' if result.ok else 'table-danger' }}">
+          <td>{{ result.site }}</td>
+          <td>{{ "OK" if result.ok else "Failed" }}</td>
+          <td>{{ result.detail }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="card border-primary-subtle bg-primary-subtle bg-opacity-10 mb-4">
+  <div class="card-body d-flex align-items-center gap-3">
+    <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-clock-history"></i></div>
+    <div>
+      <div class="stat-label mb-1">Most Recent Extract Refresh (any workbook or data source)</div>
+      <div class="stat-number">{{ most_recent_extract_refresh or "No extract refresh recorded yet" }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle text-muted mb-2">Last Successful Refresh</h6>
+        {% if last_successful %}
+          <p class="mb-0">{{ last_successful.started_at }}</p>
+        {% else %}
+          <p class="mb-0 text-danger">None recorded</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle text-muted mb-2">Consecutive Sync Failures</h6>
+        <p class="mb-0 {{ 'text-danger fw-bold' if consecutive_failures > 0 else '' }}">
+          {{ consecutive_failures }}
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-body">
+        <h6 class="card-subtitle text-muted mb-2">Next Scheduled Run</h6>
+        <p class="mb-0">{{ next_run if next_run else "Not scheduled yet" }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h6 class="card-subtitle text-muted mb-3">Sync Duration Trend</h6>
+    {% if trend_series %}
+    <canvas id="duration-trend-chart" height="80"></canvas>
+    {% else %}
+    <p class="text-muted small mb-0">Not enough completed runs yet to chart.</p>
+    {% endif %}
+  </div>
+</div>
+
+<table id="refresh-log-table" class="table table-striped table-bordered w-100">
+  <thead>
+    <tr>
+      <th>Started</th>
+      <th>Finished</th>
+      <th>Status</th>
+      <th>Duration (s)</th>
+      <th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr class="{{ 'table-danger' if row.status == 'failed' else ('table-warning' if row.status == 'partial' else '') }}">
+      <td>{{ row.started_at }}</td>
+      <td>{{ row.finished_at or "" }}</td>
+      <td>{{ row.status }}</td>
+      <td>{{ row.duration_seconds | round(1) if row.duration_seconds is not none else "" }}</td>
+      <td>{{ row.detail_sanitized or "" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  $(document).ready(function () {
+    initDataTable('#refresh-log-table', { order: [], pageLength: 25 });
+
+    var trendSeries = {{ trend_series | tojson }};
+    if (trendSeries.length > 0) {
+      new Chart(document.getElementById('duration-trend-chart'), {
+        type: 'line',
+        data: {
+          labels: trendSeries.map(function (r) { return r.started_at; }),
+          datasets: [{
+            label: 'Sync duration (s)',
+            data: trendSeries.map(function (r) { return r.duration_seconds; }),
+            borderColor: '#2f5fdb',
+            backgroundColor: 'rgba(47, 95, 219, 0.15)',
+            fill: true,
+            tension: 0.25,
+            pointRadius: 2
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: { x: { ticks: { maxTicksLimit: 8 } }, y: { beginAtZero: true } }
+        }
+      });
+    }
+  });
+</script>
+{% endblock %}

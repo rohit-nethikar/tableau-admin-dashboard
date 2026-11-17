@@ -1,0 +1,62 @@
+/* ========================================
+   DARK MODE SPECIFIC OVERRIDES
+   ======================================== */
+
+body.dark-mode {
+  background-color: #1A1A1A;
+  color: #E4E4E4;
+}
+
+body.dark-mode header {
+  background-color: #2D2D2D;
+  border-bottom-color: #404040;
+}
+
+body.dark-mode .card {
+  background-color: #2D2D2D;
+  border-color: #404040;
+}
+
+body.dark-mode input[type="text"],
+body.dark-mode input[type="email"],
+body.dark-mode input[type="password"],
+body.dark-mode input[type="number"],
+body.dark-mode select,
+body.dark-mode textarea {
+  background-color: #3A3A3A;
+  border-color: #404040;
+  color: #E4E4E4;
+}
+
+body.dark-mode input:focus,
+body.dark-mode select:focus,
+body.dark-mode textarea:focus {
+  border-color: #00A3E0;
+  box-shadow: 0 0 0 3px rgba(0, 163, 224, 0.2);
+}
+
+body.dark-mode thead {
+  background-color: #3A3A3A;
+  border-bottom-color: #404040;
+}
+
+body.dark-mode td {
+  border-bottom-color: #404040;
+}
+
+body.dark-mode tbody tr:hover {
+  background-color: #3A3A3A;
+}
+
+/* Scrollbar dark mode */
+body.dark-mode::-webkit-scrollbar-track {
+  background: #3A3A3A;
+}
+
+body.dark-mode::-webkit-scrollbar-thumb {
+  background: #505050;
+}
+
+body.dark-mode::-webkit-scrollbar-thumb:hover {
+  background: #606060;
+}

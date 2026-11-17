@@ -1,0 +1,28 @@
+<!-- Add this modal to custom_views.html for managing account numbers -->
+<div class="modal fade" id="accountNumberModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Manage Account Numbers</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <table id="accountNumbersTable" class="table table-sm">
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Email</th>
+              <th>Account Number</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="accountNumbersBody">
+          </tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

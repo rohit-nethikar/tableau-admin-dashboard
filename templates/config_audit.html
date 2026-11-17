@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration Audit - Tableau Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="display-5"><i class="bi bi-clock-history"></i> Configuration Audit</h1>
+      <p class="text-muted">Track changes to site-wide settings detected during syncs</p>
+    </div>
+  </div>
+
+  <!-- Configuration Change History -->
+  {% if changes %}
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-list-check"></i> Configuration Changes ({{ changes|length }} total)</h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Detected At</th>
+                  <th>Setting</th>
+                  <th>Old Value</th>
+                  <th>New Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for change in changes %}
+                <tr>
+                  <td><small class="text-muted">{{ change.detected_at }}</small></td>
+                  <td><strong>{{ change.setting_label }}</strong></td>
+                  <td><code class="small">{{ change.old_value or "—" }}</code></td>
+                  <td><code class="small">{{ change.new_value or "—" }}</code></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="alert alert-info d-flex align-items-start" role="alert">
+        <i class="bi bi-info-circle me-2 mt-1" style="flex-shrink: 0;"></i>
+        <div>
+          <strong>No configuration drift detected</strong>
+          <p class="mb-0 mt-1">Site settings have not changed since tracking began, or this is the first sync on this site.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Current Settings Summary -->
+  {% if current_settings %}
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-gear"></i> Current Settings</h5>
+        </div>
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            <tbody>
+              <tr>
+                <td class="fw-bold text-muted" style="width: 40%;">Extract Encryption Mode:</td>
+                <td>{{ current_settings.extract_encryption_mode or "N/A" }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Guest Access Enabled:</td>
+                <td>
+                  {% if current_settings.guest_access_enabled %}
+                    <span class="badge bg-success">Enabled</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Disabled</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Subscriptions Disabled:</td>
+                <td>
+                  {% if current_settings.disable_subscriptions %}
+                    <span class="badge bg-warning text-dark">Yes</span>
+                  {% else %}
+                    <span class="badge bg-success">No (Enabled)</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Revision History Enabled:</td>
+                <td>
+                  {% if current_settings.revision_history_enabled %}
+                    <span class="badge bg-success">Enabled</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Disabled</span>
+                  {% endif %}
+                </td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Revision Limit:</td>
+                <td>{{ current_settings.revision_limit or "Unlimited" }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Ask Data Mode:</td>
+                <td>{{ current_settings.ask_data_mode or "N/A" }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Creator Capacity:</td>
+                <td>{{ current_settings.tier_creator_capacity or "Unlimited" }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Explorer Capacity:</td>
+                <td>{{ current_settings.tier_explorer_capacity or "Unlimited" }}</td>
+              </tr>
+              <tr>
+                <td class="fw-bold text-muted">Viewer Capacity:</td>
+                <td>{{ current_settings.tier_viewer_capacity or "Unlimited" }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Last Refresh -->
+  {% if last_refresh %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <small class="text-muted">
+            Last synced: <strong>{{ last_refresh.finished_at or last_refresh.started_at }}</strong>
+            <span class="badge bg-{{ 'success' if last_refresh.status == 'success' else 'warning' if last_refresh.status == 'partial' else 'danger' }} ms-2">
+              {{ last_refresh.status|capitalize }}
+            </span>
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<style>
+  .card {
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+
+  .badge {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .display-5 {
+    color: var(--bs-body-color);
+    font-weight: 600;
+  }
+</style>
+{% endblock %}

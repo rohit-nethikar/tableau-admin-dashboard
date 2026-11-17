@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Templates - Tableau Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="display-5"><i class="bi bi-collection"></i> Templates</h1>
+      <p class="text-muted">Curated starter workbooks you can download and build on, instead of starting from a blank canvas.</p>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0"><i class="bi bi-journal-text"></i> Developer Standards &amp; Conventions</h5>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="standards-edit-btn">
+            <i class="bi bi-pencil"></i> Edit
+          </button>
+        </div>
+        <div class="card-body">
+          <div id="standards-view-mode">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <a href="{{ url_for('static', filename='img/bei_report_tab_standard.png') }}" target="_blank" rel="noopener">
+                  <img src="{{ url_for('static', filename='img/bei_report_tab_standard.png') }}"
+                       alt="BEI standard report tab wireframe" class="img-fluid rounded border">
+                </a>
+                <p class="text-muted small mt-1 mb-0">Click to view full size</p>
+              </div>
+              <div class="col-md-9">
+                {% if standards_notes %}
+                <pre class="small mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ standards_notes }}</pre>
+                {% else %}
+                <p class="text-muted mb-0">No standards documented yet. Click Edit to add guidance for developers building new workbooks.</p>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div id="standards-edit-mode" class="d-none">
+            <form method="post" action="{{ url_for('templates.save_standards_notes') }}">
+              <textarea class="form-control small" name="notes" rows="20" style="font-family: inherit;">{{ standards_notes }}</textarea>
+              <div class="mt-2">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-outline-secondary" id="standards-cancel-btn">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-plus-circle"></i> Add a Template</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small mb-3">
+            Pick an existing workbook to feature as a starter template. The download contains the
+            workbook's structure and formatting only (no extract/live data) - you'll need to point it
+            at your own data source after downloading.
+          </p>
+
+          <form method="post" action="{{ url_for('templates.add_template') }}">
+            <div class="row g-2">
+              <div class="col-md-4">
+                <select class="form-select" name="workbook_id" required>
+                  <option value="">Select a workbook&hellip;</option>
+                  {% for wb in workbooks %}
+                  <option value="{{ wb.id }}">{{ wb.name }}{% if wb.project_name %} ({{ wb.project_name }}){% endif %}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <input type="text" class="form-control" name="title" placeholder="Template title" required>
+              </div>
+              <div class="col-md-2">
+                <input type="text" class="form-control" name="category" placeholder="Category (optional)">
+              </div>
+              <div class="col-md-3">
+                <input type="text" class="form-control" name="description" placeholder="Short description (optional)">
+              </div>
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-md-12">
+                <textarea class="form-control" name="standards_notes" rows="2"
+                          placeholder="What structure/format/standards does this workbook demonstrate? (optional)"></textarea>
+              </div>
+            </div>
+            <div class="mt-2">
+              <button type="submit" class="btn btn-primary">Add Template</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if templates %}
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+    {% for tpl in templates %}
+    <div class="col">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <h5 class="mb-0">{{ tpl.title }}</h5>
+            {% if tpl.category %}
+            <span class="badge bg-primary-subtle text-primary">{{ tpl.category }}</span>
+            {% endif %}
+          </div>
+          {% if tpl.description %}
+          <p class="text-muted small flex-grow-1">{{ tpl.description }}</p>
+          {% else %}
+          <p class="text-muted small flex-grow-1"></p>
+          {% endif %}
+          <p class="small text-muted mb-2">Based on: <strong>{{ tpl.workbook_name }}</strong></p>
+          {% if tpl.standards_notes %}
+          <p class="small text-muted mb-3"><strong>Standards:</strong> <span style="white-space: pre-wrap;">{{ tpl.standards_notes }}</span></p>
+          {% endif %}
+          <div class="d-flex gap-2 mt-auto">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('templates.download_template', template_id=tpl.id) }}">
+              <i class="bi bi-download"></i> Download
+            </a>
+            <form method="post" action="{{ url_for('templates.delete_template_route', template_id=tpl.id) }}" class="ms-auto">
+              <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete template {{ tpl.title }}?');">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info">
+    No templates yet. Use the form above to feature an existing workbook as a starter template.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('standards-edit-btn').addEventListener('click', function () {
+    document.getElementById('standards-view-mode').classList.add('d-none');
+    document.getElementById('standards-edit-mode').classList.remove('d-none');
+  });
+  document.getElementById('standards-cancel-btn').addEventListener('click', function () {
+    document.getElementById('standards-edit-mode').classList.add('d-none');
+    document.getElementById('standards-view-mode').classList.remove('d-none');
+  });
+</script>
+{% endblock %}

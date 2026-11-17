@@ -1,0 +1,63 @@
+# Copy this file to config.yaml and edit it for your organization:
+#     copy config.example.yaml config.yaml      (Windows)
+#     cp config.example.yaml config.yaml        (Mac/Linux)
+# config.yaml is git-ignored so your server names and emails stay out of the repo.
+#
+# Non-secret settings only. Secrets (PAT, passcode hash) live encrypted/hashed in the
+# SQLite DB, entered via the /setup screen the first time you run the app - never put
+# them here. Restart the app after editing.
+
+# --- Tableau Server -----------------------------------------------------------------
+# Base URL only - no /#/site/... path, no trailing slash.
+server_url: "https://tableau.yourorg.com"
+
+# Each entry is a site's content URL - the segment right after /#/site/ in your
+# browser's address bar. Use "" for the Default site. The same PAT must have access
+# to every site listed here.
+sites:
+  - "Finance"
+  - "Analytics-DEV"
+default_site: "Finance"   # used for setup validation and as the fallback site
+
+# --- Web server ---------------------------------------------------------------------
+# "127.0.0.1" only accepts connections from this machine. "0.0.0.0" accepts connections
+# from other machines - do that only on a trusted internal network, and put a reverse
+# proxy with TLS in front of it if it is reachable beyond that.
+host: "127.0.0.1"
+port: 5000
+
+# --- Refresh behaviour --------------------------------------------------------------
+refresh_interval_minutes: 60       # background sync of every site
+site_switch_staleness_minutes: 5   # switching site refreshes it if older than this
+stale_threshold_days: 90           # content unused this long is flagged stale
+
+# --- Email alerts (optional) --------------------------------------------------------
+# Extract-refresh failure and license-threshold emails. Leave smtp_host blank to
+# disable all email alerting.
+smtp_host: ""                      # e.g. "smtp.yourorg.com"
+smtp_port: 25
+alert_email_from: "tableau-admin@yourorg.com"
+alert_email_to: "tableau-admins@yourorg.com"
+license_alert_threshold_pct: 90    # alert when a seat tier passes this % of capacity
+
+# --- Branding -----------------------------------------------------------------------
+org_name: "Your Organization"      # used in labels such as "<org_name> only"
+org_logo: ""                       # filename under static/img/ (e.g. "yourorg-logo.png"); blank = no logo
+
+# Owners whose email ends in @<this domain> count as "internal" on the Custom Views
+# page filter. Blank hides the Internal/External filter.
+internal_email_domain: ""          # e.g. "yourorg.com"
+
+# --- BigQuery account-number sync (optional) ----------------------------------------
+# Fills the "Account #" column on Custom Views from a BigQuery table/view that maps
+# user email -> account number. Leave enabled: false if you don't have one; the rest
+# of the app does not need it.
+# Auth: put a service-account key at ./bigquery-credentials.json (git-ignored), set
+# GOOGLE_APPLICATION_CREDENTIALS, or use `gcloud auth application-default login`.
+bigquery:
+  enabled: false
+  project: ""                      # GCP project id
+  dataset: ""
+  view: ""                         # table or view name
+  email_column: "USERNAME"         # column holding the user's email
+  account_number_column: "CLIENT_ACCOUNT_NUMBER"

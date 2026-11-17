@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Logs
+*.log
+server.log
+app.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+backups/
+*.bak
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Flask
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# BigQuery
+bigquery-credentials.json
+*-credentials.json
+
+# Helper/diagnostic scripts (temporary)
+diagnose-*.py
+inspect-*.py
+test-*.py
+validate-*.py
+populate-*.py
+list-routes.py
+run.py
+
+# MkDocs
+site/
+.cache/
+
+.deployment-backups/
+
+.patch-backups/
+health-check-log.txt
+
+# Local, org-specific config (copy config.example.yaml -> config.yaml)
+config.yaml
+
+# Runtime process files
+*.pid

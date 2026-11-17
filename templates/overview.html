@@ -1,0 +1,555 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+  <div>
+    <h1 class="mb-2">📊 Dashboard Overview <span id="live-indicator" style="display: none; color: var(--success); font-size: 14px; font-weight: 600;">🟢 LIVE</span></h1>
+    <p class="text-muted mb-0" style="font-size: 12px;">
+      {% if last_refresh and last_refresh.finished_at %}
+        Last updated: <strong id="last-refresh-time">{{ last_refresh.finished_at }}</strong>
+      {% elif last_refresh and last_refresh.started_at %}
+        Syncing since: <strong id="last-refresh-time">{{ last_refresh.started_at }}</strong>
+      {% else %}
+        <em>Never synced</em>
+      {% endif %}
+    </p>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <a href="{{ url_for('refresh.trigger_refresh') }}" class="btn btn-small" style="background-color: var(--primary); color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 13px;">🔄 Sync Now</a>
+    <a href="{{ url_for('findings.list_findings') }}" class="btn btn-small" style="background-color: var(--accent); color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 13px;">🚩 Findings</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-lg-4 col-xl-2">
+    <a href="{{ url_for('workbooks.list_workbooks') }}" class="text-decoration-none">
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">📊</div>
+          <div class="stat-number" data-metric="workbook_count" style="margin: 0; color: var(--primary); font-weight: 700;">{{ workbook_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Workbooks</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-4 col-xl-2">
+    <a href="{{ url_for('datasources.list_datasources') }}" class="text-decoration-none">
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">🔌</div>
+          <div class="stat-number" style="margin: 0; color: var(--primary); font-weight: 700;">{{ datasource_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Data Sources</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-4 col-xl-2">
+    <a href="{{ url_for('workbooks.list_workbooks') }}" class="text-decoration-none">
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">⏱️</div>
+          <div class="stat-number" style="margin: 0; color: var(--warning); font-weight: 700;">{{ stale_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Stale Items</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-4 col-xl-2">
+    <a href="{{ url_for('custom_views.list_custom_views') }}" class="text-decoration-none">
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">👀</div>
+          <div class="stat-number" style="margin: 0; color: var(--primary); font-weight: 700;">{{ custom_view_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Custom Views</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-4 col-xl-2">
+    <a href="{{ url_for('subscriptions.list_subscriptions') }}" class="text-decoration-none">
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">📬</div>
+          <div class="stat-number" style="margin: 0; color: var(--primary); font-weight: 700;">{{ subscription_count }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Subscriptions</div>
+        </div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-lg-4 col-xl-2">
+    <a href="{{ url_for('health.list_health') }}" class="text-decoration-none">
+      <div class="card stat-card h-100" style="border: 1px solid var(--border-light); transition: all 0.3s ease;">
+        <div class="card-body d-flex flex-column align-items-center gap-2 text-center">
+          <div style="font-size: 24px;">{% if avg_score is not none and avg_score >= 80 %}✅{% elif avg_score is not none and avg_score >= 50 %}⚠️{% else %}❌{% endif %}</div>
+          <div class="stat-number" style="margin: 0; color: {% if avg_score is not none and avg_score >= 80 %}var(--success){% elif avg_score is not none and avg_score >= 50 %}var(--warning){% else %}var(--error){% endif %}; font-weight: 700;">{{ avg_score if avg_score is not none else "—" }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">Health</div>
+        </div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- System Health Summary Banner -->
+<div style="background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px;">
+    <div style="text-align: center;">
+      <div id="health-total-assets" style="font-size: 28px; margin-bottom: 4px;">{{ workbook_count + datasource_count }}</div>
+      <div style="font-size: 12px; opacity: 0.9;">Total Assets</div>
+    </div>
+    <div style="text-align: center;">
+      <div id="health-stale-items" style="font-size: 28px; margin-bottom: 4px;">{{ stale_count }}</div>
+      <div style="font-size: 12px; opacity: 0.9;">Stale Items</div>
+    </div>
+    <div style="text-align: center;">
+      <div id="health-critical-issues" style="font-size: 28px; margin-bottom: 4px;">{{ severity_counts.critical + severity_counts.high }}</div>
+      <div style="font-size: 12px; opacity: 0.9;">Critical Issues</div>
+    </div>
+    <div style="text-align: center;">
+      <div id="health-avg-score" style="font-size: 28px; margin-bottom: 4px;">{{ avg_score if avg_score is not none else "—" }}</div>
+      <div style="font-size: 12px; opacity: 0.9;">Avg Health Score</div>
+    </div>
+  </div>
+</div>
+
+<!-- Phase 4: Advanced Features Toolbar -->
+<div style="background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+  <!-- Advanced Filtering -->
+  <div id="advancedFilterContainer" style="margin-bottom: 12px;"></div>
+
+  <!-- Export Buttons -->
+  <div id="exportContainer" style="margin-bottom: 12px;"></div>
+
+  <!-- Dashboard Selector -->
+  <div id="dashboardSelectorContainer" style="margin-bottom: 12px;"></div>
+
+  <!-- Alert Rules Manager -->
+  <details style="cursor: pointer;">
+    <summary style="font-weight: 600; color: var(--primary); padding: 8px; user-select: none;">
+      🚨 Alert Rules (<span id="alertRuleCount">0</span>)
+    </summary>
+    <div id="alertRulesContainer" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);"></div>
+  </details>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">📋 Open Findings by Severity</h5>
+        {% if severity_counts.values() | sum > 0 %}
+        <div style="max-height: 320px; overflow: hidden;">
+        <canvas id="severity-chart" height="320"></canvas>
+        </div>
+        <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>🔴 Critical: <strong>{{ severity_counts.critical }}</strong></div>
+            <div>🟡 High: <strong>{{ severity_counts.high }}</strong></div>
+            <div>🟠 Medium: <strong>{{ severity_counts.medium }}</strong></div>
+            <div>🔵 Low: <strong>{{ severity_counts.low }}</strong></div>
+          </div>
+        </div>
+        {% else %}
+        <div style="padding: 40px; text-align: center;">
+          <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
+          <p class="text-muted small mb-0">No open findings</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">📈 Health Score Distribution</h5>
+        {% if score_buckets.values() | sum > 0 %}
+        <canvas id="score-chart" height="60"></canvas>
+        <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>✅ Good (80+): <strong>{{ score_buckets.good }}</strong></div>
+            <div>⚠️ Warning (50-79): <strong>{{ score_buckets.warning }}</strong></div>
+            <div>❌ Critical (<50): <strong>{{ score_buckets.critical }}</strong></div>
+            <div>📊 Total: <strong>{{ score_buckets.values() | sum }}</strong></div>
+          </div>
+        </div>
+        {% else %}
+        <div style="padding: 40px; text-align: center;">
+          <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+          <p class="text-muted small mb-0">No health scores yet</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Additional Dashboard Cards: Extract Status, Activity, Quick Links -->
+<div class="row g-3 mb-4">
+  <!-- Recent Activity -->
+  <div class="col-md-4">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">📝 Recent Activity</h5>
+        {% if recent_activity %}
+        <div style="display: grid; gap: 8px; font-size: 12px;">
+          {% for activity in recent_activity[:3] %}
+          <div style="padding: 8px; background-color: var(--bg-tertiary); border-radius: 4px; border-left: 2px solid var(--accent);">
+            <div style="color: var(--text-secondary); margin-bottom: 2px;">{{ activity }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 20px 0; margin: 0;">No recent activity</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Links -->
+  <div class="col-md-4">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">⚡ Quick Links</h5>
+        <div style="display: grid; gap: 8px;">
+          <a href="{{ url_for('workbooks.list_workbooks') }}" style="display: flex; align-items: center; gap: 8px; padding: 10px; background-color: var(--bg-tertiary); border-radius: 4px; text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+            <span>📊</span>
+            <span style="font-size: 12px; font-weight: 500;">View Workbooks</span>
+          </a>
+          <a href="{{ url_for('users.list_users') }}" style="display: flex; align-items: center; gap: 8px; padding: 10px; background-color: var(--bg-tertiary); border-radius: 4px; text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+            <span>👥</span>
+            <span style="font-size: 12px; font-weight: 500;">Manage Users</span>
+          </a>
+          <a href="{{ url_for('permissions.list_permissions') }}" style="display: flex; align-items: center; gap: 8px; padding: 10px; background-color: var(--bg-tertiary); border-radius: 4px; text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+            <span>🔐</span>
+            <span style="font-size: 12px; font-weight: 500;">Check Permissions</span>
+          </a>
+          <a href="{{ url_for('health.list_health') }}" style="display: flex; align-items: center; gap: 8px; padding: 10px; background-color: var(--bg-tertiary); border-radius: 4px; text-decoration: none; color: var(--text-primary); transition: all 0.2s ease;">
+            <span>❤️</span>
+            <span style="font-size: 12px; font-weight: 500;">Health Scores</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Additional Charts: User Distribution & Content Type Breakdown -->
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">👥 User Distribution by Role</h5>
+        {% if user_roles %}
+        <div style="max-height: 320px; overflow: hidden;">
+        <canvas id="user-roles-chart" height="320"></canvas>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 40px 0; margin: 0;">No user data available</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card h-100" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+      <div class="card-body">
+        <h5 style="margin-bottom: 16px; color: var(--text-primary);">📦 Content Type Breakdown</h5>
+        {% if content_by_type %}
+        <canvas id="content-type-chart" height="50"></canvas>
+        <div style="margin-top: 12px; font-size: 11px; color: var(--text-secondary);">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            {% for content_type, count in content_by_type.items() %}
+            <div>{{ content_type }}: <strong>{{ count }}</strong></div>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <p style="color: var(--text-secondary); font-size: 12px; text-align: center; padding: 40px 0; margin: 0;">No content data</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="background-color: var(--bg-secondary); border: 1px solid var(--border-light);">
+  <div class="card-body">
+    <h5 class="mb-3">🚨 Needs Attention</h5>
+    {% if top_findings %}
+    <div style="display: grid; gap: 12px;">
+      {% for f in top_findings %}
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background-color: var(--bg-tertiary); border-radius: var(--radius-md); border-left: 4px solid {% if f.severity == 'critical' %}var(--error){% elif f.severity in ('high', 'medium') %}var(--warning){% else %}var(--info){% endif %};">
+        <span style="font-size: 20px;">{% if f.severity == 'critical' %}🔴{% elif f.severity in ('high', 'medium') %}🟡{% else %}🔵{% endif %}</span>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; color: var(--text-primary);">{{ f.title }}</div>
+          <div style="font-size: 12px; color: var(--text-secondary);">{{ f.resource_name }}</div>
+        </div>
+        <span class="badge {{ 'badge-error' if f.severity == 'critical' else ('badge-warning' if f.severity in ('high', 'medium') else 'badge-info') }}" style="white-space: nowrap;">{{ f.severity | upper }}</span>
+        <a href="{{ url_for('findings.list_findings', severity=f.severity) }}" class="btn btn-small" style="background-color: var(--accent); color: white; text-decoration: none; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px;">View</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding: 24px; text-align: center;">
+      <div style="font-size: 32px; margin-bottom: 8px;">✅</div>
+      <p style="color: var(--text-secondary); margin: 0;">No open findings. Everything's in good shape!</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  $(document).ready(function () {
+    var severityTotal = {{ (severity_counts.values() | sum) }};
+    if (severityTotal > 0) {
+      new Chart(document.getElementById('severity-chart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Critical', 'High', 'Medium', 'Low'],
+          datasets: [{
+            data: [
+              {{ severity_counts.critical }},
+              {{ severity_counts.high }},
+              {{ severity_counts.medium }},
+              {{ severity_counts.low }}
+            ],
+            backgroundColor: ['#dc3545', '#fd7e14', '#ffc107', '#6c757d']
+          }]
+        },
+        options: { plugins: { legend: { position: 'bottom' } } }
+      });
+    }
+
+    var scoreTotal = {{ (score_buckets.values() | sum) }};
+    if (scoreTotal > 0) {
+      new Chart(document.getElementById('score-chart'), {
+        type: 'bar',
+        data: {
+          labels: ['Good (80+)', 'Warning (50-79)', 'Critical (<50)'],
+          datasets: [{
+            data: [
+              {{ score_buckets.good }},
+              {{ score_buckets.warning }},
+              {{ score_buckets.critical }}
+            ],
+            backgroundColor: ['#198754', '#ffc107', '#dc3545']
+          }]
+        },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      });
+    }
+
+    // User Roles Distribution Chart
+    var userRoles = {{ user_roles | tojson }};
+    if (Object.keys(userRoles).length > 0) {
+      new Chart(document.getElementById('user-roles-chart'), {
+        type: 'pie',
+        data: {
+          labels: Object.keys(userRoles),
+          datasets: [{
+            data: Object.values(userRoles),
+            backgroundColor: ['#004B87', '#00A3E0', '#5CB85C', '#FFB81C', '#D9534F', '#5BC0DE']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+    }
+
+    // Content Type Breakdown Chart
+    var contentTypes = {{ content_by_type | tojson }};
+    if (Object.keys(contentTypes).length > 0) {
+      new Chart(document.getElementById('content-type-chart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(contentTypes),
+          datasets: [{
+            label: 'Count',
+            data: Object.values(contentTypes),
+            backgroundColor: ['#004B87', '#00A3E0', '#5CB85C', '#FFB81C']
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: { legend: { display: false } },
+          scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
+    }
+
+    // ======================================
+    // WebSocket Real-Time Updates (Simplified)
+    // ======================================
+    try {
+      console.log('Initializing WebSocket...');
+      const socket = io({
+        reconnection: true,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 5000,
+        reconnectionAttempts: 5
+      });
+
+      // Connect to WebSocket server
+      socket.on('connect', function() {
+        console.log('✅ Connected to live updates');
+        const liveIndicator = document.getElementById('live-indicator');
+        if (liveIndicator) {
+          liveIndicator.style.display = 'inline';
+        }
+        socket.emit('request_metrics');
+      });
+
+      socket.on('disconnect', function() {
+        console.log('❌ Disconnected from live updates');
+        const liveIndicator = document.getElementById('live-indicator');
+        if (liveIndicator) {
+          liveIndicator.style.display = 'none';
+        }
+      });
+
+      socket.on('connect_error', function(error) {
+        console.error('Connection error:', error);
+      });
+
+      // Listen for metrics updates from server
+      socket.on('metrics_update', function(metrics) {
+        console.log('📊 Metrics updated:', metrics);
+        updateDashboardMetrics(metrics);
+      });
+
+      // Initial metrics request
+      setTimeout(() => {
+        socket.emit('request_metrics');
+      }, 1000);
+
+    } catch (error) {
+      console.error('WebSocket initialization failed:', error);
+    }
+
+    // Update dashboard with new metrics
+    function updateDashboardMetrics(metrics) {
+      // Update metric cards with animation
+      updateMetricCard('workbook_count', metrics.workbook_count);
+      updateMetricCard('datasource_count', metrics.datasource_count);
+      updateMetricCard('stale_count', metrics.stale_count);
+      updateMetricCard('custom_view_count', metrics.custom_view_count);
+      updateMetricCard('subscription_count', metrics.subscription_count);
+      updateMetricCard('avg_score', metrics.avg_score || '—');
+
+      // Update health summary banner
+      updateHealthSummary(metrics);
+
+      // Update last refresh time
+      const timestamp = new Date(metrics.timestamp);
+      document.getElementById('last-refresh-time').textContent = timestamp.toLocaleTimeString();
+
+      // Rebuild charts with new data
+      rebuildCharts(metrics);
+    }
+
+    function updateMetricCard(elementId, value) {
+      const elements = document.querySelectorAll('[data-metric="' + elementId + '"]');
+      elements.forEach(el => {
+        const oldValue = el.textContent;
+        if (oldValue !== value.toString()) {
+          el.textContent = value;
+          el.style.transition = 'all 0.3s ease';
+          el.style.backgroundColor = 'var(--accent)';
+          el.style.color = 'white';
+          el.style.borderRadius = '4px';
+          el.style.padding = '4px 8px';
+          setTimeout(() => {
+            el.style.backgroundColor = '';
+            el.style.color = '';
+          }, 500);
+        }
+      });
+    }
+
+    function updateHealthSummary(metrics) {
+      // Update the summary banner values
+      document.getElementById('health-total-assets').textContent =
+        (metrics.workbook_count + metrics.datasource_count);
+      document.getElementById('health-stale-items').textContent = metrics.stale_count;
+      document.getElementById('health-critical-issues').textContent =
+        (metrics.severity_counts.critical + metrics.severity_counts.high);
+      document.getElementById('health-avg-score').textContent =
+        (metrics.avg_score !== null ? metrics.avg_score : '—');
+    }
+
+    function rebuildCharts(metrics) {
+      // Update Severity Chart
+      const severityCtx = document.getElementById('severity-chart');
+      if (severityCtx && severityCtx.chart) {
+        severityCtx.chart.data.datasets[0].data = [
+          metrics.severity_counts.critical,
+          metrics.severity_counts.high,
+          metrics.severity_counts.medium,
+          metrics.severity_counts.low
+        ];
+        severityCtx.chart.update();
+      }
+
+      // Update User Roles Chart
+      const userRolesCtx = document.getElementById('user-roles-chart');
+      if (userRolesCtx && userRolesCtx.chart) {
+        userRolesCtx.chart.data.labels = Object.keys(metrics.user_roles);
+        userRolesCtx.chart.data.datasets[0].data = Object.values(metrics.user_roles);
+        userRolesCtx.chart.update();
+      }
+
+      // Update Content Type Chart
+      const contentTypeCtx = document.getElementById('content-type-chart');
+      if (contentTypeCtx && contentTypeCtx.chart) {
+        contentTypeCtx.chart.data.labels = Object.keys(metrics.content_by_type);
+        contentTypeCtx.chart.data.datasets[0].data = Object.values(metrics.content_by_type);
+        contentTypeCtx.chart.update();
+      }
+    }
+
+    // Store chart references for updates (fixed version)
+    if (window.Chart) {
+      // Chart.instances is an array-like object, needs proper iteration
+      setTimeout(() => {
+        if (Chart.instances && Chart.instances.length > 0) {
+          for (let i = 0; i < Chart.instances.length; i++) {
+            const chart = Chart.instances[i];
+            if (chart && chart.canvas) {
+              chart.canvas.chart = chart;
+            }
+          }
+        }
+      }, 500);
+    }
+  });
+
+  // Phase 4: Export current metrics to window for Phase 4 features
+  window.currentMetrics = {
+    workbook_count: {{ workbook_count }},
+    datasource_count: {{ datasource_count }},
+    stale_count: {{ stale_count }},
+    custom_view_count: {{ custom_view_count }},
+    subscription_count: {{ subscription_count }},
+    user_count: {{ user_count }},
+    avg_score: {{ avg_score if avg_score is not none else 'null' }},
+    severity_counts: {{ severity_counts | tojson }},
+    score_buckets: {{ score_buckets | tojson }},
+    user_roles: {{ user_roles | tojson }},
+    content_by_type: {{ content_by_type | tojson }}
+  };
+
+  // Update alert rule count
+  document.addEventListener('DOMContentLoaded', () => {
+    if (alertManager && alertManager.rules) {
+      document.getElementById('alertRuleCount').textContent = alertManager.rules.length;
+    }
+  });
+</script>
+{% endblock %}

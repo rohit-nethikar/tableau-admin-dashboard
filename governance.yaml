@@ -1,0 +1,68 @@
+# Tunable governance settings for health scoring, orphaned-content detection, and
+# permission-risk rules. Edit and restart the app to pick up changes - same workflow
+# as config.yaml. Every field here is optional; anything you omit falls back to the
+# default baked into governance_config.py, so it's safe to only override what you
+# actually want to change.
+
+# Health-score factor weights. These don't need to sum to 1 - they're normalized at
+# load time. Any factor that's not available for a given asset (e.g. lineage while
+# the Metadata API is unreachable, or certification on a workbook, which can't be
+# certified in Tableau) has its weight redistributed across that asset's remaining
+# available factors rather than being counted as zero - see /health for exactly which
+# factors were used per asset.
+weights:
+  usage: 0.20
+  ownership: 0.15
+  refresh_status: 0.20
+  certification: 0.10
+  documentation: 0.10
+  permission_risk: 0.15
+  lineage: 0.10
+
+# A user counts as "inactive" for orphaned-content detection if their last login is
+# older than this many days, or was never recorded.
+inactive_user_days: 180
+
+# The exact name of Tableau's built-in "everyone on this site" group, as it appears
+# on your server. Grants to this group are flagged by permission_risk.py.
+all_users_group_name: "All Users"
+
+# Capabilities treated as "broad" by permission-risk scoring when granted widely
+# (to All Users, or directly to individual users instead of a curated group).
+high_risk_capabilities:
+  - Download
+  - ExportData
+  - ExportXml
+  - Delete
+  - ChangePermissions
+  - ChangeHierarchy
+
+# Regexes (Python `re`, case-insensitivity via inline (?i)) used to flag a Tableau
+# user as a service/system account rather than a real person.
+service_account_patterns:
+  - "(?i)^svc[-_.]"
+  - "(?i)service[-_.]?account"
+  - "(?i)^sa[-_.]"
+  - "(?i)^bot[-_.]"
+  - "(?i)noreply"
+  - "(?i)no-reply"
+
+# Optional per-project allow-list of grantee names permission_risk.py should treat as
+# expected access, e.g.:
+#   approved_baseline:
+#     "Finance":
+#       - "Finance Analysts"
+#       - "Finance Admins"
+# Left empty by default, which skips the unexpected-project-access check entirely
+# rather than generating false positives against an undefined baseline.
+approved_baseline: {}
+
+# Maps a data source's Data Quality Warning type (Tableau's warning_type enum) to a
+# findings-page severity. severe (a boolean flag Tableau sets per-warning) does not
+# change this mapping - it's surfaced in the finding's evidence instead.
+dqw_severity_map:
+  SENSITIVE_DATA: critical
+  STALE: high
+  DEPRECATED: medium
+  WARNING: medium
+  MAINTENANCE: low

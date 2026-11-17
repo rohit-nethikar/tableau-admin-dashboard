@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Permissions{% endblock %}
+{% block content %}
+<h3 class="mb-3"><i class="bi bi-shield-lock"></i> Permissions Audit</h3>
+<p class="text-muted small">
+  Shows explicit permission grants on projects/workbooks and each project's default-permission
+  templates (what new content inherits at creation). This mirrors Tableau's actual permission
+  model rather than simulating dynamic inheritance across locked/unlocked nested projects.
+  Sort/filter by any column, including Project, to see one project at a time.
+</p>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-shield-lock"></i></div>
+        <div>
+          <div class="stat-number">{{ total_grants }}</div>
+          <div class="stat-label">Permission Grants</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-folder"></i></div>
+        <div>
+          <div class="stat-number">{{ project_count }}</div>
+          <div class="stat-label">Projects</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon {{ 'bg-danger-subtle text-danger' if risky_resource_count else 'bg-success-subtle text-success' }}">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div>
+          <div class="stat-number">{{ risky_resource_count }}</div>
+          <div class="stat-label">Flagged Resources</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-card h-100">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-people"></i></div>
+        <div>
+          <div class="stat-number">{{ group_count }}</div>
+          <div class="stat-label">Groups</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<table id="permissions-table" class="table table-striped table-bordered w-100">
+  <thead>
+    <tr>
+      <th>Project</th>
+      <th>Resource Type</th>
+      <th>Resource</th>
+      <th>Grantee Type</th>
+      <th>Grantee</th>
+      <th>Capabilities</th>
+      <th>Source</th>
+      <th>Risk</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for project_name, grants in by_project.items() %}
+      {% for g in grants %}
+      {% set risk = risk_scores.get((g.resource_type, g.resource_name)) %}
+      <tr>
+        <td>{{ project_name }}</td>
+        <td>{{ g.resource_type }}</td>
+        <td>{{ g.resource_name }}</td>
+        <td>{{ g.grantee_type }}</td>
+        <td>{{ g.grantee_name }}</td>
+        <td>{{ g.capabilities }}</td>
+        <td>{{ g.source }}</td>
+        <td>
+          {% if risk %}
+          <a href="{{ url_for('findings.list_findings', category='permission_risk') }}"
+             class="badge text-decoration-none {{ 'bg-danger' if risk >= 60 else ('bg-warning text-dark' if risk >= 25 else 'bg-secondary') }}">
+            {{ risk }}
+          </a>
+          {% else %}
+          <span class="text-muted">&mdash;</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+
+<h4 class="mt-5 mb-3">Group Membership</h4>
+<p class="text-muted small">Flattened group &rarr; user membership, so a "group" grantee above can be cross-referenced to actual people.</p>
+<table id="groups-table" class="table table-striped table-bordered w-100">
+  <thead>
+    <tr>
+      <th>Group</th>
+      <th>Member</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for group_name, members in members_by_group.items() %}
+      {% for user_name in members %}
+      <tr>
+        <td>{{ group_name }}</td>
+        <td>{{ user_name }}</td>
+      </tr>
+      {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    initDataTable('#permissions-table', { pageLength: 25 });
+    initDataTable('#groups-table', { pageLength: 25 });
+  });
+</script>
+{% endblock %}

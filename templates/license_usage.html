@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}License Usage - Tableau Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col">
+      <h1 class="display-5"><i class="bi bi-person-badge"></i> License Usage</h1>
+      <p class="text-muted">Current Creator/Explorer/Viewer seat usage vs. licensed capacity</p>
+    </div>
+  </div>
+
+  <!-- Current Usage Cards -->
+  {% if current %}
+  <div class="row mb-4">
+    {% for usage in current %}
+    {% set pct_used = usage.pct_used or 0 %}
+    {% set is_alert = pct_used >= threshold_pct %}
+    {% set is_warning = pct_used >= 75 %}
+    <div class="col-md-4 mb-3">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+          <h5 class="card-title">{{ usage.tier }} Seats</h5>
+          <div style="margin: 20px 0;">
+            <div class="progress" style="height: 25px;">
+              <div class="progress-bar {% if is_alert %}bg-danger{% elif is_warning %}bg-warning{% else %}bg-success{% endif %}"
+                   role="progressbar"
+                   style="width: {{ pct_used }}%;"
+                   aria-valuenow="{{ pct_used }}"
+                   aria-valuemin="0"
+                   aria-valuemax="100">
+                <strong>{{ pct_used }}%</strong>
+              </div>
+            </div>
+          </div>
+          <div style="text-align: center; padding: 10px 0;">
+            <div style="font-size: 24px; font-weight: 700; color: var(--primary);">
+              {{ usage.used }}<span style="font-size: 18px;">/ {{ usage.capacity or '∞' }}</span>
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+              {{ usage.used }} of {{ usage.capacity or 'unlimited' }} seats used
+            </div>
+            {% if is_alert %}
+            <div style="margin-top: 8px; padding: 8px; background-color: rgba(255,193,7,0.1); border-radius: 4px; color: var(--warning); font-weight: 600; font-size: 12px;">
+              ⚠️ Exceeds {{ threshold_pct }}% capacity
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="alert alert-info d-flex align-items-start" role="alert">
+        <i class="bi bi-info-circle me-2 mt-1" style="flex-shrink: 0;"></i>
+        <div>
+          <strong>No license usage data available</strong>
+          <p class="mb-0 mt-1">License usage snapshots are captured during each sync. If this is your first sync, data will appear after the next sync completes.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Usage History -->
+  {% if history_by_tier %}
+  <div class="row mb-4">
+    <div class="col-md-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light border-0">
+          <h5 class="mb-0"><i class="bi bi-graph-up"></i> Usage Over Time</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="usage-trend-chart" height="80"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Last Refresh Info -->
+  {% if last_refresh %}
+  <div class="row">
+    <div class="col-md-12">
+      <div class="alert alert-light border" role="alert">
+        <small class="text-muted">
+          Last synced: <strong>{{ last_refresh.finished_at or last_refresh.started_at }}</strong>
+          <span class="badge bg-{{ 'success' if last_refresh.status == 'success' else 'warning' if last_refresh.status == 'partial' else 'danger' }} ms-2">
+            {{ last_refresh.status|capitalize }}
+          </span>
+        </small>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+{% if history_by_tier %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('usage-trend-chart');
+    if (!ctx) return;
+
+    const historyByTier = {{ history_by_tier | tojson }};
+    const tiers = Object.keys(historyByTier).sort();
+
+    // Get all unique timestamps across all tiers, sorted
+    const allTimestamps = new Set();
+    tiers.forEach(tier => {
+      historyByTier[tier].forEach(snap => {
+        allTimestamps.add(snap.snapshot_at);
+      });
+    });
+    const labels = Array.from(allTimestamps).sort();
+
+    // Color palette per tier
+    const tierColors = {
+      'Creator': 'rgb(255, 99, 132)',
+      'Explorer': 'rgb(54, 162, 235)',
+      'Viewer': 'rgb(75, 192, 75)',
+    };
+
+    // Build dataset per tier
+    const datasets = tiers.map(tier => {
+      const dataPoints = labels.map(ts => {
+        const snap = historyByTier[tier].find(s => s.snapshot_at === ts);
+        return snap ? snap.used : null;
+      });
+      return {
+        label: tier,
+        data: dataPoints,
+        borderColor: tierColors[tier] || '#999',
+        backgroundColor: tierColors[tier] ? tierColors[tier].replace('rgb', 'rgba').replace(')', ', 0.1)') : 'rgba(153, 153, 153, 0.1)',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: false,
+      };
+    });
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels.map(ts => ts.split('T')[0]),
+        datasets: datasets,
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+          },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Seats Used',
+            },
+          },
+        },
+      },
+    });
+  });
+</script>
+{% endif %}
+{% endblock %}
